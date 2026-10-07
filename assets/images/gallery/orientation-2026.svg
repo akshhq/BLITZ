@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4c0000" />
+      <stop offset="60%" stop-color="#260000" />
+      <stop offset="100%" stop-color="#0b0506" />
+    </linearGradient>
+    <pattern id="grid1" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffb000" stroke-width="1" stroke-opacity="0.1" />
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg1)" />
+  <rect width="800" height="600" fill="url(#grid1)" />
+  <rect x="40" y="40" width="720" height="520" rx="6" fill="none" stroke="#ffb000" stroke-opacity="0.3" stroke-width="1.5" />
+  <text x="70" y="100" fill="#ffb000" font-family="monospace" font-size="14" letter-spacing="3">BLITZ_ARCHIVE // 01</text>
+  <text x="70" y="270" fill="#f4f1e8" font-family="sans-serif" font-weight="700" font-size="36">ORIENTATION &amp; INDUCTION</text>
+  <text x="70" y="315" fill="#f4f1e8" fill-opacity="0.75" font-family="monospace" font-size="16">Auditorium &bull; Department of Computer Science</text>
+  <circle cx="680" cy="120" r="32" fill="#ffb000" fill-opacity="0.15" />
+  <circle cx="680" cy="120" r="18" fill="#ffb000" fill-opacity="0.3" />
+  <path d="M 70 380 L 730 380" stroke="#f4f1e8" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="6 6" />
+  <text x="70" y="420" fill="#ffb000" font-family="monospace" font-size="13">[ PLACEHOLDER PHOTO — REPLACE IN assets/images/gallery/ ]</text>
+</svg>

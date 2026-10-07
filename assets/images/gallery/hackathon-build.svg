@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#260000" />
+      <stop offset="50%" stop-color="#4c0000" />
+      <stop offset="100%" stop-color="#140607" />
+    </linearGradient>
+    <pattern id="grid2" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#f4f1e8" stroke-width="1" stroke-opacity="0.06" />
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg2)" />
+  <rect width="800" height="600" fill="url(#grid2)" />
+  <rect x="40" y="40" width="720" height="520" rx="6" fill="none" stroke="#ffb000" stroke-opacity="0.3" stroke-width="1.5" />
+  <text x="70" y="100" fill="#ffb000" font-family="monospace" font-size="14" letter-spacing="3">BLITZ_ARCHIVE // 02</text>
+  <text x="70" y="270" fill="#f4f1e8" font-family="sans-serif" font-weight="700" font-size="36">CODEVERSE 24H SPRINT</text>
+  <text x="70" y="315" fill="#f4f1e8" fill-opacity="0.75" font-family="monospace" font-size="16">Computer Science Lab &bull; Collaborative Hackathon</text>
+  <path d="M 70 380 L 730 380" stroke="#f4f1e8" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="6 6" />
+  <text x="70" y="420" fill="#ffb000" font-family="monospace" font-size="13">[ PLACEHOLDER PHOTO — REPLACE IN assets/images/gallery/ ]</text>
+</svg>

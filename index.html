@@ -3,50 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Progressive enhancement hook: enable reveal animations only when JS is active
+      document.documentElement.classList.add('js');
+    </script>
+    <title>BLITZ | Computer Science Society, Keshav Mahavidyalaya, DU</title>
     <meta
       name="description"
-      content="BLITZ — the departmental society of Computer Science at Keshav Mahavidyalaya."
+      content="BLITZ is the departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi. Fostering technical excellence, hackathons, workshops, and open computing."
     />
-    <title>BLITZ</title>
-    <link rel="icon" href="assets/favicon.ico" sizes="any" />
+    <!-- Canonical link placeholder (TODO: replace with production domain) -->
+    <link rel="canonical" href="https://example.com/blitz" />
+    <meta name="theme-color" content="#0b0506" />
+
+    <!-- Open Graph Metadata -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BLITZ | Computer Science Society, Keshav Mahavidyalaya" />
+    <meta
+      property="og:description"
+      content="Silicon Minds, Circuited Hearts. Departmental Society of Computer Science at Keshav Mahavidyalaya, University of Delhi."
+    />
+    <!-- TODO: Replace placeholder og.png with official social share banner -->
+    <meta property="og:image" content="assets/og.png" />
+    <meta property="og:url" content="https://example.com/blitz" />
+    <meta property="og:site_name" content="BLITZ Keshav Mahavidyalaya" />
+
+    <!-- Twitter Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BLITZ | Computer Science Society, Keshav Mahavidyalaya" />
+    <meta
+      name="twitter:description"
+      content="Silicon Minds, Circuited Hearts. Technical workshops, hackathons, and student computing initiatives."
+    />
+    <meta name="twitter:image" content="assets/og.png" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="styles.css" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "EducationalOrganization",
+        "name": "BLITZ - Computer Science Society",
+        "alternateName": "BLITZ KMV",
+        "url": "https://example.com/blitz",
+        "logo": "assets/favicon.svg",
+        "parentOrganization": {
+          "@type": "CollegeOrUniversity",
+          "name": "Keshav Mahavidyalaya, University of Delhi",
+          "url": "https://keshav.du.ac.in"
+        },
+        "department": {
+          "@type": "Department",
+          "name": "Department of Computer Science"
+        },
+        "description": "Student-driven departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi."
+      }
+    </script>
   </head>
   <body>
-    <main>
-      <section id="top" class="introduction">
-        <nav class="introduction-nav" aria-label="Primary navigation">
-          <a class="nav-logo" href="#top" aria-label="BLITZ home">BLITZ</a>
-          <div id="transition-logo" class="transition-logo" aria-label="BLITZ logo">
-            <span class="blitz-logo" aria-hidden="true">
-              <span class="blitz-logo-extrusion"></span>
-              <span class="blitz-logo-front">BLITZ</span>
-            </span>
-          </div>
-          <button
-            id="menu-toggle"
-            class="nav-menu-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="primary-navigation-links"
-            aria-label="Open navigation menu"
-          >
-            <span></span><span></span><span></span>
-          </button>
-          <div id="primary-navigation-links" class="nav-links">
-            <a href="#department">About</a>
-            <a href="#events">Events</a>
-            <a href="#gallery">Gallery</a>
-            <a href="#highlights">Achievements</a>
-          </div>
-        </nav>
+    <!-- Accessibility Skip Link -->
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
-        <div class="department-marquee" aria-label="Computer Science Department">
+    <!-- Fixed Header Landmark with Navigation -->
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a id="nav-brand" class="nav-brand" href="#home" aria-label="BLITZ home">
+          <span class="nav-brand-text">BLITZ</span>
+        </a>
+
+        <button
+          id="menu-toggle"
+          class="nav-menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-navigation-links"
+          aria-label="Open navigation menu"
+        >
+          <span></span><span></span><span></span>
+        </button>
+
+        <div id="primary-navigation-links" class="nav-links">
+          <a href="#home" class="nav-link">Home</a>
+          <a href="#about" class="nav-link">About</a>
+          <a href="#events" class="nav-link">Events</a>
+          <a href="#team" class="nav-link">Team</a>
+          <a href="#gallery" class="nav-link">Gallery</a>
+          <a href="#achievements" class="nav-link">Achievements</a>
+          <a href="#collaborations" class="nav-link">Collaborations</a>
+          <a href="#contact" class="nav-link">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Main Content Landmark -->
+    <main id="main-content">
+      <!-- 1. HOME (Hero) -->
+      <section id="home" class="introduction surface surface--maroon" aria-label="Hero Overview">
+        <div id="transition-logo" class="transition-logo" aria-hidden="true">
+          <span class="blitz-logo">
+            <span class="blitz-logo-extrusion"></span>
+            <span class="blitz-logo-front">BLITZ</span>
+          </span>
+        </div>
+
+        <div class="department-marquee" aria-label="Computer Science Department Marquee">
           <div class="marquee-line"></div>
           <div class="marquee-viewport">
             <div class="marquee-track" aria-hidden="true">
@@ -57,45 +131,56 @@
           <div class="marquee-line"></div>
         </div>
 
+        <!-- Semantic H1 for Page Hierarchy -->
+        <div class="hero-heading-shell">
+          <h1 class="hero-h1">
+            <span class="hero-h1-brand">BLITZ</span>
+            <span class="hero-h1-sub">Department of Computer Science &bull; Keshav Mahavidyalaya</span>
+          </h1>
+        </div>
+
         <div class="introduction-copy-stack">
-          <aside class="introduction-copy introduction-announcements" aria-label="Announcements">
-            <span class="introduction-copy-label">ANNOUNCEMENTS</span>
-            <p class="introduction-copy-description">NO CURRENT ANNOUNCEMENTS</p>
-          </aside>
-          <aside class="introduction-copy" aria-label="About BLITZ">
+          <aside class="introduction-copy" aria-label="About BLITZ Society">
             <span class="introduction-copy-label intro-reveal">V.01 / BLITZ SOCIETY</span>
-            <p class="introduction-copy-title intro-reveal">BLITZ — THE DEPARTMENTAL SOCIETY OF COMPUTER SCIENCE</p>
-            <p class="introduction-copy-description intro-reveal">A STUDENT-DRIVEN COMMUNITY BUILT TO CREATE, COLLABORATE, AND PUSH THE BOUNDARIES OF COMPUTING.</p>
+            <p class="introduction-copy-title intro-reveal">THE DEPARTMENTAL SOCIETY OF COMPUTER SCIENCE</p>
+            <p class="introduction-copy-description intro-reveal">
+              A STUDENT-DRIVEN COMMUNITY BUILT TO CREATE, COLLABORATE, AND PUSH THE BOUNDARIES OF COMPUTING.
+            </p>
           </aside>
         </div>
       </section>
 
-      <section id="department" class="home-section">
+      <!-- 2. ABOUT -->
+      <section id="about" class="home-section surface surface--ink" aria-labelledby="about-title">
         <div class="home-layout">
-          <aside class="home-meta"><span class="home-meta-title">BLITZ / HOME</span></aside>
+          <aside class="home-meta"><span class="home-meta-title">BLITZ / ABOUT</span></aside>
           <div class="home-content">
             <header class="home-intro">
-              <h1 data-reveal>Silicon Minds, Circuited Hearts.</h1>
-              <p data-reveal>BLITZ is the departmental society of the Department of Computer Science at Keshav Mahavidyalaya, University of Delhi. Through workshops, seminars, competitions, technical events and other learning initiatives, BLITZ provides students with opportunities to explore technology, develop practical skills, and engage with computer science beyond the classroom.</p>
+              <h2 id="about-title" data-reveal class="about-hero-title">Silicon Minds, Circuited Hearts.</h2>
+              <p data-reveal>
+                BLITZ is the departmental society of the Department of Computer Science at Keshav Mahavidyalaya, University of Delhi.
+                Through workshops, seminars, hackathons, technical competitions, and collaborative initiatives, BLITZ empowers students
+                to master computational thinking, build real-world software, and explore modern technology beyond the classroom.
+              </p>
             </header>
             <div class="home-focus" aria-labelledby="what-we-do-title">
-              <h2 id="what-we-do-title" data-reveal>WHAT WE DO</h2>
+              <h3 id="what-we-do-title" data-reveal>WHAT WE DO</h3>
               <div class="home-focus-list">
                 <article class="home-focus-item">
-                  <div class="home-focus-heading"><span>01</span><h3 data-reveal>WORKSHOPS &amp; SEMINARS</h3></div>
-                  <p data-reveal>Interactive sessions that help students explore concepts, tools and emerging areas of technology.</p>
+                  <div class="home-focus-heading"><span>01</span><h4 data-reveal>WORKSHOPS &amp; SEMINARS</h4></div>
+                  <p data-reveal>Hands-on interactive laboratory sessions exploring systems architecture, modern languages, and emergent technologies.</p>
                 </article>
                 <article class="home-focus-item">
-                  <div class="home-focus-heading"><span>02</span><h3 data-reveal>TECHNICAL EVENTS</h3></div>
-                  <p data-reveal>Competitions and challenges that encourage problem-solving, logical thinking and creativity.</p>
+                  <div class="home-focus-heading"><span>02</span><h4 data-reveal>TECHNICAL EVENTS</h4></div>
+                  <p data-reveal>Intense build sprints, speed coding, algorithmic challenges, and bug-hunts promoting sharp logical problem solving.</p>
                 </article>
                 <article class="home-focus-item">
-                  <div class="home-focus-heading"><span>03</span><h3 data-reveal>PROJECTS &amp; INITIATIVES</h3></div>
-                  <p data-reveal>Opportunities to apply technical knowledge, experiment with ideas and learn through practical experience.</p>
+                  <div class="home-focus-heading"><span>03</span><h4 data-reveal>PROJECTS &amp; INITIATIVES</h4></div>
+                  <p data-reveal>Practical engineering where students construct open source tooling, experiments, and production-grade prototypes.</p>
                 </article>
                 <article class="home-focus-item">
-                  <div class="home-focus-heading"><span>04</span><h3 data-reveal>COMMUNITY &amp; COLLABORATION</h3></div>
-                  <p data-reveal>A space for students to learn, collaborate and grow together through shared interests in computer science.</p>
+                  <div class="home-focus-heading"><span>04</span><h4 data-reveal>COMMUNITY &amp; COLLABORATION</h4></div>
+                  <p data-reveal>An inclusive peer-learning space connecting undergraduate developers, alumni mentors, and industry practitioners.</p>
                 </article>
               </div>
             </div>
@@ -103,58 +188,236 @@
         </div>
       </section>
 
-      <section class="team-section" aria-labelledby="team-title">
+      <!-- 3. ANNOUNCEMENTS (Slim Headline Strip Under About) -->
+      <section id="announcements" class="announcements-bar" aria-label="Society Announcements">
+        <div class="announcements-bar-inner">
+          <div class="announcements-chip">
+            <span class="announcements-pulse" aria-hidden="true"></span>
+            <span class="announcements-label">ANNOUNCEMENTS</span>
+          </div>
+
+          <div
+            id="announcements-ticker-viewport"
+            class="announcements-viewport"
+            tabindex="0"
+            aria-label="Announcements feed. Press Enter or Space on an announcement for full details."
+          >
+            <div id="announcements-ticker-track" class="announcements-track" aria-live="polite"></div>
+          </div>
+
+          <div class="announcements-controls">
+            <button
+              id="announcements-toggle-play"
+              class="announcements-btn"
+              type="button"
+              aria-label="Pause announcements ticker"
+              title="Pause ticker"
+            >
+              <span id="announcements-play-icon" aria-hidden="true">⏸</span>
+            </button>
+            <button
+              id="announcements-prev"
+              class="announcements-btn"
+              type="button"
+              aria-label="Previous announcement"
+              title="Previous announcement"
+            >
+              &#8592;
+            </button>
+            <button
+              id="announcements-next"
+              class="announcements-btn"
+              type="button"
+              aria-label="Next announcement"
+              title="Next announcement"
+            >
+              &#8594;
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. EVENTS (Sticky Stacking Panels, Newest to Oldest) -->
+      <section id="events" class="events-section surface surface--maroon" aria-labelledby="events-title">
+        <header class="events-heading">
+          <p class="section-badge">BLITZ / CALENDAR</p>
+          <h2 id="events-title">Events</h2>
+        </header>
+        <div id="events-stack" class="events-stack"></div>
+      </section>
+
+      <!-- 5. TEAM (Light Cream Section with High Contrast Dark Typography) -->
+      <section id="team" class="team-section surface surface--cream" aria-labelledby="team-title">
         <div class="team-layout">
           <header class="team-heading">
+            <p class="section-badge section-badge--dark">BLITZ / SOCIETY MEMBERS</p>
             <h2 id="team-title">Our Team</h2>
-            <p>Meet the brilliant minds behind BLITZ</p>
+            <p>Meet the coordinators, developers, designers, and organizers powering BLITZ.</p>
           </header>
           <div id="team-content" class="team-content"></div>
         </div>
       </section>
 
-      <section id="events" class="events-section" aria-labelledby="events-title">
-        <header class="events-heading"><p>BLITZ / EVENTS</p><h2 id="events-title">Events</h2></header>
-        <div id="events-stack" class="events-stack"></div>
-      </section>
-
-      <section id="highlights" class="highlights-section" aria-labelledby="highlights-title">
-        <div class="highlights-layout">
-          <header class="highlights-heading">
-            <div><p class="highlights-label">BLITZ / HIGHLIGHTS</p><h2 id="highlights-title">Highlights</h2></div>
-            <p class="highlights-cue">Scroll to explore</p>
-          </header>
-          <div id="highlights-scroller" class="highlights-scroller" tabindex="0" aria-label="Highlighted events">
-            <div id="highlights-track" class="highlights-track"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="gallery" class="gallery-section" aria-labelledby="gallery-title">
+      <!-- 6. GALLERY (Lazy-loaded images on rail with manual controls) -->
+      <section id="gallery" class="gallery-section surface surface--ink" aria-labelledby="gallery-title">
         <div class="gallery-layout">
           <header class="gallery-heading">
-            <div><p class="gallery-label">BLITZ / GALLERY</p><h2 id="gallery-title">Gallery</h2></div>
-            <p class="gallery-cue">Scroll to explore</p>
+            <div>
+              <p class="gallery-label">BLITZ / GALLERY</p>
+              <h2 id="gallery-title">Gallery</h2>
+            </div>
+            <div class="rail-header-tools">
+              <span class="gallery-cue">Scroll or navigate</span>
+              <div class="rail-nav-buttons" role="group" aria-label="Gallery rail controls">
+                <button
+                  id="gallery-rail-prev"
+                  class="rail-arrow-btn"
+                  type="button"
+                  aria-label="Scroll gallery left"
+                  title="Scroll left"
+                >
+                  &#8592;
+                </button>
+                <button
+                  id="gallery-rail-next"
+                  class="rail-arrow-btn"
+                  type="button"
+                  aria-label="Scroll gallery right"
+                  title="Scroll right"
+                >
+                  &#8594;
+                </button>
+              </div>
+            </div>
           </header>
-          <div id="gallery-scroller" class="gallery-scroller" tabindex="0" aria-label="Event gallery">
+          <div
+            id="gallery-scroller"
+            class="gallery-scroller"
+            tabindex="0"
+            aria-label="Event gallery carousel. Use left and right arrow keys to navigate."
+          >
             <div id="gallery-track" class="gallery-track"></div>
           </div>
         </div>
       </section>
 
-      <section class="blitz-footer-shell" aria-label="Contact footer">
-        <footer class="blitz-contact-footer">
-          <div class="blitz-contact-footer-inner">
-            <p class="blitz-contact-label">CONTACT</p>
-            <div class="blitz-contact-grid">
-              <div class="blitz-contact-item"><p class="blitz-contact-heading">Mail</p><a href="mailto:hello@example.com">hello@example.com</a></div>
-              <div class="blitz-contact-item"><p class="blitz-contact-heading">Instagram</p><a href="https://instagram.com" target="_blank" rel="noreferrer">@blitz</a></div>
-              <div class="blitz-contact-item"><p class="blitz-contact-heading">Location</p><a href="https://maps.google.com/?q=Keshav+Mahavidyalaya" target="_blank" rel="noreferrer">Keshav Mahavidyalaya</a></div>
+      <!-- 7. ACHIEVEMENTS (Distinct accomplishments, competition wins & milestones) -->
+      <section id="achievements" class="highlights-section surface surface--achievements" aria-labelledby="achievements-title">
+        <div class="highlights-layout">
+          <header class="highlights-heading">
+            <div>
+              <p class="highlights-label">BLITZ / HONORS &amp; MILESTONES</p>
+              <h2 id="achievements-title">Achievements</h2>
             </div>
+            <div class="rail-header-tools">
+              <span class="highlights-cue">Tap or hover to expand</span>
+              <div class="rail-nav-buttons" role="group" aria-label="Achievements rail controls">
+                <button
+                  id="achievements-rail-prev"
+                  class="rail-arrow-btn"
+                  type="button"
+                  aria-label="Scroll achievements left"
+                  title="Scroll left"
+                >
+                  &#8592;
+                </button>
+                <button
+                  id="achievements-rail-next"
+                  class="rail-arrow-btn"
+                  type="button"
+                  aria-label="Scroll achievements right"
+                  title="Scroll right"
+                >
+                  &#8594;
+                </button>
+              </div>
+            </div>
+          </header>
+          <div
+            id="highlights-scroller"
+            class="highlights-scroller"
+            tabindex="0"
+            aria-label="Society achievements cards. Use arrow keys to explore."
+          >
+            <div id="highlights-track" class="highlights-track"></div>
           </div>
-        </footer>
+        </div>
+      </section>
+
+      <!-- 8. COLLABORATIONS (Partner Societies, Sponsors & Communities) -->
+      <section id="collaborations" class="collaborations-section surface surface--ink" aria-labelledby="collaborations-title">
+        <div class="collaborations-layout">
+          <header class="collaborations-heading">
+            <p class="collaborations-label">BLITZ / NETWORK</p>
+            <h2 id="collaborations-title">Collaborations</h2>
+            <p class="collaborations-intro">
+              Partnering with collegiate chapters, developer collectives, and open-source communities to build wider opportunities for our members.
+            </p>
+          </header>
+          <div id="collaborations-grid" class="collaborations-grid"></div>
+        </div>
       </section>
     </main>
+
+    <!-- 9. CONTACT FOOTER (Outside Main) -->
+    <footer id="contact" class="blitz-contact-footer surface surface--ink" aria-label="Contact and Social Links">
+      <div class="blitz-contact-footer-inner">
+        <div class="blitz-contact-header">
+          <p class="blitz-contact-label">BLITZ / CONTACT</p>
+          <h2 class="blitz-contact-title">Connect with BLITZ</h2>
+        </div>
+        <div id="contact-info-grid" class="blitz-contact-grid"></div>
+        <div class="blitz-contact-bottom">
+          <p id="copyright-notice" class="copyright-notice">
+            &copy; <span id="current-year">2026</span> BLITZ &bull; Department of Computer Science, Keshav Mahavidyalaya, University of Delhi.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Accessible Announcement Detail Modal -->
+    <dialog
+      id="announcement-modal"
+      class="announcement-modal"
+      aria-labelledby="modal-announcement-title"
+      aria-modal="true"
+    >
+      <div class="announcement-modal-box">
+        <header class="announcement-modal-header">
+          <div class="announcement-modal-meta">
+            <span class="announcement-modal-badge">ANNOUNCEMENT</span>
+            <time id="modal-announcement-date" class="announcement-modal-date"></time>
+          </div>
+          <button
+            id="modal-close-btn"
+            class="announcement-modal-close"
+            type="button"
+            aria-label="Close announcement dialog"
+          >
+            &times;
+          </button>
+        </header>
+        <div class="announcement-modal-body">
+          <h3 id="modal-announcement-title" class="announcement-modal-title"></h3>
+          <p id="modal-announcement-summary" class="announcement-modal-summary"></p>
+          <div id="modal-announcement-text" class="announcement-modal-text"></div>
+          <div id="modal-announcement-link-wrap" class="announcement-modal-action">
+            <a
+              id="modal-announcement-link"
+              class="announcement-modal-btn"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open External Link &#8599;
+            </a>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Dependencies: Plain Scripts Without Build Steps (Works on file://) -->
+    <script src="data.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
