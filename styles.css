@@ -49,6 +49,13 @@
   --accent-dim: rgba(255, 176, 0, 0.18);
   --accent-hot: #ff3d2e;   /* Alert / Upcoming Accent */
 
+  /* Semantic states */
+  --focus-ring-dark: var(--accent);
+  --focus-ring-light: var(--maroon-bright);
+  --state-hover-dark: rgba(255, 176, 0, 0.2);
+  --state-selected-dark: rgba(255, 176, 0, 0.12);
+  --state-disabled-border: rgba(244, 241, 232, 0.24);
+
   /* Navigation Dimensions (--nav-height is 64px on phones/tablets, see section 17) */
   --nav-height: 74px;
   --header-h: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
@@ -176,8 +183,20 @@ button:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible,
 summary:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring-dark);
   outline-offset: 4px;
+}
+
+.surface--cream :is(button, a, [tabindex], summary):focus-visible {
+  outline-color: var(--focus-ring-light);
+}
+
+button:disabled,
+[aria-disabled="true"],
+.is-disabled {
+  cursor: not-allowed;
+  color: var(--cream-faint);
+  border-color: var(--state-disabled-border);
 }
 
 .sr-only {
@@ -206,6 +225,10 @@ summary:focus-visible {
 
 .section-badge--dark {
   color: var(--maroon);
+}
+
+.event-detail-section .section-badge--dark {
+  color: var(--accent);
 }
 
 /* -----------------------------------------------------------------------------
@@ -378,6 +401,9 @@ summary:focus-visible {
 
 .nav-link {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
   color: var(--cream-dim);
   font-size: 14px;
   font-weight: 500;
@@ -869,8 +895,8 @@ html:not(.js) .transition-logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--tap);
+  height: var(--tap);
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -881,7 +907,7 @@ html:not(.js) .transition-logo {
 
 .announcements-btn:hover,
 .announcements-btn:focus-visible {
-  background: rgba(255, 176, 0, 0.2);
+  background: var(--state-hover-dark);
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -1493,8 +1519,8 @@ html:not(.js) .transition-logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: var(--tap);
+  height: var(--tap);
   border: 1px solid rgba(255, 176, 0, 0.5);
   border-radius: 12px;
   background: rgba(255, 176, 0, 0.12);
@@ -1596,6 +1622,22 @@ html:not(.js) .transition-logo {
 
 .event-page-block {
   margin-top: 34px;
+}
+
+.event-page-block--winners {
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 176, 0, 0.28);
+  border-radius: 12px;
+  background: var(--state-selected-dark);
+}
+
+.event-page-block--winners h3 {
+  color: var(--accent);
+}
+
+.event-page-block--winners li {
+  padding-left: 10px;
+  border-left: 2px solid var(--accent);
 }
 
 .event-page-block h3 {
@@ -2462,6 +2504,21 @@ html:not(.js) .transition-logo {
   font-family: var(--font-mono);
   font-size: 13px;
   letter-spacing: 0.04em;
+}
+
+/* Keep disabled controls visibly unavailable without hiding their labels. */
+button:disabled:hover,
+button:disabled:focus-visible,
+[aria-disabled="true"]:hover,
+[aria-disabled="true"]:focus-visible,
+.is-disabled:hover,
+.is-disabled:focus-visible {
+  transform: none;
+  background: transparent;
+  color: var(--cream-faint);
+  border-color: var(--state-disabled-border);
+  box-shadow: none;
+  text-decoration: none;
 }
 
 /* -----------------------------------------------------------------------------

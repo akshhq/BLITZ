@@ -53,9 +53,10 @@
     }).join('');
   }
 
-  function blockList(title, items) {
+  function blockList(title, items, modifier) {
     if (!Array.isArray(items) || items.length === 0) return '';
-    return '<section class="event-page-block"><h3>' + escapeHtml(title) + '</h3><ul>' +
+    var className = 'event-page-block' + (modifier ? ' event-page-block--' + modifier : '');
+    return '<section class="' + className + '"><h3>' + escapeHtml(title) + '</h3><ul>' +
       items.map(function (item) {
         if (typeof item === 'string') return '<li>' + escapeHtml(item) + '</li>';
         return '<li><strong>' + escapeHtml(item.position || item.title || 'Result') + '</strong>' +
@@ -94,7 +95,7 @@
           '<div><dt>Speaker(s)</dt><dd>' + escapeHtml(speakers.join(', ') || 'To be announced') + '</dd></div>' +
         '</dl>' +
         blockList('Key points', event.keyPoints) +
-        blockList('Winners', event.winners) +
+        blockList('Winners', event.winners, 'winners') +
         blockList('Competition highlights', event.competitionSections) +
         sessionMarkup +
         (event.additionalInfo ? '<section class="event-page-block"><h3>Notes</h3><p>' + escapeHtml(event.additionalInfo) + '</p></section>' : '') +

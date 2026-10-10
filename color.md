@@ -37,6 +37,11 @@ These variables are defined in `:root` in [`styles.css`](./styles.css).
 | `--accent-hover` | `#ffc233` | Hover/focus variation for amber controls |
 | `--accent-dim` | `rgba(255, 176, 0, 0.18)` | Soft amber fills and backgrounds |
 | `--accent-hot` | `#ff3d2e` | Alert/upcoming emphasis; use sparingly |
+| `--focus-ring-dark` | `var(--accent)` | Focus ring on dark and maroon surfaces |
+| `--focus-ring-light` | `var(--maroon-bright)` | Focus ring on the cream Team surface |
+| `--state-hover-dark` | `rgba(255, 176, 0, 0.2)` | Dark-surface hover/keyboard state fill |
+| `--state-selected-dark` | `rgba(255, 176, 0, 0.12)` | Selected event and winner emphasis fill |
+| `--state-disabled-border` | `rgba(244, 241, 232, 0.24)` | Disabled-control boundary |
 
 ## 3. Base colors
 
@@ -137,8 +142,9 @@ for new sections. Its historical gradient was:
 
 - Header background: `var(--ink)` with dark translucent/solid responsive menu treatment
 - Navigation text: `var(--cream-dim)`
-- Navigation hover and active text: `var(--cream)`
+- Navigation hover and active text: `var(--accent)`
 - Active indicator: `var(--accent)`
+- Navigation links use the shared 44px minimum target height.
 - Mobile menu dividers: `rgba(255, 255, 255, 0.08)`
 
 ### Typography and labels
@@ -155,9 +161,14 @@ for new sections. Its historical gradient was:
 All keyboard focusable controls use:
 
 ```css
-outline: 2px solid var(--accent);
+outline: 2px solid var(--focus-ring-dark);
 outline-offset: 4px;
 ```
+
+Controls on `.surface--cream` use `var(--focus-ring-light)` because amber
+does not provide sufficient contrast against the light Team background. Disabled
+controls use a muted cream token and border, never reduced element opacity that
+could unintentionally reduce the contrast of nested labels.
 
 The skip link uses:
 
@@ -176,6 +187,10 @@ state.
 - Past badge: translucent cream background with `var(--cream-dim)` text
 - Detail buttons: translucent light background, amber border, cream text
 - Detail button hover/focus: amber background with ink text
+- Selected Launchpad tiles use an amber border and a lift/shadow change in
+  addition to the selected state; the state is not communicated by color alone.
+- Winner blocks use a labelled section, accent heading, and left rule for
+  hierarchy. No medal-specific palette is introduced.
 
 ### Announcements
 
@@ -268,3 +283,65 @@ introducing another one-off color.
 - Page surfaces: [`index.html`](./index.html)
 - Event page surfaces: [`event.html`](./event.html)
 - Shared content data: [`data.js`](./data.js)
+
+## 9. Measured contrast audit
+
+Ratios below use the WCAG relative-luminance formula with alpha colors
+composited over the named solid background. They are representative checks;
+text over a gradient must still be checked at its darkest and lightest points.
+The AA targets are **4.5:1 for normal text**, **3:1 for large text**, and
+**3:1 for non-text focus indicators**.
+
+| Foreground | Background | Composited foreground | Ratio | AA result |
+|---|---|---:|---:|---|
+| `--cream` | `--ink` | `#f4f1e8` | 17.90:1 | Pass |
+| `--cream-dim` | `--ink` | `#c1bdb6` | 10.81:1 | Pass |
+| `--cream-faint` | `--ink` | `#928e89` | 6.21:1 | Pass |
+| `--cream` | `--ink-surface` | `#f4f1e8` | 17.47:1 | Pass |
+| `--cream-dim` | `--maroon` | `#cfbcb5` | 8.81:1 | Pass |
+| `--cream-faint` | `--maroon` | `#ad8c87` | 5.26:1 | Pass |
+| `--cream` | `--maroon-bright` | `#f4f1e8` | 9.74:1 | Pass |
+| `--accent` | `--ink` | `#ffb000` | 11.04:1 | Pass |
+| `--accent` | `--ink-surface` | `#ffb000` | 10.77:1 | Pass |
+| `--accent` | `--maroon` | `#ffb000` | 8.77:1 | Pass |
+| `--ink` | `--accent` | `#0b0506` | 11.04:1 | Pass |
+| `--ink` | `--accent-hover` | `#0b0506` | 12.53:1 | Pass |
+| `--maroon` | `--cream` | `#4c0000` | 14.22:1 | Pass |
+| `--ink` | `--cream` | `#0b0506` | 17.90:1 | Pass |
+
+The audit found no failing representative body-text or control-label pairing
+after the state-token changes. Thin translucent borders and texture overlays
+are intentionally not treated as text colors. Amber is not used as body copy
+on the cream Team surface; the light-surface focus ring is maroon instead.
+
+## 10. Interactive-state contract
+
+Every interactive component should expose the following states:
+
+| State | Required treatment |
+|---|---|
+| Default | Stable token-based text, border, and surface |
+| Hover | Amber border or fill plus a non-color cue such as lift or underline |
+| Focus-visible | 2px contrasting outline with 4px offset |
+| Active/pressed | Preserve the selected border/fill while removing lift if appropriate |
+| Selected | `aria-current`, `aria-pressed`, or equivalent semantic state plus visual styling |
+| Disabled | `:disabled`, `[aria-disabled="true"]`, or `.is-disabled`; muted text/border and no misleading hover |
+| Visited | Inherit the component's readable link color; do not introduce an untracked purple |
+
+The current implementation covers navigation, Launchpad tiles, event actions,
+announcement controls, gallery rails, Network cards, and footer links. New
+interactive components must use the same contract and the 44px touch-target
+token where applicable.
+
+## 11. Texture, responsive, and motion checks
+
+- Scanlines and grain remain pointer-free overlays with low opacity. They are
+  decorative and must not be placed above text with an opaque blend.
+- `mix-blend-mode: screen` is limited to the scanline layer; headings and body
+  copy remain on the base surface.
+- The responsive breakpoint preserves readable contrast and state hierarchy at
+  the mobile navigation, one-column Launchpad, and horizontally scrolling
+  Gallery layouts.
+- `prefers-reduced-motion: reduce` removes reveal/hover transitions and keeps
+  selected, focus, and open states visible through borders, labels, and layout,
+  not animation.
