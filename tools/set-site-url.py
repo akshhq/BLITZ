@@ -15,7 +15,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FILES = ["index.html", "sitemap.xml", "robots.txt", "README.md"]
+FILES = ["index.html", "event.html", "sitemap.xml", "robots.txt", "README.md"]
 
 
 def main():

@@ -27,7 +27,6 @@
     events: [],
     team: [],
     gallery: [],
-    achievements: [],
     collaborations: [],
     contact: {}
   };
@@ -35,6 +34,28 @@
   const root = document.documentElement;
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const isReducedMotion = reducedMotionQuery.matches;
+
+  function validateEventData(events) {
+    const seen = new Set();
+    const issues = [];
+    (Array.isArray(events) ? events : []).forEach(function (event, index) {
+      if (!event || typeof event !== 'object') {
+        issues.push(`events[${index}] is not an object`);
+        return;
+      }
+      if (!event.id || typeof event.id !== 'string') issues.push(`events[${index}] is missing a stable id`);
+      if (seen.has(event.id)) issues.push(`duplicate event id: ${event.id}`);
+      seen.add(event.id);
+      if (!event.title || typeof event.title !== 'string') issues.push(`${event.id || `events[${index}]`} is missing a title`);
+      if (event.date && !parseLocalDate(event.date)) issues.push(`${event.id || `events[${index}]`} has an invalid date`);
+      if (!event.description || typeof event.description !== 'string') issues.push(`${event.id || `events[${index}]`} is missing a description`);
+      if (!event.category || typeof event.category !== 'string') issues.push(`${event.id || `events[${index}]`} is missing a category`);
+    });
+    if (issues.length && typeof console !== 'undefined' && console.warn) {
+      console.warn('[BLITZ] Event data requires verification:', issues);
+    }
+    return issues;
+  }
 
   /** Escape HTML entities to prevent injection. */
   function escapeHtml(value) {
@@ -98,6 +119,20 @@
   function dateValue(iso) {
     const d = parseLocalDate(iso);
     return d ? d.getTime() : 0;
+  }
+
+  // Valid dates sort newest-first; undated or invalid records stay last in source order.
+  function sortEventsByDate(events) {
+    return (Array.isArray(events) ? events : []).map(function (event, index) {
+      const parsedDate = parseLocalDate(event && event.date);
+      return { event: event, index: index, date: parsedDate ? parsedDate.getTime() : 0, hasDate: !!parsedDate };
+    }).sort(function (a, b) {
+      if (a.hasDate !== b.hasDate) return a.hasDate ? -1 : 1;
+      if (a.date !== b.date) return b.date - a.date;
+      return a.index - b.index;
+    }).map(function (entry) {
+      return entry.event;
+    });
   }
 
   /** "2026-11-20" -> "20 Nov 2026" */
@@ -356,9 +391,7 @@
     const container = document.querySelector('#events-stack');
     if (!container) return;
 
-    const eventsList = [...(DATA.events || [])].sort(function (a, b) {
-      return dateValue(b.date) - dateValue(a.date);
-    });
+    const eventsList = sortEventsByDate(DATA.events).slice(0, 5);
 
     if (eventsList.length === 0) {
       container.innerHTML = '<p class="events-empty">No events scheduled at this time.</p>';
@@ -372,9 +405,15 @@
     container.innerHTML = eventsList.map(function (event, index) {
       const eventDate = parseLocalDate(event.date);
       const isUpcoming = !!eventDate && eventDate.getTime() >= today.getTime();
-      const badgeText = isUpcoming ? 'UPCOMING' : 'PAST';
-      const badgeClass = isUpcoming ? 'event-badge--upcoming' : 'event-badge--past';
+      const badgeText = !eventDate ? 'DATE TBC' : (isUpcoming ? 'UPCOMING' : 'PAST');
+      const badgeClass = !eventDate ? 'event-badge--pending' : (isUpcoming ? 'event-badge--upcoming' : 'event-badge--past');
       const titleId = `event-title-${escapeHtml(event.id || index)}`;
+      const dateMarkup = eventDate
+        ? `<div><dt>Date</dt><dd>${escapeHtml(formatDate(event.date))}</dd></div>`
+        : '';
+      const locationMarkup = event.location
+        ? `<div><dt>Location</dt><dd>${escapeHtml(event.location)}</dd></div>`
+        : '';
 
       return `
         <article
@@ -391,17 +430,11 @@
               <h3 id="${titleId}">${escapeHtml(event.title)}</h3>
               <p class="events-panel-description">${escapeHtml(event.description)}</p>
               <dl class="events-panel-details">
-                <div>
-                  <dt>Date</dt>
-                  <dd>${escapeHtml(formatDate(event.date))}</dd>
-                </div>
-                <div>
-                  <dt>Location</dt>
-                  <dd>${escapeHtml(event.location)}</dd>
-                </div>
+                ${dateMarkup}
+                ${locationMarkup}
                 <div>
                   <dt>Format</dt>
-                  <dd>${escapeHtml(event.additionalInfo || 'Departmental Initiative')}</dd>
+                  <dd>${escapeHtml(event.format || event.category)}</dd>
                 </div>
               </dl>
               <div class="events-panel-actions">
@@ -430,6 +463,28 @@
     window.history.replaceState({}, '', url);
   }
 
+  function setMetaContent(selector, value) {
+    const element = document.querySelector(selector);
+    if (element && value) element.setAttribute('content', value);
+  }
+
+  function updateHomepageMetadata(event) {
+    const baseTitle = 'BLITZ | Computer Science Society, Keshav Mahavidyalaya, DU';
+    const baseDescription = 'BLITZ is the departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi.';
+    const title = event && event.title ? `${event.title} | BLITZ` : baseTitle;
+    const description = event && event.description ? event.description : baseDescription;
+    const canonical = document.querySelector('link[rel="canonical"]');
+    const pageUrl = canonical ? canonical.href : window.location.href.split('?')[0];
+
+    document.title = title;
+    setMetaContent('meta[name="description"]', description);
+    setMetaContent('meta[property="og:title"]', title);
+    setMetaContent('meta[property="og:description"]', description);
+    setMetaContent('meta[property="og:url"]', pageUrl);
+    setMetaContent('meta[name="twitter:title"]', title);
+    setMetaContent('meta[name="twitter:description"]', description);
+  }
+
   function renderEventDetail(eventId) {
     const panel = document.querySelector('#event-detail-content');
     const section = document.querySelector('#event-detail');
@@ -440,6 +495,7 @@
     });
 
     if (!event) {
+      updateHomepageMetadata(null);
       section.classList.add('is-visible');
       panel.innerHTML = `
         <div class="event-detail-card event-detail-card--empty">
@@ -460,86 +516,12 @@
       return;
     }
 
-    const layout = event.layout || 'speaker';
-    const keyPoints = (event.keyPoints || []).map(function (point) {
-      return `<li>${escapeHtml(point)}</li>`;
-    }).join('');
-
-    const speakerText = Array.isArray(event.speakers) && event.speakers.length
-      ? event.speakers.map(function (speaker) { return escapeHtml(speaker); }).join(', ')
-      : (event.speaker ? escapeHtml(event.speaker) : '');
-
-    const winnerMarkup = Array.isArray(event.winners) && event.winners.length
-      ? `<div class="event-detail-block">
-          <h4>Winners</h4>
-          <ul>${event.winners.map(function (winner) {
-            const names = (winner.names || []).map(function (name) { return escapeHtml(name); }).join(', ');
-            return `<li><strong>${escapeHtml(winner.position || 'Result')}</strong> — ${names}</li>`;
-          }).join('')}</ul>
-        </div>`
+    updateHomepageMetadata(event);
+    const sharedDetailMarkup = window.BLITZ_EVENT_RENDERER
+      ? window.BLITZ_EVENT_RENDERER.render(event, 'homepage')
       : '';
 
-    const sessionsMarkup = Array.isArray(event.sessions) && event.sessions.length
-      ? `<div class="event-detail-block">
-          <h4>Sessions</h4>
-          <div class="event-detail-session-list">${event.sessions.map(function (session) {
-            const sessionSpeakers = Array.isArray(session.speakers) ? session.speakers.join(', ') : '';
-            return `
-              <article class="event-detail-session">
-                <h5>${escapeHtml(session.title)}</h5>
-                <p>${sessionSpeakers ? `<strong>Speakers:</strong> ${escapeHtml(sessionSpeakers)}` : ''}</p>
-                <p>${escapeHtml(session.summary || '')}</p>
-              </article>
-            `;
-          }).join('')}</div>
-        </div>`
-      : '';
-
-    const competitionMarkup = Array.isArray(event.competitionSections) && event.competitionSections.length
-      ? `<div class="event-detail-block">
-          <h4>Competition highlights</h4>
-          <ul>${event.competitionSections.map(function (section) {
-            return `<li><strong>${escapeHtml(section.title || 'Competition')}</strong>${section.type ? ` — ${escapeHtml(section.type)}` : ''}</li>`;
-          }).join('')}</ul>
-        </div>`
-      : '';
-
-    const detailTitle = {
-      workshop: 'Workshop highlights',
-      competition: 'Competition outcomes',
-      festival: 'Festival overview',
-      speaker: 'Speaker session'
-    }[layout] || 'Event details';
-
-    panel.innerHTML = `
-      <article class="event-detail-card">
-        <div class="event-detail-header">
-          <p class="section-badge section-badge--dark">BLITZ / ${escapeHtml((event.category || 'EVENT').toUpperCase())}</p>
-          <button type="button" class="event-detail-close" aria-label="Close event details">Close</button>
-        </div>
-        <div class="event-detail-body">
-          <div class="event-detail-topline">
-            <span class="event-detail-tag">${escapeHtml(formatDate(event.date))}</span>
-            <span class="event-detail-tag">${escapeHtml(event.location || 'Campus')}</span>
-          </div>
-          <h3>${escapeHtml(event.title)}</h3>
-          <p class="event-detail-summary">${escapeHtml(event.description || '')}</p>
-          <dl class="event-detail-meta">
-            <div><dt>Format</dt><dd>${escapeHtml(event.format || event.category || 'Event')}</dd></div>
-            <div><dt>Time</dt><dd>${escapeHtml(event.time || 'To be announced')}</dd></div>
-            <div><dt>Speaker(s)</dt><dd>${escapeHtml(speakerText || 'To be announced')}</dd></div>
-          </dl>
-          <div class="event-detail-section">
-            <h4>${detailTitle}</h4>
-            ${keyPoints ? `<ul class="event-detail-points">${keyPoints}</ul>` : '<p>No key points have been published yet.</p>'}
-          </div>
-          ${winnerMarkup}
-          ${sessionsMarkup}
-          ${competitionMarkup}
-          ${event.additionalInfo ? `<div class="event-detail-block"><h4>Notes</h4><p>${escapeHtml(event.additionalInfo)}</p></div>` : ''}
-        </div>
-      </article>
-    `;
+    panel.innerHTML = sharedDetailMarkup;
 
     const closeBtn = panel.querySelector('.event-detail-close');
     if (closeBtn) {
@@ -558,6 +540,7 @@
     if (eventId) {
       renderEventDetail(eventId);
     } else {
+      updateHomepageMetadata(null);
       const detailSection = document.querySelector('#event-detail');
       if (detailSection) {
         detailSection.classList.remove('is-visible');
@@ -700,67 +683,35 @@
     }
 
     track.innerHTML = galleryList.map(function (item, index) {
+      const imageUrl = safeAssetUrl(item.image);
+      const isIllustration = item.mediaType === 'illustration' || /\.svg(?:$|[?#])/i.test(String(item.image || ''));
+      const imageMarkup = imageUrl
+        ? `<img
+              src="${imageUrl}"
+              alt="${escapeHtml(item.alt || (isIllustration ? `Illustration representing ${item.title}` : item.title || 'Gallery image'))}"
+              loading="lazy"
+              decoding="async"
+              width="800"
+              height="600"
+            />`
+        : '<div class="gallery-image-fallback" role="img" aria-label="Gallery image unavailable">Image unavailable</div>';
       return `
         <figure class="gallery-item">
           <figcaption class="gallery-item-copy">
             <span class="gallery-item-number">${padZero(index + 1, 2)}</span>
             <strong class="gallery-item-title">${escapeHtml(item.title)}</strong>
             ${item.description ? `<small class="gallery-item-description">${escapeHtml(item.description)}</small>` : ''}
+            <span class="gallery-item-kind">${isIllustration ? 'Illustration' : 'Event image'}</span>
           </figcaption>
           <div class="gallery-img-shell">
-            <img
-              src="${safeAssetUrl(item.image)}"
-              alt="${escapeHtml(item.alt || item.title)}"
-              loading="lazy"
-              decoding="async"
-              width="800"
-              height="600"
-            />
+            ${imageMarkup}
           </div>
         </figure>
       `;
     }).join('');
   }
-
   // ---------------------------------------------------------------------------
-  // 07. ACHIEVEMENTS RENDERING (Honors, Placements, Milestones)
-  // ---------------------------------------------------------------------------
-  function renderAchievements() {
-    const track = document.querySelector('#highlights-track');
-    if (!track) return;
-
-    const list = DATA.achievements || [];
-    if (list.length === 0) {
-      track.innerHTML = '<p class="events-empty">Milestones and accolades will be published shortly.</p>';
-      return;
-    }
-
-    // Everything inside a <button> must be phrasing content, hence <span> (not <div>/<h3>/<p>).
-    // The button's accessible name is its text content, so the details are always readable by AT.
-    track.innerHTML = list.map(function (item, index) {
-      return `
-        <button class="highlights-card" type="button" aria-expanded="false">
-          <span class="highlights-card-surface">
-            <span class="highlights-card-header">
-              <span class="highlights-card-number">${padZero(index + 1, 2)}</span>
-              <span class="highlights-card-year">${escapeHtml(item.year)}</span>
-            </span>
-            <span class="highlights-card-category">${escapeHtml(item.category || 'Honors')}</span>
-            <span class="highlights-card-title">${escapeHtml(item.title)}</span>
-            <span class="highlights-card-details">
-              <span class="highlights-card-details-inner">
-                <span class="highlights-card-description">${escapeHtml(item.description)}</span>
-                ${item.metrics ? `<span class="highlights-card-metric">${escapeHtml(item.metrics)}</span>` : ''}
-              </span>
-            </span>
-          </span>
-        </button>
-      `;
-    }).join('');
-  }
-
-  // ---------------------------------------------------------------------------
-  // 08. COLLABORATIONS RENDERING (Partners, Societies, Sponsors)
+  // 07. COLLABORATIONS RENDERING (Partners, Societies, Sponsors)
   // ---------------------------------------------------------------------------
   function renderCollaborations() {
     const grid = document.querySelector('#collaborations-grid');
@@ -792,32 +743,23 @@
     }
 
     grid.innerHTML = list.map(function (partner) {
+      const destination = typeof partner.url === 'string' && /^https?:\/\//i.test(partner.url.trim())
+        ? ` href="${safeUrl(partner.url)}" target="_blank" rel="noopener noreferrer"` : '';
+      const tag = destination ? 'a' : 'div';
       return `
-        <a
-          href="${safeUrl(partner.url)}"
-          class="collab-card"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <${tag}${destination} class="collab-card">
           <div class="collab-logo-box">
-            <img
-              src="${safeAssetUrl(partner.logo)}"
-              alt="${escapeHtml(partner.name)} logo"
-              loading="lazy"
-              decoding="async"
-              width="240"
-              height="100"
-            />
+            ${partner.logo ? `<img src="${safeAssetUrl(partner.logo)}" alt="${escapeHtml(partner.name)} logo" loading="lazy" decoding="async" width="240" height="100" />` : '<span class="collab-logo-missing">Logo pending</span>'}
           </div>
           <h3 class="collab-name">${escapeHtml(partner.name)}</h3>
           <span class="collab-type">${escapeHtml(partner.type)}</span>
-        </a>
+        </${tag}>
       `;
     }).join('');
   }
 
   // ---------------------------------------------------------------------------
-  // 09. CONTACT FOOTER RENDERING & DYNAMIC COPYRIGHT
+  // 08. CONTACT FOOTER RENDERING & DYNAMIC COPYRIGHT
   // ---------------------------------------------------------------------------
   const ICONS = {
     mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6.5L21 7"/>',
@@ -1001,6 +943,12 @@
     const hero = document.querySelector('#home');
     const shell = document.querySelector('.hero-heading-shell');
     if (!logo || !hero) return;
+    if (reducedMotionQuery.matches) {
+      if (shell) shell.style.opacity = '1';
+      logo.style.opacity = '1';
+      logo.style.transform = 'none';
+      return;
+    }
 
     // Cached geometry: the scroll handler only reads window.scrollY and writes styles.
     let navHeight = 64;
@@ -1100,7 +1048,12 @@
     }
 
     function scrollByCards(direction) {
-      scroller.scrollBy({ left: direction * cardStep(), behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
+      const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+      target = clamp(scroller.scrollLeft + direction * cardStep(), 0, maxScroll);
+      // Use a direct position update for button and keyboard controls. This works
+      // reliably on static file URLs as well as deployed pages; wheel input keeps
+      // the custom animation below.
+      scroller.scrollLeft = target;
     }
 
     function animate() {
@@ -1153,71 +1106,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 13. ACHIEVEMENT CARDS (hover / keyboard on pointer devices, always open on touch)
-  // ---------------------------------------------------------------------------
-  function setUpHighlightCards() {
-    const cards = [...document.querySelectorAll('.highlights-card')];
-    if (cards.length === 0) return;
-
-    const touchOnly = window.matchMedia('(hover: none)');
-
-    /**
-     * A card is open when it is hovered, keyboard-focused or pinned (Enter / Space).
-     * On touch-only devices every card is always open (CSS shows the details), so no tap is
-     * needed and the old "focus opens, click closes" race cannot occur.
-     */
-    function refresh(card) {
-      const open = touchOnly.matches ||
-        card.classList.contains('is-pinned') ||
-        card._hovered === true ||
-        card.matches(':focus-visible');
-      card.classList.toggle('is-open', open);
-      card.setAttribute('aria-expanded', String(open));
-    }
-
-    function refreshAll() {
-      cards.forEach(refresh);
-    }
-
-    cards.forEach(function (card) {
-      card.addEventListener('mouseenter', function () { card._hovered = true; refresh(card); });
-      card.addEventListener('mouseleave', function () { card._hovered = false; refresh(card); });
-      card.addEventListener('focus', function () { refresh(card); });
-      card.addEventListener('blur', function () { refresh(card); });
-
-      // click fires for Enter, Space AND pointer taps. Only toggle the pin for keyboard / AT
-      // activation (detail === 0); a mouse click on a hovered card must not collapse it.
-      card.addEventListener('click', function (event) {
-        if (touchOnly.matches) return;
-        if (event.detail !== 0) return;
-        card.classList.toggle('is-pinned');
-        refresh(card);
-      });
-    });
-
-    // Pinned cards close when focus or a pointer goes elsewhere.
-    document.addEventListener('pointerdown', function (event) {
-      if (event.target.closest && event.target.closest('.highlights-card')) return;
-      cards.forEach(function (c) {
-        c.classList.remove('is-pinned');
-      });
-      refreshAll();
-    });
-    cards.forEach(function (card) {
-      card.addEventListener('blur', function () {
-        card.classList.remove('is-pinned');
-        refresh(card);
-      });
-    });
-
-    if (touchOnly.addEventListener) {
-      touchOnly.addEventListener('change', refreshAll);
-    }
-    refreshAll();
-  }
-
-  // ---------------------------------------------------------------------------
-  // 14. PROGRESSIVE REVEALS (Fallback Scoped to html.js)
+  // 13. PROGRESSIVE REVEALS (Fallback Scoped to html.js)
   // ---------------------------------------------------------------------------
   function setUpReveals() {
     const revealItems = [...document.querySelectorAll('[data-reveal], .reveal-tier')];
@@ -1248,7 +1137,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 15. INITIALIZATION
+  // 14. INITIALIZATION
   // ---------------------------------------------------------------------------
   function init() {
     setUpMarquee();

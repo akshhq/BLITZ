@@ -16,7 +16,8 @@ BLITZ/
 ├── styles.css            # Design system, responsive rules (section 17 = mobile)
 ├── data.js               # ALL content (announcements, events, team, contact, ...)
 ├── script.js             # Vanilla JS: ticker, modal, nav sheet, rails, hero logo
-├── event-page.js          # Data-driven event selector and detail renderer
+├── event-renderer.js      # Shared, escaped event-detail markup for both pages
+├── event-page.js          # Data-driven event selector and route-aware page shell
 ├── favicon.ico           # 16/32/48 (generated)
 ├── favicon-16.png  favicon-32.png  apple-touch-icon.png  icon-192.png  icon-512.png
 ├── site.webmanifest      # PWA/theme colours + icons
@@ -36,6 +37,7 @@ BLITZ/
 │   ├── build-brand-assets.py    # logo -> favicons, icons, og.png
 │   ├── optimize-team-images.py  # photos -> 400x400 WebP
 │   ├── set-site-url.py          # change the production URL everywhere
+│   ├── validate-site.js         # metadata, URL, sitemap, robots, asset checks
 │   └── sync-noscript.js         # regenerate <noscript> blocks from data.js
 └── README.md
 ```
@@ -127,9 +129,15 @@ All dynamic content lives in `window.BLITZ_DATA` in `data.js`, and it is intenti
   layout: 'competition', format: 'Hackathon',
   additionalInfo: 'Flagship Hackathon' } // shown in the event detail view
 ```
-Event cards link to `event.html?event=<id>`. The Launchpad page reads the selected event from
-`data.js`, so adding an event to the shared data source automatically adds its selector tile
-and detail view without creating another HTML file.
+Event cards link to `event.html?event=<id>`. Both the homepage detail view and the Launchpad
+load `event-renderer.js` before their page-specific scripts, so common metadata and
+layout-specific sections are rendered from one escaped implementation. The selected event
+also updates the document title, description, and social title/description at runtime.
+The event page keeps `event.html` as its canonical URL while its `og:url` reflects the
+selected query URL; the homepage keeps the homepage canonical URL. Unknown IDs show an
+explicit empty state and restore generic page metadata. The Launchpad page reads the
+selected event from `data.js`, so adding an event to the shared data source automatically
+adds its selector tile and detail view without creating another HTML file.
 
 ### C. Team member
 Tiers: `'core'` (Leadership), `'senior'` (Senior Executives), `'junior'` (Junior Executives), `'volunteer'` (Volunteers). Cards show photo, name and position only.
@@ -195,6 +203,13 @@ The default is `https://keshav.du.ac.in/blitz/` (canonical, `og:url`, `og:image`
 python tools/set-site-url.py https://your-domain.tld/
 ```
 Note: crawlers only read `robots.txt` at a domain root. While the site lives under `/blitz/` on a shared domain, submit `sitemap.xml` in Search Console instead; the file is correct as soon as the site is served from a root.
+
+Run the local deployment/metadata check before publishing:
+```bash
+node tools/validate-site.js
+```
+It checks the two public HTML entry points, their local references, the intended
+canonical URLs, and the sitemap/robots pairing. It does not verify the live host.
 
 ---
 

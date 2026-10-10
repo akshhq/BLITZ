@@ -242,7 +242,7 @@
           >
             <div id="announcements-ticker-track" class="announcements-track">
               <!-- ns:announcements:start -->
-          <noscript><span class="announcement-item-btn"><span class="announcement-item-date">No updates</span><span class="announcement-item-title">No announcements are currently active.</span></span></noscript>
+          <noscript><span class="announcement-item-btn"><span class="announcement-item-date">11 Oct 2026</span><span class="announcement-item-title">Internal SIH Results Are Out</span></span></noscript>
           <!-- ns:announcements:end -->
             </div>
           </div>
@@ -284,28 +284,33 @@
       <!-- 4. EVENTS (Sticky Stacking Panels, Newest to Oldest) -->
       <section id="events" class="events-section surface surface--maroon" aria-labelledby="events-title">
         <header class="events-heading">
-          <p class="section-badge">BLITZ / CALENDAR</p>
-          <h2 id="events-title">Events</h2>
+          <div class="events-heading-main">
+            <p class="section-badge">BLITZ / CALENDAR</p>
+            <h2 id="events-title">Events</h2>
+          </div>
+          <a class="events-view-all" href="event.html">View all events <span aria-hidden="true">&#8594;</span></a>
         </header>
         <div id="events-stack" class="events-stack">
           <!-- ns:events:start -->
           <noscript>
           <div class="ns-block">
             <ul class="ns-list">
-            <li><strong>CodeVerse 2026</strong> &mdash; 20 Nov 2026, Computer Science Lab &amp; Auditorium. The flagship 48-hour collaborative build sprint challenging inter-college student teams to tackle real-world algorithmic and product problems.</li>
-            <li><strong>Kernel &amp; Systems Deep Dive</strong> &mdash; 25 Oct 2026, Seminar Hall, Keshav Mahavidyalaya. An intensive technical workshop exploring operating system internals, concurrency primitives, and low-level memory architecture.</li>
-            <li><strong>Blitzkrieg 2026</strong> &mdash; 15 Mar 2026, Keshav Mahavidyalaya Campus. The premier annual departmental festival featuring technical paper presentations, speed coding, bug hunts, and tech debates.</li>
-            <li><strong>Symposium on Modern Machine Intelligence</strong> &mdash; 10 Nov 2025, Main Auditorium. A distinguished speaker session featuring alumni and industry researchers discussing foundational models and deployment infrastructure.</li>
+            <li><strong>BLITZKRIEG 2026</strong> &mdash; 12 Mar 2026, Keshav Mahavidyalaya Campus. The annual technical fest featuring a speaker session on cloud computing, SaaS, PaaS, IaaS, and career opportunities, alongside student competitions and interactive events. Annual Technical Fest.</li>
+            <li><strong>TECHNYX 2026</strong> &mdash; 27 Jan 2026, Keshav Mahavidyalaya. A parent technical event combining multiple student-facing sessions on internships, Git and GitHub, web fundamentals, and NLP. Technical Event.</li>
+            <li><strong>Code Verse — Coding Competition</strong> &mdash; 16 Jan 2026, Lab 1. Six coding questions across easy, medium, and hard categories on HackerRank, with nine teams participating. Coding Competition.</li>
+            <li><strong>UI/UX Design Workshop</strong> &mdash; 1 Nov 2025, Online. An online workshop focused on design thinking, problem identification, the Double Diamond process, wireframing, and prototyping. Workshop.</li>
+            <li><strong>Dissertation and Academic Project Work</strong> &mdash; 24 Sep 2025, Keshav Mahavidyalaya, Computer Science Department. Seminar and orientation session covering research problems, literature review, research design, methodology, lab assessment guidelines, and academic integrity. Seminar / Orientation.</li>
             </ul>
           </div>
         </noscript>
           <!-- ns:events:end -->
         </div>
+        <noscript><p class="events-no-js-link"><a href="event.html">View all events</a></p></noscript>
       </section>
 
       <section id="event-detail" class="event-detail-section surface surface--ink" aria-live="polite" aria-label="Selected event details">
         <div class="event-detail-shell">
-          <div id="event-detail-content" class="event-detail-content" aria-live="polite"></div>
+          <div id="event-detail-content" class="event-detail-content"></div>
         </div>
       </section>
 
@@ -487,6 +492,7 @@
 
     <!-- Dependencies: Plain Scripts Without Build Steps (Works on file://) -->
     <script src="data.js"></script>
+    <script src="event-renderer.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

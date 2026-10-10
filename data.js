@@ -14,10 +14,10 @@
  *    Members without a photo get the decorative avatar placeholder automatically.
  *    Cards show photo, name and position only.
  * 4. Gallery: Add items to `gallery` with image path, title, and descriptive alt text.
- *    Place real photos inside assets/images/gallery/ and update paths here.
- * 5. Achievements: Add accomplishments (wins, awards, milestones) to `achievements`.
- * 6. Collaborations: Add partner societies, sponsors, and communities to `collaborations`.
- * 7. Contact: Update official links, email, handle and address in `contact`.
+ *    Mark supplied illustrations as `mediaType: 'illustration'`; place approved
+ *    event photos inside assets/images/gallery/ and update paths here.
+ * 5. Collaborations: Add partner societies, sponsors, and communities to `collaborations`.
+ * 6. Contact: Update official links, email, handle and address in `contact`.
  *    The footer, the Maps link and the <noscript> block are all derived from it
  *    (after editing run `node tools/sync-noscript.js`; JSON-LD in index.html is static).
  *
@@ -34,13 +34,15 @@ return {
   announcements: [
     {
       id: 'internal-sih-results-out',
-      title: 'INTERNAL SIH RESULTS OUT !!',
-      date: '2026-10-10',
-      summary: 'The internal SIH results have been announced. Please refer to the official notice for the confirmed list.',
+      title: 'Internal SIH Results Are Out',
+      date: '2026-09-10',
+      summary: 'Internal SIH results are now available.',
       body: '',
       link: 'https://drive.google.com/file/d/1T6O1p8VMs4UZNCT3o1bfY7rn_g5OriPZ/view?usp=sharing'
     }
   ],
+
+  pendingAnnouncements: [],
 
   events: [
     {
@@ -77,7 +79,7 @@ return {
         'Double Diamond process',
         'Wireframing and prototyping'
       ],
-      additionalInfo: 'Host/speaker: Anjali (designation to be confirmed). Time: 11:00 AM.'
+      additionalInfo: 'Time: 11:00 AM.'
     },
     {
       id: 'code-verse-2026',
@@ -123,8 +125,7 @@ return {
     {
       id: 'agentic-ai-speaker-session-2026',
       title: 'Agentic AI Speaker Session',
-      date: '2026-02-05',
-      time: 'Date conflict: 5 Feb (summary table) / 6 Feb (detailed report)',
+      date: '',
       location: 'Keshav Mahavidyalaya',
       description: 'Speaker session on AI agents, multi-agent systems, API-based agents, applications, limitations, and responsible implementation.',
       category: 'Speaker Session',
@@ -137,7 +138,7 @@ return {
         'API-based agents, applications and limitations',
         'Responsible implementation'
       ],
-      additionalInfo: 'Speaker: Dr. Manish Gupta. Date conflict: annual summary table lists 5 February 2026 while detailed report references 6 February 2026; confirmation pending.'
+      additionalInfo: 'Speaker: Dr. Manish Gupta.'
     },
     {
       id: 'blitzkrieg-2026',
@@ -190,7 +191,8 @@ return {
       image: 'assets/images/gallery/orientation-2026.svg',
       title: 'Department Induction & Orientation',
       description: 'A welcoming orientation for the new student cohort and society introduction.',
-      alt: 'Freshers orientation session in the Keshav Mahavidyalaya auditorium',
+      alt: 'Illustration representing a department induction and orientation',
+      mediaType: 'illustration',
       date: 'Aug 2026',
       location: 'Auditorium'
     },
@@ -199,7 +201,8 @@ return {
       image: 'assets/images/gallery/hackathon-build.svg',
       title: 'Code Verse — Coding Competition',
       description: 'Students tackled coding challenges and collaborated under time pressure.',
-      alt: 'Students collaborating on code prototypes during the coding competition',
+      alt: 'Illustration representing collaborative coding challenges',
+      mediaType: 'illustration',
       date: 'Jan 2026',
       location: 'Lab 1'
     },
@@ -208,7 +211,8 @@ return {
       image: 'assets/images/gallery/web3-workshop.svg',
       title: 'UI/UX Design Workshop',
       description: 'A design thinking workshop covering wireframes, prototypes and problem framing.',
-      alt: 'Online design workshop with brainstorming and wireframing exercises',
+      alt: 'Illustration representing an online design workshop',
+      mediaType: 'illustration',
       date: 'Nov 2025',
       location: 'Online'
     },
@@ -217,7 +221,8 @@ return {
       image: 'assets/images/gallery/annual-symposium.svg',
       title: 'Dissertation and Academic Project Work',
       description: 'Academic discussions focused on methodology, integrity and research readiness.',
-      alt: 'Academic seminar on research design and project work',
+      alt: 'Illustration representing an academic project seminar',
+      mediaType: 'illustration',
       date: 'Sep 2025',
       location: 'Department Seminar'
     },
@@ -226,13 +231,12 @@ return {
       image: 'assets/images/gallery/tech-quiz-finals.svg',
       title: 'TECHNYX 2026',
       description: 'A series of technical sessions covering web fundamentals, Git workflows and NLP.',
-      alt: 'Technical sessions covering web fundamentals, GitHub workflows and NLP',
+      alt: 'Illustration representing technical sessions on web fundamentals, GitHub and NLP',
+      mediaType: 'illustration',
       date: 'Jan 2026',
       location: 'Keshav Mahavidyalaya'
     }
   ],
-
-  achievements: [],
 
   collaborations: [],
 

@@ -7,22 +7,31 @@
   var detail = document.querySelector('#event-page-detail');
 
   function escapeHtml(value) {
-    return String(value === null || value === undefined ? '' : value)
-      .replace(/[&<>'"]/g, function (char) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char];
-      });
+    return window.BLITZ_EVENT_RENDERER.escapeHtml(value);
   }
 
   function parseDate(value) {
     var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
     if (!match) return 0;
-    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+    var date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    if (date.getFullYear() !== Number(match[1]) ||
+      date.getMonth() !== Number(match[2]) - 1 ||
+      date.getDate() !== Number(match[3])) return 0;
+    return date.getTime();
   }
 
-  function formatDate(value) {
-    var date = new Date(parseDate(value));
-    if (!parseDate(value)) return String(value || 'Date to be announced');
-    return date.getDate() + ' ' + date.toLocaleString('en', { month: 'short' }) + ' ' + date.getFullYear();
+  // Valid dates sort newest-first; undated or invalid records stay last in source order.
+  function sortEventsByDate(items) {
+    return (Array.isArray(items) ? items : []).map(function (event, index) {
+      var parsedDate = parseDate(event && event.date);
+      return { event: event, index: index, date: parsedDate, hasDate: parsedDate !== 0 };
+    }).sort(function (a, b) {
+      if (a.hasDate !== b.hasDate) return a.hasDate ? -1 : 1;
+      if (a.date !== b.date) return b.date - a.date;
+      return a.index - b.index;
+    }).map(function (entry) {
+      return entry.event;
+    });
   }
 
   function selectedId() {
@@ -40,72 +49,63 @@
     window.history.pushState({ eventId: id }, '', url);
   }
 
+  function setMetaContent(selector, value) {
+    var element = document.querySelector(selector);
+    if (element && value) element.setAttribute('content', value);
+  }
+
+  function updatePageMetadata(event) {
+    var baseTitle = 'Events | BLITZ Computer Science Society';
+    var baseDescription = 'Explore BLITZ events, workshops, competitions, speaker sessions, and technical festivals.';
+    var title = event && event.title ? event.title + ' | BLITZ Events' : baseTitle;
+    var description = event && event.description ? event.description : baseDescription;
+    var canonical = document.querySelector('link[rel="canonical"]');
+    var baseUrl = canonical ? canonical.href : window.location.href.split('?')[0];
+    var selectedUrl = event && event.id ? baseUrl + '?event=' + encodeURIComponent(event.id) : baseUrl;
+
+    document.title = title;
+    setMetaContent('meta[name="description"]', description);
+    setMetaContent('meta[property="og:title"]', title);
+    setMetaContent('meta[property="og:description"]', description);
+    setMetaContent('meta[property="og:url"]', selectedUrl);
+    setMetaContent('meta[name="twitter:title"]', title);
+    setMetaContent('meta[name="twitter:description"]', description);
+  }
+
   function listMarkup(selected) {
-    return events.slice().sort(function (a, b) { return parseDate(b.date) - parseDate(a.date); }).map(function (event, index) {
+    return sortEventsByDate(events).map(function (event) {
       var active = selected && event.id === selected.id;
       return '<a class="event-launchpad-tile' + (active ? ' is-selected' : '') + '" href="event.html?event=' +
         encodeURIComponent(event.id) + '" data-event-id="' + escapeHtml(event.id) + '"' +
-        (active ? ' aria-current="page"' : '') + '>' +
-        '<span class="event-launchpad-icon" aria-hidden="true">' + String(index + 1).padStart(2, '0') + '</span>' +
+        ' aria-label="' + escapeHtml(event.title) + '"' +
+        ' title="' + escapeHtml(event.title) + '"' +
+        (active ? ' aria-current="true"' : '') + '>' +
         '<span class="event-launchpad-tile-title">' + escapeHtml(event.title) + '</span>' +
-        '<span class="event-launchpad-tile-meta">' + escapeHtml(event.category || 'Event') + '</span>' +
         '</a>';
     }).join('');
   }
 
-  function blockList(title, items, modifier) {
-    if (!Array.isArray(items) || items.length === 0) return '';
-    var className = 'event-page-block' + (modifier ? ' event-page-block--' + modifier : '');
-    return '<section class="' + className + '"><h3>' + escapeHtml(title) + '</h3><ul>' +
-      items.map(function (item) {
-        if (typeof item === 'string') return '<li>' + escapeHtml(item) + '</li>';
-        return '<li><strong>' + escapeHtml(item.position || item.title || 'Result') + '</strong>' +
-          (item.names ? ' — ' + escapeHtml(item.names.join(', ')) : '') + '</li>';
-      }).join('') + '</ul></section>';
-  }
-
   function renderDetail(event) {
     if (!event) {
+      updatePageMetadata(null);
       detail.innerHTML = '<div class="event-page-empty"><h2>Event not found</h2><p>Select an event from the Launchpad to continue.</p></div>';
       return;
     }
-
-    var speakers = Array.isArray(event.speakers) ? event.speakers : (event.speaker ? [event.speaker] : []);
-    var sessions = Array.isArray(event.sessions) ? event.sessions : [];
-    var sessionMarkup = sessions.length
-      ? '<section class="event-page-block"><h3>Sessions</h3><div class="event-page-session-grid">' +
-        sessions.map(function (session) {
-          return '<article><h4>' + escapeHtml(session.title) + '</h4><p>' +
-            escapeHtml(session.summary || '') + '</p>' +
-            (session.speakers ? '<small>' + escapeHtml(session.speakers.join(', ')) + '</small>' : '') +
-            '</article>';
-        }).join('') + '</div></section>'
-      : '';
-
-    detail.innerHTML =
-      '<article class="event-page-detail-card">' +
-        '<div class="event-page-detail-kicker"><span>' + escapeHtml(event.layout || 'event') + '</span><span>' +
-          escapeHtml(formatDate(event.date)) + '</span></div>' +
-        '<h2>' + escapeHtml(event.title) + '</h2>' +
-        '<p class="event-page-summary">' + escapeHtml(event.description || '') + '</p>' +
-        '<dl class="event-page-meta">' +
-          '<div><dt>Location</dt><dd>' + escapeHtml(event.location || 'To be announced') + '</dd></div>' +
-          '<div><dt>Format</dt><dd>' + escapeHtml(event.format || event.category || 'Event') + '</dd></div>' +
-          '<div><dt>Time</dt><dd>' + escapeHtml(event.time || 'To be announced') + '</dd></div>' +
-          '<div><dt>Speaker(s)</dt><dd>' + escapeHtml(speakers.join(', ') || 'To be announced') + '</dd></div>' +
-        '</dl>' +
-        blockList('Key points', event.keyPoints) +
-        blockList('Winners', event.winners, 'winners') +
-        blockList('Competition highlights', event.competitionSections) +
-        sessionMarkup +
-        (event.additionalInfo ? '<section class="event-page-block"><h3>Notes</h3><p>' + escapeHtml(event.additionalInfo) + '</p></section>' : '') +
-      '</article>';
+    updatePageMetadata(event);
+    detail.innerHTML = window.BLITZ_EVENT_RENDERER.render(event, 'launchpad');
   }
 
   function render() {
+    if (events.length === 0) {
+      updatePageMetadata(null);
+      grid.innerHTML = '<div class="event-page-empty"><h2>No events published</h2><p>Check back soon for the next BLITZ event.</p></div>';
+      detail.innerHTML = '';
+      return;
+    }
     var event = eventById(selectedId());
     grid.innerHTML = listMarkup(event);
     if (!event) {
+      updatePageMetadata(null);
       detail.innerHTML = '<div class="event-page-empty"><h2>Event not found</h2><p>The requested event could not be located. Select another event from the Launchpad.</p></div>';
       return;
     }

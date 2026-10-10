@@ -32,19 +32,35 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (iso) => { const [y, m, d] = String(iso).split('-'); return `${parseInt(d, 10)} ${MONTHS[parseInt(m, 10) - 1]} ${y}`; };
-const byDateDesc = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+const dateValue = (value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+  if (!match) return 0;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return date.getFullYear() === Number(match[1]) &&
+    date.getMonth() === Number(match[2]) - 1 &&
+    date.getDate() === Number(match[3]) ? date.getTime() : 0;
+};
+const sortByDateDesc = (items) => items.map((item, index) => {
+  const date = dateValue(item.date);
+  return { item, index, date, hasDate: date !== 0 };
+}).sort((a, b) => (a.hasDate === b.hasDate ? b.date - a.date || a.index - b.index : a.hasDate ? -1 : 1))
+  .map(({ item }) => item);
 const bare = (u) => u.replace(/^https?:\/\/(www\.)?/, '');
 const ext = 'target="_blank" rel="noopener noreferrer"';
 
 const blocks = {
   announcements() {
-    const latest = [...DATA.announcements].sort(byDateDesc)[0];
+    const latest = sortByDateDesc([...DATA.announcements])[0];
     if (!latest) return '';
     return `<noscript><span class="announcement-item-btn"><span class="announcement-item-date">${esc(fmt(latest.date))}</span><span class="announcement-item-title">${esc(latest.title)}</span></span></noscript>`;
   },
   events() {
-    const items = [...DATA.events].sort(byDateDesc).map((e) =>
-      `<li><strong>${esc(e.title)}</strong> &mdash; ${esc(fmt(e.date))}, ${esc(e.location)}. ${esc(e.description)}</li>`).join('\n            ');
+    const items = sortByDateDesc([...DATA.events]).slice(0, 5).map((e) => {
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(String(e.date || '')) ? `${esc(fmt(e.date))}, ` : '';
+      const location = e.location ? `${esc(e.location)}. ` : '';
+      const category = e.category ? ` ${esc(e.category)}.` : '';
+      return `<li><strong>${esc(e.title)}</strong> &mdash; ${date}${location}${esc(e.description)}${category}</li>`;
+    }).join('\n            ');
     return `<noscript>\n          <div class="ns-block">\n            <ul class="ns-list">\n            ${items}\n            </ul>\n          </div>\n        </noscript>`;
   },
   team() {
@@ -73,7 +89,10 @@ let html = fs.readFileSync(file, 'utf8');
 for (const name of Object.keys(blocks)) {
   const re = new RegExp(`(<!-- ns:${name}:start -->)[\\s\\S]*?(<!-- ns:${name}:end -->)`);
   if (!re.test(html)) throw new Error(`Marker pair ns:${name} not found in index.html`);
-  html = html.replace(re, (_, a, b) => `${a}\n          ${blocks[name]()}\n          ${b}`);
+  html = html.replace(re, (_, a, b) => {
+    const block = blocks[name]();
+    return block ? `${a}\n          ${block}\n          ${b}` : `${a}\n          ${b}`;
+  });
 }
 fs.writeFileSync(file, html);
 console.log('index.html <noscript> blocks synced from data.js');
