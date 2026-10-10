@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aksh.is-a.dev/BLITZ/sitemap.xml

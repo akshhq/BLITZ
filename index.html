@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <script>
       // Progressive enhancement hook: enable reveal animations only when JS is active
       document.documentElement.classList.add('js');
@@ -12,20 +12,29 @@
       name="description"
       content="BLITZ is the departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi. Fostering technical excellence, hackathons, workshops, and open computing."
     />
-    <!-- Canonical link placeholder (TODO: replace with production domain) -->
-    <link rel="canonical" href="https://example.com/blitz" />
-    <meta name="theme-color" content="#0b0506" />
 
-    <!-- Open Graph Metadata -->
+    <!--
+      PRODUCTION URL: https://aksh.is-a.dev/BLITZ/
+      TODO: change if the society gets its own domain, then run
+            `python tools/set-site-url.py https://your-domain.tld/` (updates canonical,
+            og:url, og:image, twitter:image, JSON-LD, sitemap.xml and robots.txt in one go).
+    -->
+    <link rel="canonical" href="https://aksh.is-a.dev/BLITZ/" />
+    <meta name="theme-color" content="#0b0506" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Open Graph Metadata (absolute URLs required by social scrapers) -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="BLITZ | Computer Science Society, Keshav Mahavidyalaya" />
     <meta
       property="og:description"
       content="Silicon Minds, Circuited Hearts. Departmental Society of Computer Science at Keshav Mahavidyalaya, University of Delhi."
     />
-    <!-- TODO: Replace placeholder og.png with official social share banner -->
-    <meta property="og:image" content="assets/og.png" />
-    <meta property="og:url" content="https://example.com/blitz" />
+    <meta property="og:image" content="https://aksh.is-a.dev/BLITZ/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="BLITZ logo on a dark maroon background: Computer Science Society, Keshav Mahavidyalaya, University of Delhi" />
+    <meta property="og:url" content="https://aksh.is-a.dev/BLITZ/" />
     <meta property="og:site_name" content="BLITZ Keshav Mahavidyalaya" />
 
     <!-- Twitter Card Metadata -->
@@ -35,11 +44,14 @@
       name="twitter:description"
       content="Silicon Minds, Circuited Hearts. Technical workshops, hackathons, and student computing initiatives."
     />
-    <meta name="twitter:image" content="assets/og.png" />
+    <meta name="twitter:image" content="https://aksh.is-a.dev/BLITZ/assets/og.png" />
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <!-- Favicons (generated from the logo by tools/build-brand-assets.py) -->
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="site.webmanifest" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -59,8 +71,27 @@
         "@type": "EducationalOrganization",
         "name": "BLITZ - Computer Science Society",
         "alternateName": "BLITZ KMV",
-        "url": "https://example.com/blitz",
-        "logo": "assets/favicon.svg",
+        "url": "https://aksh.is-a.dev/BLITZ/",
+        "logo": "https://aksh.is-a.dev/BLITZ/assets/logo/blitz-logo.png",
+        "image": "https://aksh.is-a.dev/BLITZ/assets/og.png",
+        "email": "team.blitzkmv@gmail.com",
+        "sameAs": [
+          "https://www.instagram.com/blitzkmv/",
+          "https://www.linkedin.com/in/blitz-keshav-mahavidyalaya"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "general enquiries",
+          "email": "team.blitzkmv@gmail.com"
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "H-4, 5 Zone, near Sainik Vihar, Co-operative Group Housing Societies Pitampura",
+          "addressLocality": "Pitampura",
+          "addressRegion": "Delhi",
+          "postalCode": "110034",
+          "addressCountry": "IN"
+        },
         "parentOrganization": {
           "@type": "CollegeOrUniversity",
           "name": "Keshav Mahavidyalaya, University of Delhi",
@@ -82,7 +113,7 @@
     <header class="site-header">
       <nav class="site-nav" aria-label="Primary navigation">
         <a id="nav-brand" class="nav-brand" href="#home" aria-label="BLITZ home">
-          <span class="nav-brand-text">BLITZ</span>
+          <img class="nav-brand-logo" src="assets/logo/blitz-logo.png" alt="" width="56" height="32" decoding="async" />
         </a>
 
         <button
@@ -113,17 +144,26 @@
     <main id="main-content">
       <!-- 1. HOME (Hero) -->
       <section id="home" class="introduction surface surface--maroon" aria-label="Hero Overview">
-        <div id="transition-logo" class="transition-logo" aria-hidden="true">
-          <span class="blitz-logo">
-            <span class="blitz-logo-extrusion"></span>
-            <span class="blitz-logo-front">BLITZ</span>
-          </span>
+        <div id="transition-logo" class="transition-logo">
+          <div class="hero-logo-tilt">
+            <img
+              class="hero-logo-img"
+              src="assets/logo/blitz-logo.png"
+              srcset="assets/logo/blitz-logo.png 512w, assets/logo/blitz-logo-1024.png 1024w"
+              sizes="(min-width: 900px) 520px, 60vw"
+              width="512"
+              height="293"
+              alt="BLITZ logo"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
         </div>
 
-        <div class="department-marquee" aria-label="Computer Science Department Marquee">
+        <div class="department-marquee" aria-hidden="true">
           <div class="marquee-line"></div>
           <div class="marquee-viewport">
-            <div class="marquee-track" aria-hidden="true">
+            <div class="marquee-track">
               <div class="marquee-group"></div>
               <div class="marquee-group"></div>
             </div>
@@ -189,7 +229,8 @@
       </section>
 
       <!-- 3. ANNOUNCEMENTS (Slim Headline Strip Under About) -->
-      <section id="announcements" class="announcements-bar" aria-label="Society Announcements">
+      <section id="announcements" class="announcements-bar" aria-labelledby="announcements-title">
+        <h2 id="announcements-title" class="sr-only">Announcements</h2>
         <div class="announcements-bar-inner">
           <div class="announcements-chip">
             <span class="announcements-pulse" aria-hidden="true"></span>
@@ -202,7 +243,11 @@
             tabindex="0"
             aria-label="Announcements feed. Press Enter or Space on an announcement for full details."
           >
-            <div id="announcements-ticker-track" class="announcements-track" aria-live="polite"></div>
+            <div id="announcements-ticker-track" class="announcements-track">
+              <!-- ns:announcements:start -->
+          <noscript><span class="announcement-item-btn"><span class="announcement-item-date">15 Oct 2026</span><span class="announcement-item-title">Call for Core Working Committee Nominations 2026–27</span></span></noscript>
+          <!-- ns:announcements:end -->
+            </div>
           </div>
 
           <div class="announcements-controls">
@@ -235,6 +280,8 @@
             </button>
           </div>
         </div>
+        <!-- Only written to when the user changes item manually (never on auto-rotation) -->
+        <p id="announcements-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
       </section>
 
       <!-- 4. EVENTS (Sticky Stacking Panels, Newest to Oldest) -->
@@ -243,7 +290,20 @@
           <p class="section-badge">BLITZ / CALENDAR</p>
           <h2 id="events-title">Events</h2>
         </header>
-        <div id="events-stack" class="events-stack"></div>
+        <div id="events-stack" class="events-stack">
+          <!-- ns:events:start -->
+          <noscript>
+          <div class="ns-block">
+            <ul class="ns-list">
+            <li><strong>CodeVerse 2026</strong> &mdash; 20 Nov 2026, Computer Science Lab &amp; Auditorium. The flagship 48-hour collaborative build sprint challenging inter-college student teams to tackle real-world algorithmic and product problems.</li>
+            <li><strong>Kernel &amp; Systems Deep Dive</strong> &mdash; 25 Oct 2026, Seminar Hall, Keshav Mahavidyalaya. An intensive technical workshop exploring operating system internals, concurrency primitives, and low-level memory architecture.</li>
+            <li><strong>Blitzkrieg 2026</strong> &mdash; 15 Mar 2026, Keshav Mahavidyalaya Campus. The premier annual departmental festival featuring technical paper presentations, speed coding, bug hunts, and tech debates.</li>
+            <li><strong>Symposium on Modern Machine Intelligence</strong> &mdash; 10 Nov 2025, Main Auditorium. A distinguished speaker session featuring alumni and industry researchers discussing foundational models and deployment infrastructure.</li>
+            </ul>
+          </div>
+        </noscript>
+          <!-- ns:events:end -->
+        </div>
       </section>
 
       <!-- 5. TEAM (Light Cream Section with High Contrast Dark Typography) -->
@@ -254,7 +314,42 @@
             <h2 id="team-title">Our Team</h2>
             <p>Meet the coordinators, developers, designers, and organizers powering BLITZ.</p>
           </header>
-          <div id="team-content" class="team-content"></div>
+          <div id="team-content" class="team-content">
+            <!-- ns:team:start -->
+          <noscript>
+          <div class="ns-block ns-block--dark">
+            <h3>Leadership</h3>
+            <ul class="ns-list ns-list--dark">
+              <li>Aksh Kumar, President</li>
+              <li>Priyal Vatsa, Secretary</li>
+              <li>Vrinda Goyal, Treasurer</li>
+            </ul>
+            <h3>Senior Executives</h3>
+            <ul class="ns-list ns-list--dark">
+              <li>Ayushi Jain, Senior Executive</li>
+              <li>Dev Narayan, Senior Executive</li>
+              <li>Kavya Gera, Senior Executive</li>
+              <li>Lavanya Sharma, Senior Executive</li>
+              <li>Parth Arora, Senior Executive</li>
+              <li>Riya Solanki, Senior Executive</li>
+            </ul>
+            <h3>Junior Executives</h3>
+            <ul class="ns-list ns-list--dark">
+              <li>Sachi Grover, Junior Executive</li>
+              <li>Shaurya, Junior Executive</li>
+            </ul>
+            <h3>Volunteers</h3>
+            <ul class="ns-list ns-list--dark">
+              <li>Aditya Raj, Volunteer</li>
+              <li>Diva Bauddh, Volunteer</li>
+              <li>Eesha, Volunteer</li>
+              <li>Neha Bisht, Volunteer</li>
+              <li>Yashika Gupta, Volunteer</li>
+            </ul>
+          </div>
+        </noscript>
+          <!-- ns:team:end -->
+          </div>
         </div>
       </section>
 
@@ -267,7 +362,7 @@
               <h2 id="gallery-title">Gallery</h2>
             </div>
             <div class="rail-header-tools">
-              <span class="gallery-cue">Scroll or navigate</span>
+              <span class="gallery-cue"><span class="cue-pointer">Scroll or navigate</span><span class="cue-touch">Swipe to browse</span></span>
               <div class="rail-nav-buttons" role="group" aria-label="Gallery rail controls">
                 <button
                   id="gallery-rail-prev"
@@ -310,7 +405,7 @@
               <h2 id="achievements-title">Achievements</h2>
             </div>
             <div class="rail-header-tools">
-              <span class="highlights-cue">Tap or hover to expand</span>
+              <span class="highlights-cue"><span class="cue-pointer">Hover to expand</span><span class="cue-touch">Swipe to browse</span></span>
               <div class="rail-nav-buttons" role="group" aria-label="Achievements rail controls">
                 <button
                   id="achievements-rail-prev"
@@ -360,13 +455,27 @@
     </main>
 
     <!-- 9. CONTACT FOOTER (Outside Main) -->
-    <footer id="contact" class="blitz-contact-footer surface surface--ink" aria-label="Contact and Social Links">
+    <footer id="contact" class="blitz-contact-footer surface surface--ink" aria-label="Contact and social links">
       <div class="blitz-contact-footer-inner">
         <div class="blitz-contact-header">
-          <p class="blitz-contact-label">BLITZ / CONTACT</p>
-          <h2 class="blitz-contact-title">Connect with BLITZ</h2>
+          <img class="blitz-contact-logo" src="assets/logo/blitz-logo.png" alt="" width="88" height="50" loading="lazy" decoding="async" />
+          <div>
+            <p class="blitz-contact-label">BLITZ / CONTACT</p>
+            <h2 class="blitz-contact-title">Connect with BLITZ</h2>
+          </div>
         </div>
-        <div id="contact-info-grid" class="blitz-contact-grid"></div>
+        <div id="contact-info-grid" class="blitz-contact-grid">
+          <!-- ns:contact:start -->
+          <noscript>
+          <ul class="ns-list">
+            <li>Mail: <a href="mailto:team.blitzkmv@gmail.com">team.blitzkmv@gmail.com</a></li>
+            <li>Instagram: <a href="https://www.instagram.com/blitzkmv/" target="_blank" rel="noopener noreferrer">@blitzkmv</a></li>
+            <li>LinkedIn: <a href="https://www.linkedin.com/in/blitz-keshav-mahavidyalaya" target="_blank" rel="noopener noreferrer">linkedin.com/in/blitz-keshav-mahavidyalaya</a></li>
+            <li>Location: <a href="https://www.google.com/maps/search/?api=1&amp;query=H-4%2C%205%20Zone%2C%20near%20Sainik%20Vihar%2C%20Co-operative%20Group%20Housing%20Societies%20Pitampura%2C%20Pitampura%2C%20Delhi%2C%20110034" target="_blank" rel="noopener noreferrer">H-4, 5 Zone, near Sainik Vihar, Co-operative Group Housing Societies Pitampura, Pitampura, Delhi, 110034</a></li>
+          </ul>
+        </noscript>
+          <!-- ns:contact:end -->
+        </div>
         <div class="blitz-contact-bottom">
           <p id="copyright-notice" class="copyright-notice">
             &copy; <span id="current-year">2026</span> BLITZ &bull; Department of Computer Science, Keshav Mahavidyalaya, University of Delhi.
@@ -380,11 +489,11 @@
       id="announcement-modal"
       class="announcement-modal"
       aria-labelledby="modal-announcement-title"
-      aria-modal="true"
     >
       <div class="announcement-modal-box">
         <header class="announcement-modal-header">
           <div class="announcement-modal-meta">
+            <img class="announcement-modal-logo" src="assets/logo/blitz-logo.png" alt="" width="42" height="24" decoding="async" />
             <span class="announcement-modal-badge">ANNOUNCEMENT</span>
             <time id="modal-announcement-date" class="announcement-modal-date"></time>
           </div>

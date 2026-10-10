@@ -10,7 +10,7 @@
   <rect x="40" y="40" width="720" height="520" rx="6" fill="none" stroke="#ffb000" stroke-opacity="0.3" stroke-width="1.5" />
   <text x="70" y="100" fill="#ffb000" font-family="monospace" font-size="14" letter-spacing="3">BLITZ_ARCHIVE // 05</text>
   <text x="70" y="270" fill="#f4f1e8" font-family="sans-serif" font-weight="700" font-size="36">NATIONAL TECH QUIZ</text>
-  <text x="70" y="315" fill="#f4f1e8" fill-opacity="0.75" font-family="monospace" font-size="16">Conference Hall &bull; Inter-College Finals</text>
+  <text x="70" y="315" fill="#f4f1e8" fill-opacity="0.75" font-family="monospace" font-size="16">Conference Hall &#8226; Inter-College Finals</text>
   <path d="M 70 380 L 730 380" stroke="#f4f1e8" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="6 6" />
   <text x="70" y="420" fill="#ffb000" font-family="monospace" font-size="13">[ PLACEHOLDER PHOTO — REPLACE IN assets/images/gallery/ ]</text>
 </svg>

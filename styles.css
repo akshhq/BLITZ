@@ -8,7 +8,7 @@
    03. TYPOGRAPHY & ACCESSIBILITY UTILITIES
    04. SHARED SURFACE SYSTEM (Textures, Gradients, Scanlines)
    05. SITE HEADER & NAVIGATION
-   06. 3D BRAND LOGO & HERO SECTION
+   06. BRAND LOGO & HERO SECTION
    07. MARQUEE COMPONENT
    08. ABOUT SECTION (Department Focus)
    09. ANNOUNCEMENTS TICKER & MODAL
@@ -49,9 +49,17 @@
   --accent-dim: rgba(255, 176, 0, 0.18);
   --accent-hot: #ff3d2e;   /* Alert / Upcoming Accent */
 
-  /* Navigation Dimensions */
+  /* Navigation Dimensions (--nav-height is 64px on phones/tablets, see section 17) */
   --nav-height: 74px;
-  --nav-height-mobile: 64px;
+  --header-h: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
+  --tap: 44px; /* minimum touch target */
+
+  /* Events stack: how much of each earlier panel stays visible */
+  --stack-step: 48px;
+
+  /* Hero logo: width, aspect ratio of assets/logo/blitz-logo.png (512x293) */
+  --hero-logo-ratio: 1.7474;
+  --hero-logo-w: clamp(200px, 60vw, 520px);
 
   /* Typography */
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -59,7 +67,7 @@
 
   /* Layout Containers */
   --container-max: 1320px;
-  --container-pad: clamp(20px, 5vw, 64px);
+  --container-pad: clamp(16px, 5.2vw, 64px);
 
   /* Transitions */
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
@@ -81,6 +89,14 @@ html {
   color: var(--cream);
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-gutter: stable; /* no layout shift when scroll is locked (menu / dialog) */
+}
+
+/* Scroll lock while the mobile menu or the announcement dialog is open */
+html.nav-open,
+html.modal-open {
+  overflow: hidden;
 }
 
 body {
@@ -91,6 +107,7 @@ body {
   font-size: 16px;
   line-height: 1.6;
   overflow-x: hidden;
+  overflow-wrap: break-word;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -111,6 +128,14 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* No 300ms delay / accidental double-tap zoom on interactive elements */
+button,
+a,
+summary,
+[role="button"] {
+  touch-action: manipulation;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -120,14 +145,7 @@ a {
 /* Section Anchor Offsets (Prevents fixed nav overlap) */
 section,
 footer {
-  scroll-margin-top: var(--nav-height);
-}
-
-@media (max-width: 768px) {
-  section,
-  footer {
-    scroll-margin-top: var(--nav-height-mobile);
-  }
+  scroll-margin-top: var(--header-h);
 }
 
 /* -----------------------------------------------------------------------------
@@ -180,7 +198,7 @@ summary:focus-visible {
   margin: 0 0 14px;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -246,6 +264,14 @@ summary:focus-visible {
   --surface-grain: rgba(255, 255, 255, 0.04);
 }
 
+.introduction.surface--maroon {
+  --surface-grain: rgba(255, 255, 255, 0.052);
+}
+
+.introduction.surface--maroon::after {
+  opacity: 0.34;
+}
+
 .surface--ink {
   background-color: var(--ink);
   background-image: linear-gradient(
@@ -294,11 +320,19 @@ summary:focus-visible {
   left: 0;
   right: 0;
   z-index: 100;
-  height: var(--nav-height);
-  background: rgba(11, 5, 6, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  height: var(--header-h);
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+  background: rgba(11, 5, 6, 0.97); /* solid fallback */
   border-bottom: 1px solid rgba(255, 176, 0, 0.22);
+}
+
+/* Blur only where it is supported, and only on this small bar (never on large areas) */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header {
+    background: rgba(11, 5, 6, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
 }
 
 .site-nav {
@@ -308,20 +342,27 @@ summary:focus-visible {
   max-width: var(--container-max);
   height: 100%;
   margin: 0 auto;
-  padding: 0 clamp(20px, 4vw, 42px);
+  padding: 0 clamp(16px, 4vw, 42px);
 }
 
-/* Brand Link in Navbar (Only ONE logo in nav) */
+/* Brand link in navbar: logo mark + wordmark */
 .nav-brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-height: var(--tap);
   color: var(--cream);
   font-size: 26px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-decoration: none;
   transition: color var(--duration-normal) ease;
+}
+
+.nav-brand-logo {
+  width: auto;
+  height: 32px;
+  flex: 0 0 auto;
 }
 
 .nav-brand:hover,
@@ -372,82 +413,77 @@ summary:focus-visible {
 }
 
 /* -----------------------------------------------------------------------------
-   06. 3D BRAND LOGO & HERO SECTION
+   06. BRAND LOGO & HERO SECTION
    ----------------------------------------------------------------------------- */
 .introduction {
   min-height: 100vh;
   min-height: 100svh;
 }
 
-/* Center 3D Logo (Only in Hero) */
+@supports (height: 100svh) {
+  :root {
+    --hero-logo-w: min(clamp(200px, 60vw, 520px), calc(30svh * var(--hero-logo-ratio)));
+  }
+}
+
+/* Hero logo image (fixed; JS docks it into the nav on scroll) */
 .transition-logo {
   position: fixed;
   top: 41.4vh;
+  top: 41.4svh;
   left: 50%;
   z-index: 20;
+  width: var(--hero-logo-w);
   perspective: 1200px;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  transform-style: preserve-3d;
+  will-change: transform, opacity;
   transition: opacity 180ms ease;
 }
 
-.blitz-logo {
-  position: relative;
+/* Slow float/tilt: transform only, so it stays on the compositor */
+.hero-logo-tilt {
+  animation: logo-float 9s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.hero-logo-img {
   display: block;
-  color: #ffffff;
-  font-size: clamp(110px, 12.5vw, 175px);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  transform-style: preserve-3d;
-  /* Gentle, front-facing oscillation: never flips mirrored */
-  animation: logo-tilt 8s ease-in-out infinite alternate;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.55)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
-.blitz-logo-extrusion,
-.blitz-logo-front {
-  display: block;
-}
-
-.blitz-logo-extrusion {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-}
-
-.blitz-logo-depth {
-  position: absolute;
-  inset: 0;
-  color: rgba(35, 12, 14, 0.88);
-  transform: translateZ(calc(var(--depth-step) * -1));
-  transform-style: preserve-3d;
-}
-
-.blitz-logo-front {
-  position: relative;
-  z-index: 2;
-  color: #ffffff;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-}
-
-@keyframes logo-tilt {
+@keyframes logo-float {
   0% {
-    transform: rotateY(-18deg) rotateX(4deg);
+    transform: translate3d(0, -6px, 0) rotateX(3deg) rotateY(-7deg);
   }
   100% {
-    transform: rotateY(18deg) rotateX(-4deg);
+    transform: translate3d(0, 6px, 0) rotateX(-3deg) rotateY(7deg);
   }
+}
+
+/* Paused while the hero is off-screen (class toggled by script.js) */
+.introduction.is-offscreen .hero-logo-tilt,
+.introduction.is-offscreen .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Without JS the logo can't be docked, so keep it inside the hero instead of fixed to the screen */
+html:not(.js) .transition-logo {
+  position: absolute;
 }
 
 /* Hero Semantic H1 */
 .hero-heading-shell {
   position: absolute;
-  top: 30vh;
+  top: calc(41.4vh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + clamp(16px, 3vh, 36px));
+  top: calc(41.4svh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + clamp(16px, 3svh, 36px));
   left: 50%;
   transform: translateX(-50%);
-  width: min(90vw, 1000px);
+  width: min(92vw, 1000px);
   text-align: center;
   z-index: 5;
   pointer-events: none;
@@ -470,14 +506,14 @@ summary:focus-visible {
 
 .hero-h1-sub {
   display: inline-block;
-  margin-top: clamp(140px, 18vh, 220px);
+  max-width: 100%;
   padding: 6px 18px;
   background: rgba(11, 5, 6, 0.65);
   border: 1px solid rgba(255, 176, 0, 0.28);
   border-radius: 999px;
   color: var(--cream);
   font-family: var(--font-mono);
-  font-size: clamp(12px, 1.1vw, 14px);
+  font-size: clamp(13px, 1.1vw, 14px);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -499,6 +535,7 @@ summary:focus-visible {
 
 .introduction-copy {
   width: min(44vw, 480px);
+  overflow-wrap: break-word;
   color: var(--cream);
   font-family: var(--font-mono);
   text-align: right;
@@ -508,7 +545,7 @@ summary:focus-visible {
   display: block;
   margin-bottom: 8px;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.18em;
 }
@@ -516,7 +553,7 @@ summary:focus-visible {
 .introduction-copy-title {
   margin: 0 0 8px;
   color: var(--cream);
-  font-size: clamp(12px, 0.95vw, 14px);
+  font-size: clamp(13px, 0.95vw, 14px);
   font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 1.4;
@@ -525,7 +562,7 @@ summary:focus-visible {
 .introduction-copy-description {
   margin: 0;
   color: var(--cream-dim);
-  font-size: clamp(12px, 0.85vw, 13px);
+  font-size: clamp(13px, 0.85vw, 13px);
   letter-spacing: 0.04em;
   line-height: 1.6;
 }
@@ -576,7 +613,7 @@ summary:focus-visible {
 .marquee-text {
   flex: 0 0 auto;
   color: rgba(255, 255, 255, 0.92);
-  font-size: clamp(48px, 4.8vw, 68px);
+  font-size: clamp(36px, 3.4vw, 50px);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -616,7 +653,7 @@ summary:focus-visible {
   padding-top: 8px;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -763,7 +800,7 @@ summary:focus-visible {
 .announcements-label {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -785,6 +822,7 @@ summary:focus-visible {
   align-items: center;
   gap: 12px;
   width: 100%;
+  min-height: 36px;
   text-align: left;
   color: var(--cream);
   font-size: 14px;
@@ -803,15 +841,21 @@ summary:focus-visible {
 }
 
 .announcement-item-date {
+  flex: 0 0 auto;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .announcement-item-title {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.announcement-item-arrow {
+  flex: 0 0 auto;
 }
 
 .announcements-controls {
@@ -825,8 +869,8 @@ summary:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -842,22 +886,29 @@ summary:focus-visible {
   color: var(--accent);
 }
 
-/* Accessible Modal */
+/* Accessible Modal (centred dialog on desktop, bottom sheet on phones: see section 17) */
 .announcement-modal {
   padding: 0;
   border: none;
   background: transparent;
   max-width: min(92vw, 620px);
   width: 100%;
+  max-height: 88vh;
+  max-height: 88svh;
+  overflow: visible;
+  color: var(--cream);
 }
 
 .announcement-modal::backdrop {
-  background: rgba(11, 5, 6, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Solid dim, no blur: blurring a full-screen layer is expensive on mid-range phones */
+  background: rgba(11, 5, 6, 0.9);
 }
 
 .announcement-modal-box {
+  display: flex;
+  flex-direction: column;
+  max-height: 88vh;
+  max-height: 88svh;
   background: var(--ink-surface);
   border: 1px solid var(--accent);
   border-radius: 12px;
@@ -868,7 +919,8 @@ summary:focus-visible {
 
 .announcement-modal-header {
   display: flex;
-  align-items: flex-start;
+  flex: 0 0 auto;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
@@ -876,8 +928,16 @@ summary:focus-visible {
 
 .announcement-modal-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.announcement-modal-logo {
+  width: auto;
+  height: 24px;
+  flex: 0 0 auto;
 }
 
 .announcement-modal-badge {
@@ -885,7 +945,7 @@ summary:focus-visible {
   background: rgba(255, 176, 0, 0.15);
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.12em;
   border-radius: 999px;
@@ -894,27 +954,36 @@ summary:focus-visible {
 .announcement-modal-date {
   color: var(--cream-dim);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .announcement-modal-close {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--tap);
+  height: var(--tap);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   color: var(--cream);
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1;
-  transition: all var(--duration-normal) ease;
+  transition: background var(--duration-normal) ease, color var(--duration-normal) ease;
 }
 
 .announcement-modal-close:hover,
 .announcement-modal-close:focus-visible {
   background: var(--accent);
   color: var(--ink);
+}
+
+.announcement-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .announcement-modal-title {
@@ -944,6 +1013,7 @@ summary:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: var(--tap);
   padding: 10px 20px;
   background: var(--accent);
   color: var(--ink);
@@ -990,34 +1060,50 @@ summary:focus-visible {
   z-index: 1;
 }
 
+.events-section {
+  --top-row-h: 28px;
+}
+
+/* Each panel sticks BELOW the fixed header; later panels stack --stack-step lower so a strip
+   (number + badge) of every earlier panel stays visible. */
 .events-panel {
   position: sticky;
-  top: var(--event-stack-offset);
-  z-index: calc(10 + var(--event-index));
-  display: block;
-  height: calc(100vh - var(--event-stack-offset));
-  height: calc(100svh - var(--event-stack-offset));
-  min-height: 560px;
-  overflow: hidden;
+  top: calc(var(--header-h) + var(--event-index, 0) * var(--stack-step));
+  z-index: calc(10 + var(--event-index, 0));
+  display: flex;
+  flex-direction: column;
+  min-height: max(420px, calc(100vh - var(--header-h) - var(--event-index, 0) * var(--stack-step)));
+  min-height: max(420px, calc(100svh - var(--header-h) - var(--event-index, 0) * var(--stack-step)));
+  overflow: visible; /* never clip long titles/descriptions */
   border-top: 1px solid rgba(255, 176, 0, 0.28);
+}
+
+/* Set by script.js for panels taller than the visible area, so their lower part stays reachable */
+.events-panel.is-tall {
+  position: relative;
+  top: auto;
 }
 
 .events-panel-inner {
   position: relative;
   z-index: 1;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   justify-content: space-between;
+  gap: 24px;
+  width: 100%;
   max-width: var(--container-max);
-  height: 100%;
   margin: 0 auto;
-  padding: clamp(24px, 3vh, 36px) var(--container-pad) clamp(48px, 6vh, 84px);
+  /* the number + badge row sits inside the strip that earlier panels leave visible */
+  padding: calc((var(--stack-step) - var(--top-row-h)) / 2) var(--container-pad) clamp(40px, 6vh, 84px);
 }
 
 .events-panel-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: var(--top-row-h);
 }
 
 .events-panel-number {
@@ -1030,10 +1116,11 @@ summary:focus-visible {
 
 .event-badge {
   display: inline-block;
+  line-height: 1;
   padding: 4px 12px;
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -1052,8 +1139,9 @@ summary:focus-visible {
 
 .events-panel-content {
   max-width: 900px;
+  min-width: 0;
   margin: auto 0;
-  padding: 32px 0;
+  padding: 24px 0;
 }
 
 .events-panel-content h3 {
@@ -1062,7 +1150,9 @@ summary:focus-visible {
   font-size: clamp(40px, 6.5vw, 96px);
   font-weight: 600;
   letter-spacing: -0.04em;
-  line-height: 0.95;
+  line-height: 0.98;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .events-panel-description {
@@ -1090,7 +1180,7 @@ summary:focus-visible {
   margin-bottom: 6px;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1101,15 +1191,6 @@ summary:focus-visible {
   color: var(--cream);
   font-size: 15px;
   font-weight: 500;
-}
-
-.events-panel-info {
-  margin: 24px 0 0;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 /* -----------------------------------------------------------------------------
@@ -1204,10 +1285,12 @@ summary:focus-visible {
   transition: transform var(--duration-normal) ease, box-shadow var(--duration-normal) ease;
 }
 
-.team-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(76, 0, 0, 0.1);
-  border-color: var(--maroon);
+@media (hover: hover) {
+  .team-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(76, 0, 0, 0.1);
+    border-color: var(--maroon);
+  }
 }
 
 .team-card-image {
@@ -1226,8 +1309,15 @@ summary:focus-visible {
   object-fit: cover;
 }
 
+.team-card-text {
+  min-width: 0;
+  width: 100%;
+}
+
 .team-card-name {
   margin: 0 0 4px;
+  overflow-wrap: break-word;
+  text-wrap: balance;
   color: var(--ink);
   font-size: 17px;
   font-weight: 700;
@@ -1235,46 +1325,14 @@ summary:focus-visible {
 }
 
 .team-card-position {
-  margin: 0 0 10px;
+  margin: 0;
   color: var(--maroon);
+  overflow-wrap: break-word;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.team-card-bio {
-  margin: 0 0 14px;
-  color: rgba(11, 5, 6, 0.72);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.team-card-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: auto;
-}
-
-.team-card-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(76, 0, 0, 0.08);
-  color: var(--maroon);
-  transition: all var(--duration-normal) ease;
-}
-
-.team-card-link:hover,
-.team-card-link:focus-visible {
-  background: var(--maroon);
-  color: var(--cream);
 }
 
 /* -----------------------------------------------------------------------------
@@ -1305,7 +1363,7 @@ summary:focus-visible {
   margin: 0;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1326,11 +1384,25 @@ summary:focus-visible {
   gap: 20px;
 }
 
+.cue-touch {
+  display: none;
+}
+
+@media (hover: none) {
+  .cue-pointer {
+    display: none;
+  }
+
+  .cue-touch {
+    display: inline;
+  }
+}
+
 .gallery-cue,
 .highlights-cue {
   color: var(--cream-dim);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1346,8 +1418,8 @@ summary:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--tap);
+  height: var(--tap);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 176, 0, 0.3);
@@ -1370,7 +1442,8 @@ summary:focus-visible {
   overflow-y: hidden;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .gallery-scroller::-webkit-scrollbar {
@@ -1381,7 +1454,7 @@ summary:focus-visible {
   display: flex;
   gap: clamp(20px, 2.5vw, 36px);
   width: max-content;
-  padding-right: 24px;
+  padding-right: var(--container-pad);
 }
 
 .gallery-item {
@@ -1457,7 +1530,7 @@ summary:focus-visible {
   margin: 0;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1479,7 +1552,8 @@ summary:focus-visible {
   overflow-y: visible;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .highlights-scroller::-webkit-scrollbar {
@@ -1509,12 +1583,40 @@ summary:focus-visible {
   transition: transform 380ms var(--ease-smooth), border-color 380ms ease, box-shadow 380ms ease;
 }
 
-.highlights-card:hover,
-.highlights-card:focus-visible,
-.highlights-card.is-expanded {
+/* .is-open is set by script.js: hovered, keyboard-focused or pinned (always on for touch) */
+.highlights-card.is-open {
   border-color: var(--accent);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 176, 0, 0.2);
-  transform: translateY(-6px);
+}
+
+@media (hover: hover) {
+  .highlights-card.is-open {
+    transform: translateY(-6px);
+  }
+}
+
+/* Touch-only devices: details are always visible, so a tap can never "open then close" */
+@media (hover: none) {
+  .highlights-card {
+    cursor: default;
+  }
+
+  .highlights-card-details {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .highlights-track {
+    align-items: stretch;
+  }
+}
+
+/* Cards are <button>s, so their contents are <span>s */
+.highlights-card-category,
+.highlights-card-title,
+.highlights-card-description,
+.highlights-card-details-inner {
+  display: block;
 }
 
 .highlights-card-surface {
@@ -1543,7 +1645,7 @@ summary:focus-visible {
   background: rgba(255, 176, 0, 0.15);
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   border-radius: 4px;
 }
@@ -1551,7 +1653,7 @@ summary:focus-visible {
 .highlights-card-category {
   color: var(--cream-dim);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -1573,7 +1675,7 @@ summary:focus-visible {
   transition: grid-template-rows 380ms var(--ease-smooth), opacity 280ms ease;
 }
 
-.highlights-card.is-expanded .highlights-card-details {
+.highlights-card.is-open .highlights-card-details {
   grid-template-rows: 1fr;
   opacity: 1;
 }
@@ -1598,7 +1700,7 @@ summary:focus-visible {
   border: 1px solid var(--accent);
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   border-radius: 4px;
 }
@@ -1627,7 +1729,7 @@ summary:focus-visible {
   margin: 0 0 12px;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1685,6 +1787,7 @@ summary:focus-visible {
 
 .collab-logo-box img {
   max-height: 70px;
+  max-width: 100%;
   width: auto;
   filter: grayscale(1) opacity(0.72);
   transition: filter var(--duration-normal) ease, opacity var(--duration-normal) ease;
@@ -1700,12 +1803,14 @@ summary:focus-visible {
   color: var(--cream);
   font-size: 16px;
   font-weight: 600;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 .collab-type {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1725,70 +1830,109 @@ summary:focus-visible {
   z-index: 1;
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: clamp(64px, 8vh, 96px) var(--container-pad) 40px;
+  padding: clamp(64px, 8vh, 96px) var(--container-pad) calc(40px + env(safe-area-inset-bottom, 0px));
 }
 
 .blitz-contact-label {
   margin: 0 0 8px;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
+.blitz-contact-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 3vw, 28px);
+  margin-bottom: 40px;
+}
+
+.blitz-contact-logo {
+  flex: 0 0 auto;
+  width: clamp(64px, 9vw, 88px);
+  height: auto;
+}
+
 .blitz-contact-title {
-  margin: 0 0 40px;
+  margin: 0;
   color: var(--cream);
-  font-size: clamp(32px, 3.8vw, 54px);
+  font-size: clamp(30px, 3.8vw, 54px);
   font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.1;
+  overflow-wrap: break-word;
 }
 
 .blitz-contact-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: clamp(24px, 4vw, 48px);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(20px, 4vw, 48px);
   padding-bottom: 48px;
   border-bottom: 1px solid rgba(244, 241, 232, 0.15);
 }
 
 .blitz-contact-item {
   display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  min-height: 48px;
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.blitz-contact-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 176, 0, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 176, 0, 0.12);
+  color: var(--accent);
+  transition: background var(--duration-normal) ease, color var(--duration-normal) ease;
+}
+
+.blitz-contact-text {
+  display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  min-width: 0;
+  padding-top: 1px;
 }
 
 .blitz-contact-heading {
-  margin: 0;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.14em;
+  line-height: 1.3;
   text-transform: uppercase;
 }
 
-.blitz-contact-item a {
+.blitz-contact-value {
   color: var(--cream);
   font-size: 15px;
   line-height: 1.5;
-  transition: color var(--duration-normal) ease;
+  overflow-wrap: anywhere;
 }
 
-.blitz-contact-item a:hover,
-.blitz-contact-item a:focus-visible {
+.blitz-contact-item:hover .blitz-contact-value,
+.blitz-contact-item:focus-visible .blitz-contact-value {
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 
-.blitz-contact-item p {
-  margin: 0;
-  color: var(--cream-dim);
-  font-size: 14px;
-  line-height: 1.6;
+.blitz-contact-item:hover .blitz-contact-icon,
+.blitz-contact-item:focus-visible .blitz-contact-icon {
+  background: var(--accent);
+  color: var(--ink);
 }
 
 .blitz-contact-bottom {
@@ -1798,6 +1942,7 @@ summary:focus-visible {
 
 .copyright-notice {
   margin: 0;
+  overflow-wrap: break-word;
   color: var(--cream-dim);
   font-family: var(--font-mono);
   font-size: 13px;
@@ -1823,26 +1968,65 @@ html.js .reveal-tier.is-revealed {
 
 /* -----------------------------------------------------------------------------
    17. MEDIA QUERIES & RESPONSIVE ADAPTATIONS
+   Desktop (>= 900px) is the approved layout and is left untouched.
    ----------------------------------------------------------------------------- */
-@media (max-width: 899px) {
-  .site-header {
-    height: var(--nav-height-mobile);
+
+/* Touch-size controls on anything that is not a fine pointer */
+@media (max-width: 899px), (pointer: coarse) {
+  .announcements-btn {
+    width: var(--tap);
+    height: var(--tap);
   }
 
+  .announcement-item-btn {
+    min-height: var(--tap);
+  }
+
+  /* big full-section blend layers are costly on phones; plain alpha looks the same */
+  .surface::before {
+    mix-blend-mode: normal;
+  }
+}
+
+/* Snap rails only for touch (a mouse wheel keeps the smooth custom scrolling) */
+@media (hover: none), (pointer: coarse) {
+  .gallery-scroller,
+  .highlights-scroller {
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--container-pad);
+  }
+
+  .gallery-item,
+  .highlights-card {
+    scroll-snap-align: start;
+  }
+}
+
+/* ---- Phones & tablets (mobile layout) ------------------------------------ */
+@media (max-width: 899px) {
+  :root {
+    --nav-height: 64px;
+    --stack-step: 28px;
+  }
+
+  .events-section {
+    --top-row-h: 22px;
+  }
+
+  /* Nav: full-width slide-down sheet */
   .nav-menu-toggle {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    width: 44px;
-    height: 44px;
+    width: var(--tap);
+    height: var(--tap);
     padding: 0;
     color: var(--cream);
     background: transparent;
     border: 1px solid rgba(255, 176, 0, 0.4);
     border-radius: 6px;
-    cursor: pointer;
   }
 
   .nav-menu-toggle span {
@@ -1867,19 +2051,26 @@ html.js .reveal-tier.is-revealed {
 
   .nav-links {
     position: absolute;
-    top: var(--nav-height-mobile);
+    top: 100%;
     right: 0;
     left: 0;
     visibility: hidden;
     flex-direction: column;
     align-items: stretch;
     gap: 0;
-    padding: 12px 20px 24px;
-    background: rgba(11, 5, 6, 0.98);
+    max-height: calc(100vh - var(--header-h));
+    max-height: calc(100dvh - var(--header-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px max(var(--container-pad), env(safe-area-inset-right, 0px))
+      calc(20px + env(safe-area-inset-bottom, 0px)) max(var(--container-pad), env(safe-area-inset-left, 0px));
+    background: var(--ink);
     border-bottom: 1px solid var(--accent);
     opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity var(--duration-normal) ease, transform var(--duration-normal) ease, visibility var(--duration-normal);
+    transform: translateY(-8px);
+    transition: opacity var(--duration-normal) ease, transform var(--duration-normal) ease,
+      visibility var(--duration-normal);
   }
 
   .nav-links.is-open {
@@ -1889,16 +2080,74 @@ html.js .reveal-tier.is-revealed {
   }
 
   .nav-link {
-    min-height: 44px;
     display: flex;
     align-items: center;
-    font-size: 16px;
+    min-height: 48px;
+    padding: 0 4px;
+    font-size: 18px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .nav-link:first-child {
+    border-top: 0;
+  }
+
+  .nav-link:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .nav-link.is-active {
+    padding-left: 14px;
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  .nav-link.is-active::after {
+    display: none;
+  }
+
+  /* Hero */
+  .department-marquee {
+    top: calc(var(--header-h) + clamp(10px, 2.6svh, 28px));
+    height: clamp(56px, 10svh, 76px);
+  }
+
+  .marquee-line {
+    width: calc(100% - 2 * var(--container-pad));
+    margin: 0 var(--container-pad);
+  }
+
+  .marquee-track {
+    animation-duration: 44s;
+  }
+
+  .marquee-group {
+    gap: 48px;
+    padding-right: 48px;
+  }
+
+  .marquee-text {
+    font-size: clamp(24px, 6vw, 34px);
+  }
+
+  .hero-h1-sub {
+    border-radius: 18px;
+    line-height: 1.5;
+    padding: 8px 16px;
+  }
+
+  .introduction-copy-stack {
+    bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+  }
+
+  /* About */
+  .home-section,
+  .home-layout {
+    min-height: 0;
   }
 
   .home-layout {
     display: block;
-    padding-top: 88px;
+    padding-top: calc(var(--header-h) + 32px);
   }
 
   .home-meta {
@@ -1912,28 +2161,80 @@ html.js .reveal-tier.is-revealed {
 
   .home-focus-item p {
     margin-top: 10px;
+    font-size: 15px;
   }
 
-  .events-panel {
-    position: relative;
-    top: auto;
-    height: auto;
+  .about-hero-title,
+  .events-heading h2,
+  .team-heading h2,
+  .gallery-heading h2,
+  .highlights-heading h2,
+  .collaborations-heading h2 {
+    font-size: clamp(32px, 9.4vw, 52px);
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+
+  /* Section paddings clear the fixed header */
+  .events-heading,
+  .team-layout,
+  .gallery-layout,
+  .highlights-layout,
+  .collaborations-layout {
+    padding-top: calc(var(--header-h) + 36px);
+  }
+
+  .team-section,
+  .gallery-section,
+  .highlights-section,
+  .collaborations-section {
     min-height: 0;
   }
 
+  /* Events */
   .events-panel-inner {
-    padding: 32px 0 64px;
+    gap: 8px;
+    padding-bottom: 40px;
   }
 
   .events-panel-content {
-    padding: 32px 0;
+    padding: 20px 0 0;
   }
 
   .events-panel-content h3 {
-    font-size: clamp(36px, 10vw, 54px);
-    overflow-wrap: anywhere;
+    font-size: clamp(30px, 9.4vw, 54px);
+    margin-bottom: 16px;
   }
 
+  .events-panel-description {
+    margin-bottom: 24px;
+    font-size: 16px;
+  }
+
+  /* Date / location / format become a clean stacked list */
+  .events-panel-details {
+    display: block;
+    padding-top: 0;
+  }
+
+  .events-panel-details div {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(244, 241, 232, 0.16);
+  }
+
+  .events-panel-details dt {
+    margin: 2px 0 0;
+  }
+
+  .events-panel-details dd {
+    overflow-wrap: break-word;
+  }
+
+  /* Rails */
   .gallery-heading,
   .highlights-heading {
     display: block;
@@ -1944,35 +2245,333 @@ html.js .reveal-tier.is-revealed {
     justify-content: space-between;
   }
 
+  .gallery-scroller,
+  .highlights-scroller {
+    /* bleed to the screen edges so the next card visibly peeks */
+    margin-inline: calc(var(--container-pad) * -1);
+    padding-inline: var(--container-pad);
+    width: auto;
+  }
+
   .gallery-item {
-    flex-basis: 80vw;
+    flex-basis: min(82vw, 420px);
   }
 
   .highlights-card {
-    width: 80vw;
+    width: min(82vw, 380px);
+  }
+
+  /* Contact */
+  .blitz-contact-header {
+    margin-bottom: 24px;
   }
 }
 
-@media (max-width: 480px) {
+/* ---- Phones ----------------------------------------------------------------- */
+@media (max-width: 640px) {
+  /* Announcements: chip row / headline row / controls row */
   .announcements-bar-inner {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "chip"
+      "headline"
+      "controls";
+    gap: 10px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  .announcements-chip {
+    grid-area: chip;
+    justify-self: start;
   }
 
   .announcements-viewport {
-    order: 3;
-    width: 100%;
+    grid-area: headline;
+    touch-action: pan-y; /* horizontal swipe changes item, vertical scroll stays native */
   }
 
+  .announcements-controls {
+    grid-area: controls;
+    gap: 10px;
+  }
+
+  .announcement-item-btn {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "date arrow"
+      "title arrow";
+    align-items: center;
+    gap: 2px 12px;
+    min-height: 76px;
+    padding: 6px 0;
+    white-space: normal;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .announcement-item-date {
+    grid-area: date;
+  }
+
+  .announcement-item-title {
+    display: -webkit-box;
+    grid-area: title;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .announcement-item-arrow {
+    grid-area: arrow;
+    font-size: 20px;
+  }
+
+  /* Modal becomes a bottom sheet */
+  .announcement-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh;
+    max-height: 85svh;
+    margin: auto 0 0;
+  }
+
+  .announcement-modal-box {
+    max-height: 85vh;
+    max-height: 85svh;
+    padding: 18px var(--container-pad) calc(24px + env(safe-area-inset-bottom, 0px));
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 16px 16px 0 0;
+    animation: sheet-in 260ms var(--ease-smooth);
+  }
+
+  .announcement-modal-header {
+    margin-bottom: 12px;
+  }
+
+  /* Team: 2 columns, leadership as full-width rows with larger photos */
+  .team-grid--senior,
+  .team-grid--junior,
+  .team-grid--volunteer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .team-grid--core {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .team-card {
+    padding: 18px 10px;
+  }
+
+  .team-card-image {
+    width: 92px;
+    height: 92px;
+    margin-bottom: 12px;
+  }
+
+  .team-card-name {
+    font-size: 16px;
+  }
+
+  .team-grid--core .team-card {
+    flex-direction: row;
+    gap: 16px;
+    padding: 16px;
+    text-align: left;
+  }
+
+  .team-grid--core .team-card-image {
+    width: 104px;
+    height: 104px;
+    margin: 0;
+  }
+
+  .team-grid--core .team-card-text {
+    width: auto;
+  }
+
+  .team-tier {
+    margin-bottom: 48px;
+  }
+
+  .team-tier-heading {
+    margin-bottom: 20px;
+    padding-top: 18px;
+  }
+
+  /* Collaborations */
+  .collaborations-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .collab-card {
+    padding: 14px 12px;
+  }
+
+  .collab-logo-box {
+    height: 72px;
+    padding: 8px;
+  }
+
+  .collab-logo-box img {
+    max-height: 52px;
+  }
+
+  .collab-name {
+    font-size: 15px;
+  }
+
+  /* Contact: one column of 48px+ tappable rows */
+  .blitz-contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-bottom: 24px;
+  }
+
+  .blitz-contact-item {
+    align-items: center;
+    min-height: 64px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(244, 241, 232, 0.1);
+  }
+
+  .blitz-contact-item:first-child {
+    border-top: 0;
+  }
+
+  .blitz-contact-bottom {
+    padding-top: 24px;
+  }
+
+  /* Hero copy: centred with a comfortable line length */
   .introduction-copy-stack {
     justify-content: center;
   }
 
   .introduction-copy {
     width: 100%;
+    max-width: 36ch;
     text-align: center;
   }
 }
 
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ---- Short landscape phones (e.g. 740x360) ------------------------------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  .introduction {
+    min-height: max(100svh, 420px);
+  }
+
+  .transition-logo {
+    top: 50svh;
+  }
+
+  .hero-heading-shell {
+    top: calc(50svh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + 10px);
+  }
+
+  .department-marquee {
+    top: calc(var(--header-h) + 4px);
+    height: 44px;
+  }
+
+  .marquee-text {
+    font-size: 22px;
+  }
+
+  .introduction-copy-description {
+    display: none;
+  }
+}
+
+/* ---- No-JS fallbacks --------------------------------------------------------- */
+html:not(.js) .nav-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  html:not(.js) .site-header {
+    position: absolute;
+    height: auto;
+  }
+
+  html:not(.js) .site-nav {
+    flex-wrap: wrap;
+    height: auto;
+    padding-block: 6px;
+  }
+
+  html:not(.js) .nav-links {
+    position: static;
+    visibility: visible;
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-height: none;
+    padding: 0;
+    background: none;
+    border: 0;
+    opacity: 1;
+    transform: none;
+  }
+
+  html:not(.js) .nav-link {
+    min-height: var(--tap);
+    padding: 0 10px;
+    border: 0;
+    font-size: 15px;
+  }
+}
+
+.ns-block {
+  position: relative;
+  z-index: 1;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 32px var(--container-pad);
+  color: var(--cream);
+}
+
+.ns-block--dark {
+  color: var(--ink);
+}
+
+.ns-block h3 {
+  margin: 24px 0 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ns-list {
+  margin: 0;
+  padding-left: 1.2em;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.ns-list a {
+  text-decoration: underline;
+}
 /* -----------------------------------------------------------------------------
    18. PREFERS-REDUCED-MOTION OVERRIDES
    ----------------------------------------------------------------------------- */
@@ -1986,8 +2585,9 @@ html.js .reveal-tier.is-revealed {
     scroll-behavior: auto !important;
   }
 
-  .blitz-logo,
-  .marquee-track {
+  .hero-logo-tilt,
+  .marquee-track,
+  .announcements-pulse {
     animation: none !important;
   }
 

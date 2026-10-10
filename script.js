@@ -3,6 +3,16 @@
  * =============================================================================
  * Dependency-free, vanilla JavaScript for the BLITZ website.
  * Works seamlessly via file:// and any static hosting provider.
+ *
+ * Sections
+ *   01 Utilities & data validation      09 Contact footer
+ *   02 Marquee                          10 Navigation sheet & active link
+ *   03 Announcements ticker & modal     11 Hero logo (scroll-driven dock)
+ *   04 Events                           12 Horizontal rails
+ *   05 Team                             13 Achievement cards
+ *   06 Gallery                          14 Reveals
+ *   07 Achievements                     15 Init
+ *   08 Collaborations
  * =============================================================================
  */
 
@@ -22,9 +32,11 @@
     contact: {}
   };
 
-  /**
-   * Escape HTML entities to prevent injection
-   */
+  const root = document.documentElement;
+  const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const isReducedMotion = reducedMotionQuery.matches;
+
+  /** Escape HTML entities to prevent injection. */
   function escapeHtml(value) {
     if (value === null || value === undefined) return '';
     return String(value).replace(/[&<>'"]/g, function (char) {
@@ -39,9 +51,7 @@
     });
   }
 
-  /**
-   * Validate and sanitize URLs (only allow safe protocols)
-   */
+  /** Link URLs: only http(s) and mailto are allowed. Returns an HTML-escaped value. */
   function safeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
     const trimmed = url.trim();
@@ -52,57 +62,67 @@
   }
 
   /**
-   * Pad numbers with leading zeroes
+   * Asset URLs (images): only relative paths or http(s) are allowed.
+   * Rejects javascript:, data:, protocol-relative (//host) and any other scheme.
+   * Returns an HTML-escaped value, or '' when unusable.
    */
+  function safeAssetUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return escapeHtml(trimmed);
+    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed) || trimmed.indexOf('//') === 0) return '';
+    return escapeHtml(trimmed);
+  }
+
   function padZero(num, length) {
     return String(num).padStart(length, '0');
   }
 
   /**
-   * Format ISO date string (YYYY-MM-DD) into readable display (e.g. "15 Nov 2026")
+   * Parse "YYYY-MM-DD" as a LOCAL calendar date (new Date('2026-10-08') would be
+   * UTC midnight and shift by a day in some timezones). Returns null if invalid.
    */
-  function formatDate(isoString) {
-    if (!isoString) return '';
-    const parts = isoString.split('-');
-    if (parts.length === 3) {
-      const year = parts[0];
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const monthIndex = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      if (monthIndex >= 0 && monthIndex < 12 && !isNaN(day)) {
-        return `${day} ${monthNames[monthIndex]} ${year}`;
-      }
-    }
-    return isoString;
+  function parseLocalDate(iso) {
+    if (typeof iso !== 'string') return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+    if (!m) return null;
+    const year = Number(m[1]);
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+    return date;
   }
 
-  const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function dateValue(iso) {
+    const d = parseLocalDate(iso);
+    return d ? d.getTime() : 0;
+  }
+
+  /** "2026-11-20" -> "20 Nov 2026" */
+  function formatDate(isoString) {
+    if (!isoString) return '';
+    const d = parseLocalDate(isoString);
+    if (!d) return String(isoString);
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  /** Nav height from the --nav-height CSS variable (+ any safe-area padding on the header). */
+  function readNavHeight() {
+    const header = document.querySelector('.site-header');
+    let height = parseFloat(getComputedStyle(root).getPropertyValue('--nav-height'));
+    if (!isFinite(height)) height = header ? header.offsetHeight : 64;
+    const safeTop = header ? parseFloat(getComputedStyle(header).paddingTop) || 0 : 0;
+    return height + safeTop;
+  }
 
   // ---------------------------------------------------------------------------
-  // 02. MARQUEE & 3D LOGO SETUP
+  // 02. MARQUEE
   // ---------------------------------------------------------------------------
-  function makeLogo() {
-    const extrusion = document.querySelector('.blitz-logo-extrusion');
-    if (!extrusion) return;
-
-    // Reduce extruded layers on mobile or reduced motion for optimal rendering performance
-    let layerCount = 12;
-    let stepSize = 2;
-    if (isReducedMotion) {
-      layerCount = 1;
-      stepSize = 1;
-    } else if (window.innerWidth < 768) {
-      layerCount = 6;
-      stepSize = 3;
-    }
-
-    extrusion.innerHTML = Array.from({ length: layerCount }, function (_, index) {
-      const step = (index + 1) * stepSize;
-      return `<span class="blitz-logo-depth" style="--depth-step:${step}px">BLITZ</span>`;
-    }).join('');
-
-    const marqueeGroups = document.querySelectorAll('.marquee-group');
-    marqueeGroups.forEach(function (group) {
+  function setUpMarquee() {
+    document.querySelectorAll('.marquee-group').forEach(function (group) {
       group.innerHTML = Array.from({ length: 4 }, function () {
         return '<span class="marquee-text">DEPARTMENT OF COMPUTER SCIENCE</span>';
       }).join('');
@@ -112,13 +132,11 @@
   // ---------------------------------------------------------------------------
   // 03. ANNOUNCEMENTS TICKER & ACCESSIBLE MODAL
   // ---------------------------------------------------------------------------
-  let announcementIndex = 0;
-  let tickerTimer = null;
-  let isTickerPaused = false;
-  let lastFocusedElement = null;
-
   function renderAnnouncements() {
+    const section = document.querySelector('#announcements');
     const track = document.querySelector('#announcements-ticker-track');
+    const viewport = document.querySelector('#announcements-ticker-viewport');
+    const status = document.querySelector('#announcements-status');
     const prevBtn = document.querySelector('#announcements-prev');
     const nextBtn = document.querySelector('#announcements-next');
     const toggleBtn = document.querySelector('#announcements-toggle-play');
@@ -129,7 +147,7 @@
     if (!track) return;
 
     const items = [...(DATA.announcements || [])].sort(function (a, b) {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
+      return dateValue(b.date) - dateValue(a.date);
     });
 
     if (items.length === 0) {
@@ -140,109 +158,114 @@
       return;
     }
 
-    function updateTicker() {
-      const current = items[announcementIndex];
+    let index = 0;
+    let timer = null;
+    const state = { paused: false, hovered: false, focused: false, onScreen: true, modalOpen: false };
+    let lastFocusedElement = null;
+
+    /** Render the current item. `announce` is only true for manual changes. */
+    function updateTicker(announce) {
+      const current = items[index];
       track.innerHTML = `
         <button
           type="button"
           class="announcement-item-btn"
           data-id="${escapeHtml(current.id)}"
-          aria-label="Announcement: ${escapeHtml(current.title)}. Click for full details."
         >
           <span class="announcement-item-date">${escapeHtml(formatDate(current.date))}</span>
           <span class="announcement-item-title">${escapeHtml(current.title)}</span>
-          <span aria-hidden="true">&#8599;</span>
+          <span class="sr-only">(opens full details)</span>
+          <span class="announcement-item-arrow" aria-hidden="true">&#8599;</span>
         </button>
       `;
 
-      const btn = track.querySelector('.announcement-item-btn');
-      if (btn) {
-        btn.addEventListener('click', function () {
-          openAnnouncementModal(current);
-        });
+      track.querySelector('.announcement-item-btn').addEventListener('click', function () {
+        openModal(current);
+      });
+
+      // The auto-rotating track is NOT a live region (it would be read out every 5s).
+      // Screen-reader feedback is given only when the user changes item themselves.
+      if (announce && status) {
+        status.textContent = `Announcement ${index + 1} of ${items.length}: ${current.title}, ${formatDate(current.date)}`;
       }
     }
 
-    function nextAnnouncement() {
-      announcementIndex = (announcementIndex + 1) % items.length;
-      updateTicker();
+    function step(delta, manual) {
+      index = (index + delta + items.length) % items.length;
+      updateTicker(manual);
     }
 
-    function prevAnnouncement() {
-      announcementIndex = (announcementIndex - 1 + items.length) % items.length;
-      updateTicker();
+    function shouldRun() {
+      return !state.paused && !state.hovered && !state.focused && state.onScreen &&
+        !state.modalOpen && !document.hidden && !reducedMotionQuery.matches && items.length > 1;
     }
 
-    function startTicker() {
-      if (isReducedMotion || items.length <= 1) return;
-      stopTicker();
-      tickerTimer = setInterval(nextAnnouncement, 5000);
-    }
-
-    function stopTicker() {
-      if (tickerTimer) {
-        clearInterval(tickerTimer);
-        tickerTimer = null;
+    function syncTicker() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      if (shouldRun()) {
+        timer = setInterval(function () { step(1, false); }, 5000);
       }
     }
 
     function setPaused(paused) {
-      isTickerPaused = paused;
-      if (paused) {
-        stopTicker();
-        if (playIcon) playIcon.textContent = '▶';
-        if (toggleBtn) {
-          toggleBtn.setAttribute('aria-label', 'Resume announcements ticker');
-          toggleBtn.title = 'Resume ticker';
-        }
-      } else {
-        startTicker();
-        if (playIcon) playIcon.textContent = '⏸';
-        if (toggleBtn) {
-          toggleBtn.setAttribute('aria-label', 'Pause announcements ticker');
-          toggleBtn.title = 'Pause ticker';
-        }
+      state.paused = paused;
+      if (playIcon) playIcon.textContent = paused ? '▶' : '⏸';
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-label', paused ? 'Resume announcements ticker' : 'Pause announcements ticker');
+        toggleBtn.title = paused ? 'Resume ticker' : 'Pause ticker';
       }
+      syncTicker();
     }
 
     if (toggleBtn) {
-      toggleBtn.addEventListener('click', function () {
-        setPaused(!isTickerPaused);
-      });
+      toggleBtn.addEventListener('click', function () { setPaused(!state.paused); });
     }
-
     if (prevBtn) {
-      prevBtn.addEventListener('click', function () {
-        prevAnnouncement();
-        setPaused(true);
-      });
+      prevBtn.addEventListener('click', function () { step(-1, true); setPaused(true); });
     }
-
     if (nextBtn) {
-      nextBtn.addEventListener('click', function () {
-        nextAnnouncement();
-        setPaused(true);
-      });
+      nextBtn.addEventListener('click', function () { step(1, true); setPaused(true); });
     }
 
-    const viewport = document.querySelector('#announcements-ticker-viewport');
     if (viewport) {
-      viewport.addEventListener('mouseenter', function () {
-        if (!isTickerPaused) stopTicker();
-      });
-      viewport.addEventListener('mouseleave', function () {
-        if (!isTickerPaused) startTicker();
-      });
-      viewport.addEventListener('focusin', function () {
-        if (!isTickerPaused) stopTicker();
-      });
-      viewport.addEventListener('focusout', function () {
-        if (!isTickerPaused) startTicker();
-      });
+      viewport.addEventListener('mouseenter', function () { state.hovered = true; syncTicker(); });
+      viewport.addEventListener('mouseleave', function () { state.hovered = false; syncTicker(); });
+      viewport.addEventListener('focusin', function () { state.focused = true; syncTicker(); });
+      viewport.addEventListener('focusout', function () { state.focused = false; syncTicker(); });
+
+      // Swipe left/right on the headline to change item (vertical scrolling stays native).
+      let startX = 0;
+      let startY = 0;
+      viewport.addEventListener('touchstart', function (event) {
+        const t = event.changedTouches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+      }, { passive: true });
+      viewport.addEventListener('touchend', function (event) {
+        const t = event.changedTouches[0];
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          step(dx < 0 ? 1 : -1, true);
+          setPaused(true);
+        }
+      }, { passive: true });
     }
 
-    // Modal Handling
-    function openAnnouncementModal(item) {
+    // Do not tick while the bar is off-screen or the tab is hidden.
+    if (section && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        state.onScreen = entries[0].isIntersecting;
+        syncTicker();
+      }).observe(section);
+    }
+    document.addEventListener('visibilitychange', syncTicker);
+
+    // ---- Modal ------------------------------------------------------------
+    function openModal(item) {
       if (!modal) return;
       lastFocusedElement = document.activeElement;
 
@@ -254,7 +277,10 @@
       const linkEl = document.querySelector('#modal-announcement-link');
 
       if (titleEl) titleEl.textContent = item.title;
-      if (dateEl) dateEl.textContent = formatDate(item.date);
+      if (dateEl) {
+        dateEl.textContent = formatDate(item.date);
+        dateEl.setAttribute('datetime', item.date || '');
+      }
       if (summaryEl) summaryEl.textContent = item.summary || '';
       if (textEl) textEl.textContent = item.body || '';
 
@@ -267,47 +293,60 @@
         }
       }
 
+      const body = modal.querySelector('.announcement-modal-body');
+      if (body) body.scrollTop = 0;
+
+      state.modalOpen = true;
+      syncTicker();
+      root.classList.add('modal-open'); // lock page scroll behind the dialog
+
       if (typeof modal.showModal === 'function') {
         modal.showModal();
       } else {
-        modal.setAttribute('open', 'true');
+        modal.setAttribute('open', '');
       }
-
       if (modalClose) modalClose.focus();
     }
 
-    function closeAnnouncementModal() {
+    /** Runs however the dialog was closed (button, ESC, backdrop tap). */
+    function afterClose() {
+      state.modalOpen = false;
+      root.classList.remove('modal-open');
+      syncTicker();
+      const target = lastFocusedElement && document.contains(lastFocusedElement)
+        ? lastFocusedElement
+        : track.querySelector('.announcement-item-btn');
+      if (target && typeof target.focus === 'function') target.focus();
+      lastFocusedElement = null;
+    }
+
+    function closeModal() {
       if (!modal) return;
-      if (typeof modal.close === 'function') {
-        modal.close();
+      if (typeof modal.close === 'function' && modal.open) {
+        modal.close(); // triggers the 'close' event -> afterClose()
       } else {
         modal.removeAttribute('open');
-      }
-      if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
-        lastFocusedElement.focus();
+        afterClose();
       }
     }
 
-    if (modalClose) {
-      modalClose.addEventListener('click', closeAnnouncementModal);
-    }
+    if (modalClose) modalClose.addEventListener('click', closeModal);
 
     if (modal) {
       modal.addEventListener('click', function (event) {
-        if (event.target === modal) {
-          closeAnnouncementModal();
-        }
+        if (event.target === modal) closeModal(); // tap on the backdrop
       });
       modal.addEventListener('cancel', function (event) {
         event.preventDefault();
-        closeAnnouncementModal();
+        closeModal();
+      });
+      modal.addEventListener('close', function () {
+        if (state.modalOpen) afterClose();
       });
     }
 
-    updateTicker();
-    if (!isReducedMotion) {
-      startTicker();
-    }
+    updateTicker(false);
+    syncTicker();
   }
 
   // ---------------------------------------------------------------------------
@@ -318,7 +357,7 @@
     if (!container) return;
 
     const eventsList = [...(DATA.events || [])].sort(function (a, b) {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
+      return dateValue(b.date) - dateValue(a.date);
     });
 
     if (eventsList.length === 0) {
@@ -326,20 +365,22 @@
       return;
     }
 
+    // Local midnight "today": an event dated today is still UPCOMING in every timezone.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     container.innerHTML = eventsList.map(function (event, index) {
-      const eventDate = new Date(event.date);
-      const isUpcoming = eventDate.getTime() >= today.getTime();
+      const eventDate = parseLocalDate(event.date);
+      const isUpcoming = !!eventDate && eventDate.getTime() >= today.getTime();
       const badgeText = isUpcoming ? 'UPCOMING' : 'PAST';
       const badgeClass = isUpcoming ? 'event-badge--upcoming' : 'event-badge--past';
+      const titleId = `event-title-${escapeHtml(event.id || index)}`;
 
       return `
         <article
           class="events-panel surface surface--maroon"
-          style="--event-index:${index};--event-stack-offset:${index * 48}px"
-          aria-labelledby="event-title-${escapeHtml(event.id || index)}"
+          style="--event-index:${index}"
+          aria-labelledby="${titleId}"
         >
           <div class="events-panel-inner">
             <div class="events-panel-top">
@@ -347,7 +388,7 @@
               <span class="event-badge ${badgeClass}">${badgeText}</span>
             </div>
             <div class="events-panel-content">
-              <h3 id="event-title-${escapeHtml(event.id || index)}">${escapeHtml(event.title)}</h3>
+              <h3 id="${titleId}">${escapeHtml(event.title)}</h3>
               <p class="events-panel-description">${escapeHtml(event.description)}</p>
               <dl class="events-panel-details">
                 <div>
@@ -363,12 +404,57 @@
                   <dd>${escapeHtml(event.additionalInfo || 'Departmental Initiative')}</dd>
                 </div>
               </dl>
-              <p class="events-panel-info">${escapeHtml(event.additionalInfo || 'BLITZ Initiative')}</p>
             </div>
           </div>
         </article>
       `;
     }).join('');
+
+    setUpStickyGuard();
+  }
+
+  /**
+   * Sticky stacking only works when a panel fits inside the visible area below its
+   * stuck position; otherwise its lower part could never be scrolled into view.
+   * Panels that are too tall (long copy on small screens) fall back to normal flow.
+   */
+  function setUpStickyGuard() {
+    const panels = [...document.querySelectorAll('.events-panel')];
+    if (panels.length === 0) return;
+
+    let lastWidth = -1;
+    let frame = null;
+
+    function evaluate() {
+      frame = null;
+      const viewportHeight = window.innerHeight;
+      panels.forEach(function (panel) {
+        panel.classList.remove('is-tall');
+      });
+      panels.forEach(function (panel) {
+        const stuckTop = parseFloat(getComputedStyle(panel).top) || 0;
+        // +2: a panel sized exactly to the visible area (its min-height) is not 'too tall'
+        const tooTall = panel.offsetHeight > viewportHeight - stuckTop + 2;
+        panel.classList.toggle('is-tall', tooTall);
+      });
+    }
+
+    function schedule() {
+      if (frame) return;
+      frame = requestAnimationFrame(evaluate);
+    }
+
+    window.addEventListener('resize', function () {
+      // Ignore height-only changes (mobile toolbars showing/hiding).
+      if (window.innerWidth !== lastWidth) {
+        lastWidth = window.innerWidth;
+        schedule();
+      }
+    });
+    lastWidth = window.innerWidth;
+    evaluate();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+    window.addEventListener('load', schedule);
   }
 
   // ---------------------------------------------------------------------------
@@ -381,12 +467,23 @@
     const tiers = [
       { key: 'core', label: 'Leadership', gridClass: 'team-grid--core' },
       { key: 'senior', label: 'Senior Executives', gridClass: 'team-grid--senior' },
-      { key: 'junior', label: 'Junior Members', gridClass: 'team-grid--junior' },
+      { key: 'junior', label: 'Junior Executives', gridClass: 'team-grid--junior' },
       { key: 'volunteer', label: 'Volunteers', gridClass: 'team-grid--volunteer' }
     ];
 
-    const teamList = DATA.team || [];
     const defaultAvatar = 'assets/images/team/avatar-placeholder.svg';
+
+    // Normalise once; a record without a name is skipped instead of throwing.
+    const teamList = (DATA.team || []).map(function (member) {
+      return {
+        name: String((member && member.name) || '').trim(),
+        position: String((member && member.position) || '').trim(),
+        tier: member && member.tier,
+        photo: member && member.photo
+      };
+    }).filter(function (member) {
+      return member.name;
+    });
 
     container.innerHTML = tiers.map(function (tier) {
       const members = teamList.filter(function (m) {
@@ -395,83 +492,37 @@
       if (members.length === 0) return '';
 
       const cardsHtml = members.map(function (member) {
-        const isTBD = member.name.startsWith('TBD');
-        const altText = isTBD ? '' : `${escapeHtml(member.name)}, ${escapeHtml(member.position)}`;
-        const photoSrc = member.photo && member.photo.trim() ? member.photo : defaultAvatar;
-
-        let linksHtml = '';
-        if (member.links) {
-          const links = [];
-          if (member.links.linkedin) {
-            links.push(`
-              <a
-                href="${safeUrl(member.links.linkedin)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="team-card-link"
-                aria-label="${escapeHtml(member.name)} on LinkedIn"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
-              </a>
-            `);
-          }
-          if (member.links.github) {
-            links.push(`
-              <a
-                href="${safeUrl(member.links.github)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="team-card-link"
-                aria-label="${escapeHtml(member.name)} on GitHub"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
-              </a>
-            `);
-          }
-          if (member.links.instagram) {
-            links.push(`
-              <a
-                href="${safeUrl(member.links.instagram)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="team-card-link"
-                aria-label="${escapeHtml(member.name)} on Instagram"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
-              </a>
-            `);
-          }
-          if (links.length > 0) {
-            linksHtml = `<div class="team-card-links">${links.join('')}</div>`;
-          }
-        }
-
-        const bioHtml = member.bio ? `<p class="team-card-bio">${escapeHtml(member.bio)}</p>` : '';
+        const photo = safeAssetUrl(member.photo);
+        const hasPhoto = !!photo;
+        // Real photos get a descriptive alt; the placeholder avatar is decorative.
+        const altText = hasPhoto
+          ? escapeHtml(member.position ? `${member.name}, ${member.position}` : member.name)
+          : '';
 
         return `
           <div class="team-card">
             <div class="team-card-image">
               <img
-                src="${photoSrc}"
+                src="${hasPhoto ? photo : defaultAvatar}"
                 alt="${altText}"
                 loading="lazy"
                 decoding="async"
-                width="96"
-                height="96"
+                width="200"
+                height="200"
               />
             </div>
-            <h4 class="team-card-name">${escapeHtml(member.name)}</h4>
-            <p class="team-card-position">${escapeHtml(member.position)}</p>
-            ${bioHtml}
-            ${linksHtml}
+            <div class="team-card-text">
+              <h4 class="team-card-name">${escapeHtml(member.name)}</h4>
+              ${member.position ? `<p class="team-card-position">${escapeHtml(member.position)}</p>` : ''}
+            </div>
           </div>
         `;
       }).join('');
 
       return `
-        <section class="team-tier reveal-tier" aria-label="${escapeHtml(tier.label)}">
+        <section class="team-tier reveal-tier" aria-labelledby="team-tier-${tier.key}">
           <div class="team-tier-heading">
-            <h3>${escapeHtml(tier.label)}</h3>
+            <h3 id="team-tier-${tier.key}">${escapeHtml(tier.label)}</h3>
           </div>
           <div class="team-grid ${tier.gridClass}">
             ${cardsHtml}
@@ -499,7 +550,7 @@
         <figure class="gallery-item">
           <div class="gallery-img-shell">
             <img
-              src="${escapeHtml(item.image)}"
+              src="${safeAssetUrl(item.image)}"
               alt="${escapeHtml(item.alt || item.title)}"
               loading="lazy"
               decoding="async"
@@ -529,28 +580,25 @@
       return;
     }
 
+    // Everything inside a <button> must be phrasing content, hence <span> (not <div>/<h3>/<p>).
+    // The button's accessible name is its text content, so the details are always readable by AT.
     track.innerHTML = list.map(function (item, index) {
       return `
-        <button
-          class="highlights-card"
-          type="button"
-          aria-expanded="false"
-          aria-label="${escapeHtml(item.title)}: ${escapeHtml(item.metrics || '')}. Click to view details."
-        >
-          <div class="highlights-card-surface">
-            <div class="highlights-card-header">
+        <button class="highlights-card" type="button" aria-expanded="false">
+          <span class="highlights-card-surface">
+            <span class="highlights-card-header">
               <span class="highlights-card-number">${padZero(index + 1, 2)}</span>
               <span class="highlights-card-year">${escapeHtml(item.year)}</span>
-            </div>
-            <div class="highlights-card-category">${escapeHtml(item.category || 'Honors')}</div>
-            <h3 class="highlights-card-title">${escapeHtml(item.title)}</h3>
-            <div class="highlights-card-details">
-              <div class="highlights-card-details-inner">
-                <p class="highlights-card-description">${escapeHtml(item.description)}</p>
+            </span>
+            <span class="highlights-card-category">${escapeHtml(item.category || 'Honors')}</span>
+            <span class="highlights-card-title">${escapeHtml(item.title)}</span>
+            <span class="highlights-card-details">
+              <span class="highlights-card-details-inner">
+                <span class="highlights-card-description">${escapeHtml(item.description)}</span>
                 ${item.metrics ? `<span class="highlights-card-metric">${escapeHtml(item.metrics)}</span>` : ''}
-              </div>
-            </div>
-          </div>
+              </span>
+            </span>
+          </span>
         </button>
       `;
     }).join('');
@@ -576,11 +624,10 @@
           class="collab-card"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="${escapeHtml(partner.name)} (${escapeHtml(partner.type)})"
         >
           <div class="collab-logo-box">
             <img
-              src="${escapeHtml(partner.logo)}"
+              src="${safeAssetUrl(partner.logo)}"
               alt="${escapeHtml(partner.name)} logo"
               loading="lazy"
               decoding="async"
@@ -598,84 +645,84 @@
   // ---------------------------------------------------------------------------
   // 09. CONTACT FOOTER RENDERING & DYNAMIC COPYRIGHT
   // ---------------------------------------------------------------------------
+  const ICONS = {
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6.5L21 7"/>',
+    instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="0.6" fill="currentColor"/>',
+    linkedin: '<path d="M6 9.5V19M6 5.6v.01M10.5 19V9.5m0 4c0-2.2 1.6-4 4-4s3.5 1.6 3.5 4V19"/>',
+    pin: '<path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/>'
+  };
+
+  function contactItem(icon, label, value, href, external) {
+    const attrs = external ? ' target="_blank" rel="noopener noreferrer"' : '';
+    return `
+      <a class="blitz-contact-item" href="${href}"${attrs}>
+        <span class="blitz-contact-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">${ICONS[icon]}</svg>
+        </span>
+        <span class="blitz-contact-text">
+          <span class="blitz-contact-heading">${escapeHtml(label)}</span>
+          <span class="blitz-contact-value">${escapeHtml(value)}</span>
+        </span>
+      </a>
+    `;
+  }
+
   function renderContact() {
     const grid = document.querySelector('#contact-info-grid');
     const yearEl = document.querySelector('#current-year');
     if (yearEl) {
       yearEl.textContent = String(new Date().getFullYear());
     }
-
     if (!grid) return;
 
     const contact = DATA.contact || {};
     const items = [];
 
     if (contact.mail) {
-      items.push(`
-        <div class="blitz-contact-item">
-          <p class="blitz-contact-heading">Mail</p>
-          <a href="mailto:${escapeHtml(contact.mail)}">${escapeHtml(contact.mail)}</a>
-        </div>
-      `);
+      items.push(contactItem('mail', 'Mail', contact.mail, safeUrl('mailto:' + contact.mail), false));
     }
-
     if (contact.instagram) {
-      items.push(`
-        <div class="blitz-contact-item">
-          <p class="blitz-contact-heading">Instagram</p>
-          <a href="${safeUrl(contact.instagram)}" target="_blank" rel="noopener noreferrer">
-            ${escapeHtml(contact.instagramHandle || '@blitz_kmv')}
-          </a>
-        </div>
-      `);
+      items.push(contactItem('instagram', 'Instagram', contact.instagramHandle || contact.instagram, safeUrl(contact.instagram), true));
     }
-
+    if (contact.linkedin) {
+      const display = String(contact.linkedin).replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+      items.push(contactItem('linkedin', 'LinkedIn', display, safeUrl(contact.linkedin), true));
+    }
     if (contact.location) {
-      items.push(`
-        <div class="blitz-contact-item">
-          <p class="blitz-contact-heading">Location</p>
-          <a href="${safeUrl(contact.mapsUrl || 'https://maps.google.com/?q=Keshav+Mahavidyalaya')}" target="_blank" rel="noopener noreferrer">
-            ${escapeHtml(contact.location)}
-          </a>
-        </div>
-      `);
-    }
-
-    if (Array.isArray(contact.extraLinks) && contact.extraLinks.length > 0) {
-      contact.extraLinks.forEach(function (link) {
-        if (link && link.label && link.url) {
-          items.push(`
-            <div class="blitz-contact-item">
-              <p class="blitz-contact-heading">${escapeHtml(link.label)}</p>
-              <a href="${safeUrl(link.url)}" target="_blank" rel="noopener noreferrer">
-                ${escapeHtml(link.label)} Profile &#8599;
-              </a>
-            </div>
-          `);
-        }
-      });
+      const maps = contact.mapsUrl ||
+        'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(contact.location);
+      items.push(contactItem('pin', 'Location', contact.location, safeUrl(maps), true));
     }
 
     grid.innerHTML = items.join('');
   }
 
   // ---------------------------------------------------------------------------
-  // 10. NAVIGATION MENU & ACTIVE LINK OBSERVER
+  // 10. NAVIGATION SHEET & ACTIVE LINK OBSERVER
   // ---------------------------------------------------------------------------
   function setUpMenu() {
     const toggle = document.querySelector('#menu-toggle');
     const links = document.querySelector('#primary-navigation-links');
+    const header = document.querySelector('.site-header');
+    const brand = document.querySelector('#nav-brand');
     if (!toggle || !links) return;
+
+    const desktopQuery = window.matchMedia('(min-width: 900px)');
+
+    function isOpen() {
+      return toggle.classList.contains('is-open');
+    }
 
     function setOpen(open) {
       toggle.classList.toggle('is-open', open);
       links.classList.toggle('is-open', open);
+      root.classList.toggle('nav-open', open); // body scroll lock
       toggle.setAttribute('aria-expanded', String(open));
       toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
     }
 
     toggle.addEventListener('click', function () {
-      setOpen(!toggle.classList.contains('is-open'));
+      setOpen(!isOpen());
     });
 
     links.querySelectorAll('a').forEach(function (link) {
@@ -685,17 +732,49 @@
     });
 
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && toggle.classList.contains('is-open')) {
+      if (!isOpen()) return;
+
+      if (event.key === 'Escape') {
         setOpen(false);
         toggle.focus();
+        return;
+      }
+
+      // Focus trap: Tab cycles through brand, toggle and the sheet's links only.
+      if (event.key === 'Tab') {
+        const focusables = [brand, toggle].concat([...links.querySelectorAll('a')]).filter(Boolean);
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+        if (!header.contains(active)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+        } else if (event.shiftKey && active === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     });
 
+    // Outside tap closes
     document.addEventListener('click', function (event) {
-      if (!toggle.contains(event.target) && !links.contains(event.target) && toggle.classList.contains('is-open')) {
+      if (isOpen() && !header.contains(event.target)) {
         setOpen(false);
       }
     });
+
+    // Rotating a tablet / resizing to desktop must never leave the page scroll-locked.
+    function onBreakpoint() {
+      if (desktopQuery.matches && isOpen()) setOpen(false);
+    }
+    if (desktopQuery.addEventListener) {
+      desktopQuery.addEventListener('change', onBreakpoint);
+    } else if (desktopQuery.addListener) {
+      desktopQuery.addListener(onBreakpoint);
+    }
   }
 
   function setUpActiveNavObserver() {
@@ -703,21 +782,21 @@
     const navLinks = document.querySelectorAll('.nav-links .nav-link');
     if (sections.length === 0 || navLinks.length === 0) return;
 
+    function activate(id) {
+      navLinks.forEach(function (link) {
+        const isActive = link.getAttribute('href') === `#${id}`;
+        link.classList.toggle('is-active', isActive);
+        if (isActive) {
+          link.setAttribute('aria-current', 'true');
+        } else {
+          link.removeAttribute('aria-current');
+        }
+      });
+    }
+
     const observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute('id');
-          navLinks.forEach(function (link) {
-            const href = link.getAttribute('href');
-            const isActive = href === `#${id}`;
-            link.classList.toggle('is-active', isActive);
-            if (isActive) {
-              link.setAttribute('aria-current', 'true');
-            } else {
-              link.removeAttribute('aria-current');
-            }
-          });
-        }
+        if (entry.isIntersecting) activate(entry.target.getAttribute('id'));
       });
     }, {
       rootMargin: '-20% 0px -70% 0px',
@@ -727,19 +806,46 @@
     sections.forEach(function (sec) {
       observer.observe(sec);
     });
+
+    // The footer is shorter than the viewport band above, so it would never activate on its own.
+    let frame = null;
+    window.addEventListener('scroll', function () {
+      if (frame) return;
+      frame = requestAnimationFrame(function () {
+        frame = null;
+        const atBottom = window.innerHeight + window.scrollY >= root.scrollHeight - 4;
+        if (atBottom) activate('contact');
+      });
+    }, { passive: true });
   }
 
   // ---------------------------------------------------------------------------
-  // 11. HERO LOGO INTERPOLATION & BATTERY SAVER
+  // 11. HERO LOGO (scroll-driven shrink/fade into the nav)
   // ---------------------------------------------------------------------------
   function setUpHeroLogo() {
     const logo = document.querySelector('#transition-logo');
     const hero = document.querySelector('#home');
-    const blitzLogoText = document.querySelector('.blitz-logo');
+    const shell = document.querySelector('.hero-heading-shell');
     if (!logo || !hero) return;
 
+    // Cached geometry: the scroll handler only reads window.scrollY and writes styles.
+    let navHeight = 64;
+    let heroHeight = 1;
+    let startCenterY = 0;
+    let endScale = 0.3;
+    let lastWidth = -1;
     let frame = null;
     let isHeroVisible = true;
+
+    function measure() {
+      navHeight = readNavHeight();
+      heroHeight = hero.offsetHeight;
+      // `top` of the fixed logo resolves to px (its centre line, see translate(-50%,-50%)).
+      startCenterY = parseFloat(getComputedStyle(logo).top) || window.innerHeight * 0.414;
+      const logoHeight = logo.offsetHeight || 1;
+      endScale = Math.max(0.14, Math.min(0.6, (navHeight * 0.5) / logoHeight));
+      lastWidth = window.innerWidth;
+    }
 
     function update() {
       frame = null;
@@ -748,24 +854,19 @@
         return;
       }
 
-      const heroRect = hero.getBoundingClientRect();
-      const heroHeight = hero.offsetHeight;
-      const progress = Math.max(0, Math.min(1, -heroRect.top / (heroHeight - 74)));
+      const range = Math.max(1, heroHeight - navHeight);
+      const progress = Math.max(0, Math.min(1, window.scrollY / range));
+      // the subtitle pill fades out early so the travelling logo never visibly crosses it
+      if (shell) shell.style.opacity = String(Math.max(0, 1 - progress * 4));
 
       if (progress >= 1) {
-        // Docked: hide transition logo to prevent duplicate text with nav brand
+        // Docked: hide so it doesn't duplicate the nav brand
         logo.style.opacity = '0';
-        logo.style.pointerEvents = 'none';
-        if (blitzLogoText) blitzLogoText.style.animationPlayState = 'paused';
       } else {
         logo.style.opacity = String(1 - Math.pow(progress, 2.5));
-        const initialTop = window.innerHeight * 0.414;
-        const y = -(initialTop - 37) * progress;
-        const scale = 1 - 0.76 * progress;
-        logo.style.transform = `translate(-50%, calc(-50% + ${y}px)) scale(${scale})`;
-        if (blitzLogoText && !isReducedMotion) {
-          blitzLogoText.style.animationPlayState = 'running';
-        }
+        const y = -(startCenterY - navHeight / 2) * progress;
+        const scale = 1 - (1 - endScale) * progress;
+        logo.style.transform = `translate(-50%, calc(-50% + ${y.toFixed(1)}px)) scale(${scale.toFixed(4)})`;
       }
     }
 
@@ -774,24 +875,32 @@
     }
 
     window.addEventListener('scroll', requestUpdate, { passive: true });
-    window.addEventListener('resize', requestUpdate);
+    window.addEventListener('resize', function () {
+      // Height-only resizes (mobile toolbars) don't change any of the cached values.
+      if (window.innerWidth !== lastWidth) {
+        measure();
+        requestUpdate();
+      }
+    });
+    window.addEventListener('orientationchange', function () {
+      setTimeout(function () { measure(); requestUpdate(); }, 250);
+    });
+    window.addEventListener('load', function () { measure(); requestUpdate(); });
 
-    // Pause animation when hero leaves viewport to conserve GPU & battery
+    // Pause logo float + marquee (pure CSS, driven by this class) when the hero is off-screen.
     const heroObserver = new IntersectionObserver(function (entries) {
       isHeroVisible = entries[0].isIntersecting;
+      hero.classList.toggle('is-offscreen', !isHeroVisible);
       requestUpdate();
-      const marqueeTrack = document.querySelector('.marquee-track');
-      if (marqueeTrack) {
-        marqueeTrack.style.animationPlayState = isHeroVisible ? 'running' : 'paused';
-      }
     }, { threshold: 0 });
 
     heroObserver.observe(hero);
+    measure();
     update();
   }
 
   // ---------------------------------------------------------------------------
-  // 12. HORIZONTAL RAIL LOGIC (Scroll Trap Fix + Arrow Keys + Prev/Next)
+  // 12. HORIZONTAL RAIL LOGIC (wheel assist, arrow keys, prev/next by card)
   // ---------------------------------------------------------------------------
   function setUpHorizontalRail(scrollerSelector, prevBtnSelector, nextBtnSelector) {
     const scroller = document.querySelector(scrollerSelector);
@@ -807,6 +916,19 @@
       return Math.max(min, Math.min(max, val));
     }
 
+    /** Distance of one card (+ gap), so buttons/keys always land on the next card. */
+    function cardStep() {
+      const track = scroller.firstElementChild;
+      const card = track && track.firstElementChild;
+      if (!card) return scroller.clientWidth * 0.75;
+      const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+      return card.getBoundingClientRect().width + gap;
+    }
+
+    function scrollByCards(direction) {
+      scroller.scrollBy({ left: direction * cardStep(), behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
+    }
+
     function animate() {
       const distance = target - scroller.scrollLeft;
       if (Math.abs(distance) < 0.5) {
@@ -818,26 +940,19 @@
       frame = requestAnimationFrame(animate);
     }
 
-    // Bug 7a Fix: Do NOT trap vertical wheel event at rail edges or when scrolling vertically
+    // Wheel assist for mice: converts vertical wheel to horizontal ONLY while the rail can still
+    // move that way; at either edge (or for horizontal / modified wheel) the page scrolls normally.
     scroller.addEventListener('wheel', function (event) {
       const maxScroll = scroller.scrollWidth - scroller.clientWidth;
       if (maxScroll <= 0 || !event.deltaY) return;
-
-      // Ignore if user is holding modifier keys (Shift, Ctrl, Alt)
       if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
-
-      // Ignore if already moving horizontally
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
 
       const isScrollingDown = event.deltaY > 0;
       const isScrollingUp = event.deltaY < 0;
       const atStart = scroller.scrollLeft <= 2;
       const atEnd = scroller.scrollLeft >= maxScroll - 2;
-
-      // At edges, pass event through to window scroll!
-      if ((isScrollingDown && atEnd) || (isScrollingUp && atStart)) {
-        return;
-      }
+      if ((isScrollingDown && atEnd) || (isScrollingUp && atStart)) return;
 
       event.preventDefault();
       const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
@@ -849,90 +964,82 @@
       if (!frame) target = scroller.scrollLeft;
     }, { passive: true });
 
-    // Arrow key navigation when scroller or child has focus
     scroller.addEventListener('keydown', function (event) {
-      const step = 320;
-      const maxScroll = scroller.scrollWidth - scroller.clientWidth;
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        target = clamp(scroller.scrollLeft + step, 0, maxScroll);
-        if (!frame) frame = requestAnimationFrame(animate);
+        scrollByCards(1);
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        target = clamp(scroller.scrollLeft - step, 0, maxScroll);
-        if (!frame) frame = requestAnimationFrame(animate);
+        scrollByCards(-1);
       }
     });
 
-    // Arrow Button Controls
-    if (prevBtn) {
-      prevBtn.addEventListener('click', function () {
-        const step = scroller.clientWidth * 0.75;
-        scroller.scrollBy({ left: -step, behavior: isReducedMotion ? 'auto' : 'smooth' });
-      });
-    }
-    if (nextBtn) {
-      nextBtn.addEventListener('click', function () {
-        const step = scroller.clientWidth * 0.75;
-        scroller.scrollBy({ left: step, behavior: isReducedMotion ? 'auto' : 'smooth' });
-      });
-    }
+    if (prevBtn) prevBtn.addEventListener('click', function () { scrollByCards(-1); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { scrollByCards(1); });
   }
 
   // ---------------------------------------------------------------------------
-  // 13. ACHIEVEMENTS CARDS INTERACTION (Mouse Hover vs Touch Tap)
+  // 13. ACHIEVEMENT CARDS (hover / keyboard on pointer devices, always open on touch)
   // ---------------------------------------------------------------------------
   function setUpHighlightCards() {
     const cards = [...document.querySelectorAll('.highlights-card')];
     if (cards.length === 0) return;
 
-    const canHover = window.matchMedia('(hover: hover)').matches;
+    const touchOnly = window.matchMedia('(hover: none)');
 
-    function setExpanded(card, expanded) {
-      card.classList.toggle('is-expanded', expanded);
-      card.setAttribute('aria-expanded', String(expanded));
+    /**
+     * A card is open when it is hovered, keyboard-focused or pinned (Enter / Space).
+     * On touch-only devices every card is always open (CSS shows the details), so no tap is
+     * needed and the old "focus opens, click closes" race cannot occur.
+     */
+    function refresh(card) {
+      const open = touchOnly.matches ||
+        card.classList.contains('is-pinned') ||
+        card._hovered === true ||
+        card.matches(':focus-visible');
+      card.classList.toggle('is-open', open);
+      card.setAttribute('aria-expanded', String(open));
+    }
+
+    function refreshAll() {
+      cards.forEach(refresh);
     }
 
     cards.forEach(function (card) {
-      // Hover only for genuine mouse pointers
-      if (canHover) {
-        card.addEventListener('mouseenter', function () {
-          setExpanded(card, true);
-        });
-        card.addEventListener('mouseleave', function () {
-          setExpanded(card, false);
-        });
-      }
+      card.addEventListener('mouseenter', function () { card._hovered = true; refresh(card); });
+      card.addEventListener('mouseleave', function () { card._hovered = false; refresh(card); });
+      card.addEventListener('focus', function () { refresh(card); });
+      card.addEventListener('blur', function () { refresh(card); });
 
-      // Keyboard focus
-      card.addEventListener('focus', function () {
-        setExpanded(card, true);
-      });
-      card.addEventListener('blur', function () {
-        setExpanded(card, false);
-      });
-
-      // Pointer/Click: toggle cleanly without conflict
+      // click fires for Enter, Space AND pointer taps. Only toggle the pin for keyboard / AT
+      // activation (detail === 0); a mouse click on a hovered card must not collapse it.
       card.addEventListener('click', function (event) {
-        // Prevent immediate toggle-close on mouse click if hover opened it
-        if (event.pointerType === 'mouse' && canHover) {
-          return;
-        }
-        const isCurrentOpen = card.classList.contains('is-expanded');
-        cards.forEach(function (c) {
-          if (c !== card) setExpanded(c, false);
-        });
-        setExpanded(card, !isCurrentOpen);
+        if (touchOnly.matches) return;
+        if (event.detail !== 0) return;
+        card.classList.toggle('is-pinned');
+        refresh(card);
       });
     });
 
+    // Pinned cards close when focus or a pointer goes elsewhere.
     document.addEventListener('pointerdown', function (event) {
-      if (!event.target.closest('.highlights-card')) {
-        cards.forEach(function (c) {
-          setExpanded(c, false);
-        });
-      }
+      if (event.target.closest && event.target.closest('.highlights-card')) return;
+      cards.forEach(function (c) {
+        c.classList.remove('is-pinned');
+      });
+      refreshAll();
     });
+    cards.forEach(function (card) {
+      card.addEventListener('blur', function () {
+        card.classList.remove('is-pinned');
+        refresh(card);
+      });
+    });
+
+    if (touchOnly.addEventListener) {
+      touchOnly.addEventListener('change', refreshAll);
+    }
+    refreshAll();
   }
 
   // ---------------------------------------------------------------------------
@@ -970,7 +1077,7 @@
   // 15. INITIALIZATION
   // ---------------------------------------------------------------------------
   function init() {
-    makeLogo();
+    setUpMarquee();
     renderAnnouncements();
     renderEvents();
     renderTeam();

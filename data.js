@@ -10,19 +10,27 @@
  * 2. Events: Add objects to `events` with id, title, ISO date (YYYY-MM-DD), location,
  *    description, and category/type. The website automatically tags upcoming vs past.
  * 3. Team: Add members to `team` with name, position, tier ('core' | 'senior' | 'junior' | 'volunteer').
- *    Optional fields: photo, bio, links: { linkedin, github, instagram }.
+ *    Optional field: photo (relative path, e.g. 'assets/images/team/first-last.webp').
+ *    Members without a photo get the decorative avatar placeholder automatically.
+ *    Cards show photo, name and position only.
  * 4. Gallery: Add items to `gallery` with image path, title, and descriptive alt text.
  *    Place real photos inside assets/images/gallery/ and update paths here.
  * 5. Achievements: Add accomplishments (wins, awards, milestones) to `achievements`.
  * 6. Collaborations: Add partner societies, sponsors, and communities to `collaborations`.
- * 7. Contact: Update official links, emails, handles, and locations in `contact`.
+ * 7. Contact: Update official links, email, handle and address in `contact`.
+ *    The footer, the Maps link and the <noscript> block are all derived from it
+ *    (after editing run `node tools/sync-noscript.js`; JSON-LD in index.html is static).
  *
  * NOTE: All placeholder data is marked with "// TODO:" comments below. Replace with
  * verified societal information before production publishing.
  * =============================================================================
  */
 
-window.BLITZ_DATA = {
+window.BLITZ_DATA = (function () {
+// Used verbatim for display and for the Maps link. Do not reword or prefix.
+var ADDRESS = 'H-4, 5 Zone, near Sainik Vihar, Co-operative Group Housing Societies Pitampura, Pitampura, Delhi, 110034';
+
+return {
   // TODO: Replace sample announcements with real department notices
   announcements: [
     {
@@ -87,149 +95,32 @@ window.BLITZ_DATA = {
     }
   ],
 
-  // TODO: Replace placeholder team records with confirmed society members
+  // Confirmed society members. Cards show photo, name and position only.
+  // Photos: 400x400 WebP in assets/images/team/ (see tools/optimize-team-images.py).
   team: [
-    // Leadership / Core
-    {
-      name: 'TBD — Student Lead 01', // TODO: Add real name
-      position: 'President',
-      tier: 'core',
-      photo: 'assets/images/team/avatar-placeholder.svg', // TODO: Drop real image in assets/images/team/
-      bio: 'Leading societal strategy, partnerships, and technical initiatives for the academic session.',
-      links: {
-        linkedin: 'https://linkedin.com/in/TODO-president',
-        github: 'https://github.com/TODO-president'
-      }
-    },
-    {
-      name: 'TBD — Student Lead 02', // TODO: Add real name
-      position: 'Vice President',
-      tier: 'core',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Overseeing operations, inter-departmental affairs, and technical competitions.',
-      links: {
-        linkedin: 'https://linkedin.com/in/TODO-vp',
-        github: 'https://github.com/TODO-vp'
-      }
-    },
-    {
-      name: 'TBD — Student Lead 03', // TODO: Add real name
-      position: 'General Secretary',
-      tier: 'core',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Managing society logistics, schedules, documentation, and university liaisons.',
-      links: {
-        linkedin: 'https://linkedin.com/in/TODO-secretary'
-      }
-    },
-    {
-      name: 'TBD — Student Lead 04', // TODO: Add real name
-      position: 'Treasurer',
-      tier: 'core',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Managing budget allocation, sponsorship accounts, and event finances.',
-      links: {
-        linkedin: 'https://linkedin.com/in/TODO-treasurer'
-      }
-    },
+    // Leadership (display order: President, Secretary, Treasurer)
+    { name: 'Aksh Kumar', position: 'President', tier: 'core', photo: 'assets/images/team/aksh-kumar.webp' },
+    { name: 'Priyal Vatsa', position: 'Secretary', tier: 'core', photo: 'assets/images/team/priyal-vatsa.webp' },
+    { name: 'Vrinda Goyal', position: 'Treasurer', tier: 'core' }, // TODO: add photo
 
     // Senior Executives
-    {
-      name: 'TBD — Senior Exec 01', // TODO: Add real name
-      position: 'Technical Lead',
-      tier: 'senior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Directing open source repositories, workshop curriculum, and cloud setups.',
-      links: {
-        github: 'https://github.com/TODO-techlead'
-      }
-    },
-    {
-      name: 'TBD — Senior Exec 02', // TODO: Add real name
-      position: 'Design & Media Lead',
-      tier: 'senior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Shaping visual identity, brand guidelines, and experiential graphics.',
-      links: {
-        instagram: 'https://instagram.com/TODO-designlead'
-      }
-    },
-    {
-      name: 'TBD — Senior Exec 03', // TODO: Add real name
-      position: 'Events & PR Head',
-      tier: 'senior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Driving outreach, host moderation, and participant engagement.',
-      links: {
-        linkedin: 'https://linkedin.com/in/TODO-prlead'
-      }
-    },
-    {
-      name: 'TBD — Senior Exec 04', // TODO: Add real name
-      position: 'Competitive Programming Head',
-      tier: 'senior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Organizing algorithmic contests, problem setting, and coding practice tracks.',
-      links: {
-        github: 'https://github.com/TODO-cplead'
-      }
-    },
-    {
-      name: 'TBD — Senior Exec 05', // TODO: Add real name
-      position: 'Sponsorship Coordinator',
-      tier: 'senior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Cultivating corporate relations, grants, and community sponsorships.'
-    },
+    { name: 'Ayushi Jain', position: 'Senior Executive', tier: 'senior' }, // TODO: add photo
+    { name: 'Dev Narayan', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/dev-narayan.webp' },
+    { name: 'Kavya Gera', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/kavya-gera.webp' },
+    { name: 'Lavanya Sharma', position: 'Senior Executive', tier: 'senior' }, // TODO: add photo
+    { name: 'Parth Arora', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/parth-arora.webp' },
+    { name: 'Riya Solanki', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/riya-solanki.webp' },
 
-    // Junior Members
-    {
-      name: 'TBD — Junior Member 01', // TODO: Add real name
-      position: 'Web Development Wing',
-      tier: 'junior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Maintaining web platforms and interactive event interfaces.'
-    },
-    {
-      name: 'TBD — Junior Member 02', // TODO: Add real name
-      position: 'Content & Editorial',
-      tier: 'junior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Curating tech articles, announcements, and societal documentation.'
-    },
-    {
-      name: 'TBD — Junior Member 03', // TODO: Add real name
-      position: 'Logistics Wing',
-      tier: 'junior',
-      photo: 'assets/images/team/avatar-placeholder.svg',
-      bio: 'Managing on-ground coordination and stage management.'
-    },
+    // Junior Executives
+    { name: 'Sachi Grover', position: 'Junior Executive', tier: 'junior', photo: 'assets/images/team/sachi-grover.webp' },
+    { name: 'Shaurya', position: 'Junior Executive', tier: 'junior', photo: 'assets/images/team/shaurya.webp' },
 
     // Volunteers
-    {
-      name: 'TBD — Volunteer 01', // TODO: Add real name
-      position: 'Technical Support',
-      tier: 'volunteer',
-      photo: 'assets/images/team/avatar-placeholder.svg'
-    },
-    {
-      name: 'TBD — Volunteer 02', // TODO: Add real name
-      position: 'Registrations Desk',
-      tier: 'volunteer',
-      photo: 'assets/images/team/avatar-placeholder.svg'
-    },
-    {
-      name: 'TBD — Volunteer 03', // TODO: Add real name
-      position: 'Photography & Media',
-      tier: 'volunteer',
-      photo: 'assets/images/team/avatar-placeholder.svg'
-    },
-    {
-      name: 'TBD — Volunteer 04', // TODO: Add real name
-      position: 'Event Operations',
-      tier: 'volunteer',
-      photo: 'assets/images/team/avatar-placeholder.svg'
-    }
+    { name: 'Aditya Raj', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/aditya-raj.webp' },
+    { name: 'Diva Bauddh', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/diva-bauddh.webp' }, // TODO: confirm spelling of "Bauddh"
+    { name: 'Eesha', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/eesha.webp' },
+    { name: 'Neha Bisht', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/neha-bisht.webp' },
+    { name: 'Yashika Gupta', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/yashika-gupta.webp' }
   ],
 
   // TODO: Replace with real photographs in assets/images/gallery/
@@ -352,19 +243,16 @@ window.BLITZ_DATA = {
     }
   ],
 
-  // TODO: Replace contact placeholders with official verified links
+  // Official, confirmed contact details.
   contact: {
-    mail: 'blitz.cs@kmv.du.ac.in', // TODO: Verify departmental email address
-    instagram: 'https://instagram.com/TODO-blitz-kmv', // TODO: Add official Instagram handle URL
-    instagramHandle: '@blitz_kmv',
-    location: 'Department of Computer Science, Keshav Mahavidyalaya, H-4-5 Zone, Rani Bagh, Pitampura, Delhi 110034',
-    mapsUrl: 'https://maps.google.com/?q=Keshav+Mahavidyalaya+Delhi',
-    extraLinks: [
-      { label: 'GitHub', url: 'https://github.com/TODO-blitz-kmv' }, // TODO: Add society GitHub
-      { label: 'LinkedIn', url: 'https://linkedin.com/company/TODO-blitz-kmv' }, // TODO: Add society LinkedIn
-      { label: 'Discord', url: 'https://discord.gg/TODO-blitz-kmv' } // TODO: Add society Discord server
-    ],
+    mail: 'team.blitzkmv@gmail.com',
+    instagram: 'https://www.instagram.com/blitzkmv/',
+    instagramHandle: '@blitzkmv',
+    linkedin: 'https://www.linkedin.com/in/blitz-keshav-mahavidyalaya',
+    location: ADDRESS,
+    mapsUrl: 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ADDRESS),
     department: 'Department of Computer Science',
     college: 'Keshav Mahavidyalaya, University of Delhi'
   }
 };
+})();

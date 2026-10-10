@@ -3,7 +3,7 @@
 
 Official website for **BLITZ**, the Computer Science departmental society of Keshav Mahavidyalaya, University of Delhi.
 
-This project is built to be **entirely dependency-free, zero-build, and static**. It runs immediately by opening `index.html` directly in any web browser (`file:///` protocol) or deployed on any static web host.
+This project is **dependency-free, zero-build and static**. It runs by opening `index.html` directly (`file://`) or from any static host. The `tools/` folder holds optional one-off maintainer scripts (Python/Node); the site itself never needs them.
 
 ---
 
@@ -11,19 +11,31 @@ This project is built to be **entirely dependency-free, zero-build, and static**
 
 ```text
 BLITZ/
-├── index.html          # Semantic HTML5 markup, landmarks, header, footer, modal
-├── styles.css          # Unified CSS design system, color tokens, responsive rules
-├── data.js             # Centralized societal content store (all TODOs marked here)
-├── script.js           # Vanilla JS interactive engine (tickers, rails, observers)
+├── index.html            # Markup, head/SEO/JSON-LD, <noscript> fallbacks, dialog
+├── styles.css            # Design system, responsive rules (section 17 = mobile)
+├── data.js               # ALL content (announcements, events, team, contact, ...)
+├── script.js             # Vanilla JS: ticker, modal, nav sheet, rails, hero logo
+├── favicon.ico           # 16/32/48 (generated)
+├── favicon-16.png  favicon-32.png  apple-touch-icon.png  icon-192.png  icon-512.png
+├── site.webmanifest      # PWA/theme colours + icons
+├── robots.txt  sitemap.xml
 ├── assets/
-│   ├── favicon.svg     # SVG vector favicon (brand bolt & shield)
-│   ├── apple-touch-icon.png # iOS touch icon
-│   ├── og.png          # Open Graph social preview banner (1200x630)
+│   ├── og.png            # 1200x630 social preview (generated)
+│   ├── logo/
+│   │   ├── blitz-logo.png         # 512px, white on transparent (site + JSON-LD)
+│   │   ├── blitz-logo-1024.png    # retina hero (srcset)
+│   │   ├── blitz-logo-dark.png    # ink-coloured variant for LIGHT backgrounds
+│   │   └── blitz-logo-source.webp # untouched master, input for the build script
 │   └── images/
-│       ├── gallery/    # Event photos (SVGs/JPGs/PNGs)
-│       ├── team/       # Avatars & member portraits
-│       └── collaborations/ # Partner & affiliate logos
-└── README.md           # Documentation, guidelines, and deployment instructions
+│       ├── gallery/      # Event photos
+│       ├── team/         # 400x400 WebP portraits + avatar-placeholder.svg
+│       └── collaborations/
+├── tools/
+│   ├── build-brand-assets.py    # logo -> favicons, icons, og.png
+│   ├── optimize-team-images.py  # photos -> 400x400 WebP
+│   ├── set-site-url.py          # change the production URL everywhere
+│   └── sync-noscript.js         # regenerate <noscript> blocks from data.js
+└── README.md
 ```
 
 ---
@@ -34,7 +46,7 @@ The website follows this exact sequential structure with assigned anchor IDs for
 
 | # | Section | Element / Tag | Anchor ID | In Navbar? | Notes |
 |---|---|---|---|---|---|
-| 1 | **Home** | `<section>` | `#home` | Yes | Hero section with 3D logo & marquee |
+| 1 | **Home** | `<section>` | `#home` | Yes | Hero section with the logo image & marquee |
 | 2 | **About** | `<section>` | `#about` | Yes | "Silicon Minds, Circuited Hearts" & "What We Do" |
 | 3 | **Announcements** | `<section>` | `#announcements` | No (Strip) | Slim news-headline ticker with dialog modal |
 | 4 | **Events** | `<section>` | `#events` | Yes | Sticky stacking panels, sorted newest-first |
@@ -48,7 +60,7 @@ The website follows this exact sequential structure with assigned anchor IDs for
 
 ## 3. Color Tokens (`:root`)
 
-Defined in [styles.css](file:///d:/Clg/BLITZ/styles.css):
+Defined in `styles.css`:
 
 ```css
 :root {
@@ -72,9 +84,9 @@ Defined in [styles.css](file:///d:/Clg/BLITZ/styles.css):
   --accent-hover: #ffc233;
   --accent-hot: #ff3d2e;
 
-  /* Navigation Heights */
+  /* Navigation height: 74px on desktop, 64px below 900px (set in styles.css section 17) */
   --nav-height: 74px;
-  --nav-height-mobile: 64px;
+  --header-h: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
 }
 ```
 
@@ -93,119 +105,103 @@ Defined in [styles.css](file:///d:/Clg/BLITZ/styles.css):
 
 ## 4. How to Update Content (`data.js`)
 
-All dynamic content lives in `window.BLITZ_DATA` in [data.js](file:///d:/Clg/BLITZ/data.js). Every placeholder is marked with a clear `// TODO:` comment.
+All dynamic content lives in `window.BLITZ_DATA` in `data.js`. Every placeholder is marked with a `// TODO:` comment (events, announcements, achievements, collaborations, gallery are still placeholders; contact and team are real).
 
-### A. Adding an Announcement
+### A. Announcement
 ```javascript
 {
   id: 'announcement-04',
   title: 'Workshop Registration Closed',
-  date: '2026-10-20', // ISO YYYY-MM-DD
+  date: '2026-10-20', // ISO YYYY-MM-DD, treated as a LOCAL calendar date
   summary: 'Seats for the cloud laboratory session are now filled.',
-  body: 'Thank you for the enthusiastic response. Registered participants will receive login credentials via email.',
-  link: 'https://example.com' // Optional external URL or empty string
+  body: 'Thank you for the enthusiastic response.',
+  link: ''            // optional http(s) URL
 }
 ```
 
-### B. Adding an Event
-Dates are stored in ISO format (`YYYY-MM-DD`). The website automatically calculates and tags **UPCOMING** vs **PAST** status relative to today's date and sorts newest first:
+### B. Event
+`UPCOMING`/`PAST` is computed from the visitor's local date (an event dated today is still upcoming).
 ```javascript
-{
-  id: 'annual-hackathon-2027',
-  title: 'CodeVerse 2027',
-  date: '2027-02-14',
-  location: 'Auditorium & Lab 1',
-  description: 'National 48-hour prototype sprint across algorithms and systems.',
-  additionalInfo: 'Flagship Hackathon'
-}
+{ id: 'annual-hackathon-2027', title: 'CodeVerse 2027', date: '2027-02-14',
+  location: 'Auditorium & Lab 1', description: 'National 48-hour prototype sprint.',
+  additionalInfo: 'Flagship Hackathon' } // shown once, as "Format"
 ```
 
-### C. Adding a Team Member
-Tiers supported: `'core'` (Leadership), `'senior'` (Senior Executives), `'junior'` (Junior Members), `'volunteer'` (Volunteers).
+### C. Team member
+Tiers: `'core'` (Leadership), `'senior'` (Senior Executives), `'junior'` (Junior Executives), `'volunteer'` (Volunteers). Cards show photo, name and position only.
 ```javascript
-{
-  name: 'Aarav Sharma',
-  position: 'President',
-  tier: 'core',
-  photo: 'assets/images/team/aarav.jpg', // Or omit for default SVG avatar
-  bio: 'Specializing in distributed computing and systems engineering.',
-  links: {
-    linkedin: 'https://linkedin.com/in/aarav',
-    github: 'https://github.com/aarav'
-  }
-}
+{ name: 'First Last', position: 'Volunteer', tier: 'volunteer',
+  photo: 'assets/images/team/first-last.webp' } // omit photo => decorative avatar placeholder
 ```
+`photo` may only be a relative path or an http(s) URL; anything else is ignored.
 
-### D. Adding Gallery Photos
-1. Drop the image file into `assets/images/gallery/` (recommended aspect ratio 4:3).
-2. Add the record in `data.js`:
-```javascript
-{
-  id: 'gallery-06',
-  image: 'assets/images/gallery/symposium-2026.jpg',
-  title: 'Symposium Keynote Address',
-  alt: 'Audience listening to keynote speaker in the auditorium',
-  date: 'Mar 2026',
-  location: 'Auditorium'
-}
-```
+### D. Contact
+Edit the `contact` object (`mail`, `instagram`, `instagramHandle`, `linkedin`, `location`). The Maps link is built from `location` automatically. The address is displayed verbatim.
 
-### E. Adding Achievements
-```javascript
-{
-  id: 'achievement-06',
-  title: 'ACM ICPC Regional Qualifiers',
-  year: '2026',
-  category: 'Competitive Programming',
-  description: 'Student trio ranked in the top 15 regionally at the Amritapuri site.',
-  metrics: 'Top 15 Regional Rank'
-}
-```
+### E. Gallery, Achievements, Collaborations
+Same pattern as before: add an object to the matching array (gallery images 4:3 in `assets/images/gallery/`, partner logos as SVG/PNG in `assets/images/collaborations/`).
 
-### F. Adding Collaborations
-```javascript
-{
-  name: 'ACM Student Chapter',
-  logo: 'assets/images/collaborations/acm.svg',
-  url: 'https://acm.org',
-  type: 'Academic Affiliate',
-  since: '2024'
-}
+### After editing events, team, announcements or contact
+The `<noscript>` fallbacks in `index.html` (what visitors without JavaScript and simple crawlers see) are generated from `data.js`:
+```bash
+node tools/sync-noscript.js
 ```
 
 ---
 
-## 5. Adding Real Photos & Logos
+## 5. Logo, Icons and Photos
 
-1. **Member Avatars**: Place portrait photos (square 1:1 ratio recommended, ~300x300px) in `assets/images/team/`. If a member does not have a photo yet, the site automatically renders the lightweight SVG placeholder `assets/images/team/avatar-placeholder.svg`.
-2. **Gallery Photos**: Place horizontal 4:3 photos into `assets/images/gallery/`. The gallery automatically uses `loading="lazy"` and `decoding="async"`.
-3. **Partner Logos**: Place vector SVGs or clean PNGs into `assets/images/collaborations/`. Logos render uniformly with automated grayscale-to-color transition on hover.
-4. **Social Banner (`og.png`)**: Replace `assets/og.png` with an official 1200x630 banner for social media link previews (Twitter/LinkedIn/WhatsApp).
+### Logo files
+`assets/logo/blitz-logo.png` is **white on transparent**, so it works on the maroon/ink surfaces used throughout the site but is invisible on cream; use `blitz-logo-dark.png` there. To regenerate every derived asset (logo sizes, `favicon.ico`, PNG icons, apple-touch icon, `assets/og.png`) after replacing `assets/logo/blitz-logo-source.webp`:
+```bash
+pip install pillow
+python tools/build-brand-assets.py
+```
+
+### Adding or replacing team photos
+1. Put the original photo(s) (HEIC, PNG, JPEG or WebP, any size) in a temporary `assets/team_images/` folder.
+2. If the person is new, add `"filestem": "first-last"` to `PHOTOS` in `tools/optimize-team-images.py`. If a face is cropped badly, add an entry to `CROP_CENTER` (centre x, centre y, zoom).
+3. Run:
+```bash
+pip install pillow pillow-heif
+python tools/optimize-team-images.py            # or: --src <folder> --out assets/images/team
+```
+The script applies EXIF orientation, strips metadata, crops a square biased toward the top, resizes to 400x400 and writes `assets/images/team/first-last.webp` (<= 50 KB). It also writes `_contact-sheet.png` for a quick visual review; delete it, and the temporary source folder, before committing.
+4. Set `photo: 'assets/images/team/first-last.webp'` in `data.js`.
+
+> The original multi-megabyte photos remain in git history. If repository size matters, purge them with `git filter-repo` (not done automatically).
 
 ---
 
-## 6. How to Deploy
-
-Because this repository contains zero build steps and no package managers, deployment takes seconds:
+## 6. Deploy
 
 ### GitHub Pages
-1. Push the repository to GitHub.
-2. Go to **Settings** > **Pages**.
-3. Under **Build and deployment**, choose **Source: Deploy from a branch**.
-4. Select `main` (or `master`) branch, folder: `/ (root)`, and click **Save**.
+1. Push to GitHub.
+2. **Settings > Pages > Build and deployment**: *Deploy from a branch*, branch `main`, folder `/ (root)`.
+3. **Enable "Enforce HTTPS"** on the same page (tick it once the certificate is issued). Do this before sharing the link.
 
-### Netlify
-1. Connect your repository on Netlify.
-2. Leave **Build command** blank.
-3. Set **Publish directory** to `.`.
-4. Click **Deploy**.
+### Netlify / any static host
+No build command; publish directory `.`.
+
+### Production URL
+The default is `https://aksh.is-a.dev/BLITZ/` (canonical, `og:url`, `og:image`, `twitter:image`, JSON-LD, sitemap, robots). Social scrapers and crawlers need absolute URLs, so it is written out in those files. If the society gets its own domain:
+```bash
+python tools/set-site-url.py https://your-domain.tld/
+```
+Note: crawlers only read `robots.txt` at a domain root. While the site lives under `/BLITZ/` on a shared domain, submit `sitemap.xml` in Search Console instead; the file is correct as soon as the site is served from a root.
 
 ---
 
-## 7. Accessibility & Performance Features
+## 7. Accessibility, Performance and Progressive Enhancement
 
-- **Progressive Enhancement**: Initial reveals are scoped to `html.js`; all content remains visible if JavaScript fails.
-- **Accessible Modal**: Focus trapped within announcements dialog, backdrop clicks close, ESC closes, and focus returns to trigger element.
-- **Wheel & Touch Trap Fix**: Horizontal rails only intercept wheel events when scrolling within active bounds; vertical swipes pass cleanly to the page on touch screens.
-- **Prefers-Reduced-Motion**: Automatically disables logo rotation, marquee loops, and ticker transitions for users with motion sensitivity.
-- **WCAG AA Compliance**: High contrast ratios across maroon, ink, and cream surfaces. All interactive targets meet minimum 44px tap sizes.
+What is actually implemented (and checked with Lighthouse mobile, headless Chromium and Playwright):
+
+- **Without JavaScript** the static content stays visible, the nav is a plain link row, and `<noscript>` blocks list the latest announcement, events, team and contact details. Image galleries, achievements and collaborations are JS-rendered and therefore absent without JS.
+- **Touch targets:** on phones/tablets (and coarse pointers) every button and link row is at least 44px tall; nav rows are 48px. On desktop with a mouse a few secondary controls are slightly smaller (e.g. 36px ticker buttons).
+- **Contrast:** secondary/faint text measures 4.97:1 or higher against its section background (automated Lighthouse accessibility score 100; this is not a substitute for a manual WCAG audit).
+- **Announcements:** the auto-rotating ticker is not a live region; screen readers are only told about an item when the user changes it manually. Rotation can be paused, and stops while the bar is off-screen, hovered, focused, the tab is hidden or the dialog is open.
+- **Dialog:** page scroll is locked while open, ESC / close button / backdrop tap close it, focus returns to the trigger; a bottom sheet on phones.
+- **Mobile menu:** body scroll lock, focus trap, ESC and outside-tap close, `aria-expanded` kept in sync.
+- **Motion:** `prefers-reduced-motion` disables the logo float, marquee and reveals; animations pause when the hero is off-screen.
+- **Touch rails:** gallery and achievements snap to cards and can be swiped; on touch-only devices achievement details are always visible.
+
