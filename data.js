@@ -100,12 +100,12 @@ return {
   team: [
     // Leadership (display order: President, Secretary, Treasurer)
     { name: 'Aksh Kumar', position: 'President', tier: 'core', photo: 'assets/images/team/aksh-kumar.webp' },
-    { name: 'Priyal Vatsa', position: 'Secretary', tier: 'core', photo: 'assets/images/team/priyal-vatsa.webp' },
+    { name: 'Priyal Vatsa', position: 'Secretary', tier: 'core', photo: 'assets/images/team/priyal-vatsa.jpg' },
     { name: 'Vrinda Goyal', position: 'Treasurer', tier: 'core' }, // TODO: add photo
 
     // Senior Executives
     { name: 'Ayushi Jain', position: 'Senior Executive', tier: 'senior' }, // TODO: add photo
-    { name: 'Dev Narayan', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/dev-narayan.webp' },
+    { name: 'Dev Narayan', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/dev-narayan.jpg' },
     { name: 'Kavya Gera', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/kavya-gera.webp' },
     { name: 'Lavanya Sharma', position: 'Senior Executive', tier: 'senior' }, // TODO: add photo
     { name: 'Parth Arora', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/parth-arora.webp' },
@@ -118,7 +118,7 @@ return {
     // Volunteers
     { name: 'Aditya Raj', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/aditya-raj.webp' },
     { name: 'Diva Bauddh', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/diva-bauddh.webp' }, // TODO: confirm spelling of "Bauddh"
-    { name: 'Eesha', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/eesha.webp' },
+    { name: 'Eesha', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/eesha.jpg' },
     { name: 'Neha Bisht', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/neha-bisht.webp' },
     { name: 'Yashika Gupta', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/yashika-gupta.webp' }
   ],

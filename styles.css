@@ -2498,6 +2498,10 @@ html.js .reveal-tier.is-revealed {
     font-size: 22px;
   }
 
+  .introduction-copy-stack {
+    bottom: 10px;
+  }
+
   .introduction-copy-description {
     display: none;
   }
