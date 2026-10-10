@@ -4,7 +4,7 @@ Change the production URL everywhere it is hard-coded (crawlers and social scrap
 need absolute URLs, so it cannot be a runtime variable).
 
     python tools/set-site-url.py https://blitz-kmv.example.org/
-    python tools/set-site-url.py https://aksh.is-a.dev/BLITZ/      # (current default)
+    python tools/set-site-url.py https://keshav.du.ac.in/blitz/      # (current default)
 
 The current URL is read from <link rel="canonical"> in index.html, then replaced in
 index.html (canonical, og:url, og:image, twitter:image, JSON-LD), sitemap.xml,

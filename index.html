@@ -14,12 +14,10 @@
     />
 
     <!--
-      PRODUCTION URL: https://aksh.is-a.dev/BLITZ/
-      TODO: change if the society gets its own domain, then run
-            `python tools/set-site-url.py https://your-domain.tld/` (updates canonical,
-            og:url, og:image, twitter:image, JSON-LD, sitemap.xml and robots.txt in one go).
+      Production URL: https://keshav.du.ac.in/blitz/
+      Update the canonical URL and the crawler/social metadata together whenever the site is moved.
     -->
-    <link rel="canonical" href="https://aksh.is-a.dev/BLITZ/" />
+    <link rel="canonical" href="https://keshav.du.ac.in/blitz/" />
     <meta name="theme-color" content="#0b0506" />
     <meta name="color-scheme" content="dark" />
 
@@ -30,11 +28,11 @@
       property="og:description"
       content="Silicon Minds, Circuited Hearts. Departmental Society of Computer Science at Keshav Mahavidyalaya, University of Delhi."
     />
-    <meta property="og:image" content="https://aksh.is-a.dev/BLITZ/assets/og.png" />
+    <meta property="og:image" content="https://keshav.du.ac.in/blitz/assets/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="BLITZ logo on a dark maroon background: Computer Science Society, Keshav Mahavidyalaya, University of Delhi" />
-    <meta property="og:url" content="https://aksh.is-a.dev/BLITZ/" />
+    <meta property="og:url" content="https://keshav.du.ac.in/blitz/" />
     <meta property="og:site_name" content="BLITZ Keshav Mahavidyalaya" />
 
     <!-- Twitter Card Metadata -->
@@ -44,7 +42,7 @@
       name="twitter:description"
       content="Silicon Minds, Circuited Hearts. Technical workshops, hackathons, and student computing initiatives."
     />
-    <meta name="twitter:image" content="https://aksh.is-a.dev/BLITZ/assets/og.png" />
+    <meta name="twitter:image" content="https://keshav.du.ac.in/blitz/assets/og.png" />
 
     <!-- Favicons (generated from the logo by tools/build-brand-assets.py) -->
     <link rel="icon" href="favicon.ico" sizes="any" />
@@ -71,9 +69,9 @@
         "@type": "EducationalOrganization",
         "name": "BLITZ - Computer Science Society",
         "alternateName": "BLITZ KMV",
-        "url": "https://aksh.is-a.dev/BLITZ/",
-        "logo": "https://aksh.is-a.dev/BLITZ/assets/logo/blitz-logo.png",
-        "image": "https://aksh.is-a.dev/BLITZ/assets/og.png",
+        "url": "https://keshav.du.ac.in/blitz/",
+        "logo": "https://keshav.du.ac.in/blitz/assets/logo/blitz-logo.png",
+        "image": "https://keshav.du.ac.in/blitz/assets/og.png",
         "email": "team.blitzkmv@gmail.com",
         "sameAs": [
           "https://www.instagram.com/blitzkmv/",
@@ -133,7 +131,6 @@
           <a href="#events" class="nav-link">Events</a>
           <a href="#team" class="nav-link">Team</a>
           <a href="#gallery" class="nav-link">Gallery</a>
-          <a href="#achievements" class="nav-link">Achievements</a>
           <a href="#collaborations" class="nav-link">Collaborations</a>
           <a href="#contact" class="nav-link">Contact</a>
         </div>
@@ -245,7 +242,7 @@
           >
             <div id="announcements-ticker-track" class="announcements-track">
               <!-- ns:announcements:start -->
-          <noscript><span class="announcement-item-btn"><span class="announcement-item-date">15 Oct 2026</span><span class="announcement-item-title">Call for Core Working Committee Nominations 2026–27</span></span></noscript>
+          <noscript><span class="announcement-item-btn"><span class="announcement-item-date">No updates</span><span class="announcement-item-title">No announcements are currently active.</span></span></noscript>
           <!-- ns:announcements:end -->
             </div>
           </div>
@@ -303,6 +300,12 @@
           </div>
         </noscript>
           <!-- ns:events:end -->
+        </div>
+      </section>
+
+      <section id="event-detail" class="event-detail-section surface surface--ink" aria-live="polite" aria-label="Selected event details">
+        <div class="event-detail-shell">
+          <div id="event-detail-content" class="event-detail-content" aria-live="polite"></div>
         </div>
       </section>
 
@@ -396,50 +399,7 @@
         </div>
       </section>
 
-      <!-- 7. ACHIEVEMENTS (Distinct accomplishments, competition wins & milestones) -->
-      <section id="achievements" class="highlights-section surface surface--achievements" aria-labelledby="achievements-title">
-        <div class="highlights-layout">
-          <header class="highlights-heading">
-            <div>
-              <p class="highlights-label">BLITZ / HONORS &amp; MILESTONES</p>
-              <h2 id="achievements-title">Achievements</h2>
-            </div>
-            <div class="rail-header-tools">
-              <span class="highlights-cue"><span class="cue-pointer">Hover to expand</span><span class="cue-touch">Swipe to browse</span></span>
-              <div class="rail-nav-buttons" role="group" aria-label="Achievements rail controls">
-                <button
-                  id="achievements-rail-prev"
-                  class="rail-arrow-btn"
-                  type="button"
-                  aria-label="Scroll achievements left"
-                  title="Scroll left"
-                >
-                  &#8592;
-                </button>
-                <button
-                  id="achievements-rail-next"
-                  class="rail-arrow-btn"
-                  type="button"
-                  aria-label="Scroll achievements right"
-                  title="Scroll right"
-                >
-                  &#8594;
-                </button>
-              </div>
-            </div>
-          </header>
-          <div
-            id="highlights-scroller"
-            class="highlights-scroller"
-            tabindex="0"
-            aria-label="Society achievements cards. Use arrow keys to explore."
-          >
-            <div id="highlights-track" class="highlights-track"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 8. COLLABORATIONS (Partner Societies, Sponsors & Communities) -->
+      <!-- 7. NETWORK (Partner Societies, Sponsors & Communities) -->
       <section id="collaborations" class="collaborations-section surface surface--ink" aria-labelledby="collaborations-title">
         <div class="collaborations-layout">
           <header class="collaborations-heading">

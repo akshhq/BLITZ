@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://aksh.is-a.dev/BLITZ/sitemap.xml
+Sitemap: https://keshav.du.ac.in/blitz/sitemap.xml

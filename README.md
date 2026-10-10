@@ -12,9 +12,11 @@ This project is **dependency-free, zero-build and static**. It runs by opening `
 ```text
 BLITZ/
 ├── index.html            # Markup, head/SEO/JSON-LD, <noscript> fallbacks, dialog
+├── event.html            # Launchpad-style event browser and selected-event view
 ├── styles.css            # Design system, responsive rules (section 17 = mobile)
 ├── data.js               # ALL content (announcements, events, team, contact, ...)
 ├── script.js             # Vanilla JS: ticker, modal, nav sheet, rails, hero logo
+├── event-page.js          # Data-driven event selector and detail renderer
 ├── favicon.ico           # 16/32/48 (generated)
 ├── favicon-16.png  favicon-32.png  apple-touch-icon.png  icon-192.png  icon-512.png
 ├── site.webmanifest      # PWA/theme colours + icons
@@ -52,9 +54,8 @@ The website follows this exact sequential structure with assigned anchor IDs for
 | 4 | **Events** | `<section>` | `#events` | Yes | Sticky stacking panels, sorted newest-first |
 | 5 | **Team** | `<section>` | `#team` | Yes | High-contrast cream break with member tiers |
 | 6 | **Gallery** | `<section>` | `#gallery` | Yes | Event imagery on smooth horizontal rail |
-| 7 | **Achievements** | `<section>` | `#achievements` | Yes | Real accolades with expandable cards |
-| 8 | **Collaborations**| `<section>` | `#collaborations` | Yes | Partner society and sponsor logos |
-| 9 | **Contact** | `<footer>` | `#contact` | Yes | Links, social handles, and dynamic copyright |
+| 7 | **Network** | `<section>` | `#collaborations` | Yes | Partner society and community placeholders |
+| 8 | **Contact** | `<footer>` | `#contact` | Yes | Links, social handles, and dynamic copyright |
 
 ---
 
@@ -97,15 +98,14 @@ Defined in `styles.css`:
 - **Events**: `.surface--maroon`
 - **Team**: `.surface--cream` (High-contrast light surface with dark text)
 - **Gallery**: `.surface--ink`
-- **Achievements**: `.surface--achievements`
-- **Collaborations**: `.surface--ink`
+- **Network**: `.surface--ink`
 - **Contact Footer**: `.surface--ink`
 
 ---
 
 ## 4. How to Update Content (`data.js`)
 
-All dynamic content lives in `window.BLITZ_DATA` in `data.js`. Every placeholder is marked with a `// TODO:` comment (events, announcements, achievements, collaborations, gallery are still placeholders; contact and team are real).
+All dynamic content lives in `window.BLITZ_DATA` in `data.js`, and it is intentionally kept separate from rendering logic for easy future replacement or admin integration.
 
 ### A. Announcement
 ```javascript
@@ -124,8 +124,12 @@ All dynamic content lives in `window.BLITZ_DATA` in `data.js`. Every placeholder
 ```javascript
 { id: 'annual-hackathon-2027', title: 'CodeVerse 2027', date: '2027-02-14',
   location: 'Auditorium & Lab 1', description: 'National 48-hour prototype sprint.',
-  additionalInfo: 'Flagship Hackathon' } // shown once, as "Format"
+  layout: 'competition', format: 'Hackathon',
+  additionalInfo: 'Flagship Hackathon' } // shown in the event detail view
 ```
+Event cards link to `event.html?event=<id>`. The Launchpad page reads the selected event from
+`data.js`, so adding an event to the shared data source automatically adds its selector tile
+and detail view without creating another HTML file.
 
 ### C. Team member
 Tiers: `'core'` (Leadership), `'senior'` (Senior Executives), `'junior'` (Junior Executives), `'volunteer'` (Volunteers). Cards show photo, name and position only.
@@ -138,8 +142,10 @@ Tiers: `'core'` (Leadership), `'senior'` (Senior Executives), `'junior'` (Junior
 ### D. Contact
 Edit the `contact` object (`mail`, `instagram`, `instagramHandle`, `linkedin`, `location`). The Maps link is built from `location` automatically. The address is displayed verbatim.
 
-### E. Gallery, Achievements, Collaborations
-Same pattern as before: add an object to the matching array (gallery images 4:3 in `assets/images/gallery/`, partner logos as SVG/PNG in `assets/images/collaborations/`).
+### E. Gallery and Network
+Add gallery objects to `gallery` (images are 4:3 in `assets/images/gallery/`). Network cards
+remain placeholders until partner information is confirmed; then add verified records to
+`collaborations` with partner logos as SVG/PNG in `assets/images/collaborations/`.
 
 ### After editing events, team, announcements or contact
 The `<noscript>` fallbacks in `index.html` (what visitors without JavaScript and simple crawlers see) are generated from `data.js`:
@@ -184,11 +190,11 @@ The script applies EXIF orientation, strips metadata, crops a square biased towa
 No build command; publish directory `.`.
 
 ### Production URL
-The default is `https://aksh.is-a.dev/BLITZ/` (canonical, `og:url`, `og:image`, `twitter:image`, JSON-LD, sitemap, robots). Social scrapers and crawlers need absolute URLs, so it is written out in those files. If the society gets its own domain:
+The default is `https://keshav.du.ac.in/blitz/` (canonical, `og:url`, `og:image`, `twitter:image`, JSON-LD, sitemap, robots). Social scrapers and crawlers need absolute URLs, so it is written out in those files. If the society gets its own domain:
 ```bash
 python tools/set-site-url.py https://your-domain.tld/
 ```
-Note: crawlers only read `robots.txt` at a domain root. While the site lives under `/BLITZ/` on a shared domain, submit `sitemap.xml` in Search Console instead; the file is correct as soon as the site is served from a root.
+Note: crawlers only read `robots.txt` at a domain root. While the site lives under `/blitz/` on a shared domain, submit `sitemap.xml` in Search Console instead; the file is correct as soon as the site is served from a root.
 
 ---
 
@@ -196,12 +202,11 @@ Note: crawlers only read `robots.txt` at a domain root. While the site lives und
 
 What is actually implemented (and checked with Lighthouse mobile, headless Chromium and Playwright):
 
-- **Without JavaScript** the static content stays visible, the nav is a plain link row, and `<noscript>` blocks list the latest announcement, events, team and contact details. Image galleries, achievements and collaborations are JS-rendered and therefore absent without JS.
+- **Without JavaScript** the static content stays visible, the nav is a plain link row, and `<noscript>` blocks list the latest announcement, events, team and contact details. Image galleries and network cards are JS-rendered and therefore absent without JS.
 - **Touch targets:** on phones/tablets (and coarse pointers) every button and link row is at least 44px tall; nav rows are 48px. On desktop with a mouse a few secondary controls are slightly smaller (e.g. 36px ticker buttons).
 - **Contrast:** secondary/faint text measures 4.97:1 or higher against its section background (automated Lighthouse accessibility score 100; this is not a substitute for a manual WCAG audit).
 - **Announcements:** the auto-rotating ticker is not a live region; screen readers are only told about an item when the user changes it manually. Rotation can be paused, and stops while the bar is off-screen, hovered, focused, the tab is hidden or the dialog is open.
 - **Dialog:** page scroll is locked while open, ESC / close button / backdrop tap close it, focus returns to the trigger; a bottom sheet on phones.
 - **Mobile menu:** body scroll lock, focus trap, ESC and outside-tap close, `aria-expanded` kept in sync.
 - **Motion:** `prefers-reduced-motion` disables the logo float, marquee and reveals; animations pause when the hero is off-screen.
-- **Touch rails:** gallery and achievements snap to cards and can be swiped; on touch-only devices achievement details are always visible.
-
+- **Touch rails:** the gallery snaps to cards and can be swiped.

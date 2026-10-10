@@ -404,6 +404,11 @@
                   <dd>${escapeHtml(event.additionalInfo || 'Departmental Initiative')}</dd>
                 </div>
               </dl>
+              <div class="events-panel-actions">
+                <a class="events-detail-btn" href="event.html?event=${encodeURIComponent(event.id || '')}">
+                  View details
+                </a>
+              </div>
             </div>
           </div>
         </article>
@@ -412,6 +417,155 @@
 
     setUpStickyGuard();
   }
+
+  function updateEventDetailRoute(eventId) {
+    if (!window.history || !window.history.replaceState) return;
+    const url = new URL(window.location.href);
+    if (eventId) {
+      url.searchParams.set('event', eventId);
+      url.hash = '';
+    } else {
+      url.searchParams.delete('event');
+    }
+    window.history.replaceState({}, '', url);
+  }
+
+  function renderEventDetail(eventId) {
+    const panel = document.querySelector('#event-detail-content');
+    const section = document.querySelector('#event-detail');
+    if (!panel || !section) return;
+
+    const event = (DATA.events || []).find(function (item) {
+      return (item && item.id) === eventId;
+    });
+
+    if (!event) {
+      section.classList.add('is-visible');
+      panel.innerHTML = `
+        <div class="event-detail-card event-detail-card--empty">
+          <div class="event-detail-header">
+            <p class="section-badge section-badge--dark">BLITZ / EVENT DETAILS</p>
+            <button type="button" class="event-detail-close" aria-label="Close event details">Close</button>
+          </div>
+          <div class="event-detail-body">
+            <h3>Event not found</h3>
+            <p>The requested event could not be located. Please choose an event from the list below.</p>
+          </div>
+        </div>
+      `;
+      panel.querySelector('.event-detail-close').addEventListener('click', function () {
+        section.classList.remove('is-visible');
+        updateEventDetailRoute('');
+      });
+      return;
+    }
+
+    const layout = event.layout || 'speaker';
+    const keyPoints = (event.keyPoints || []).map(function (point) {
+      return `<li>${escapeHtml(point)}</li>`;
+    }).join('');
+
+    const speakerText = Array.isArray(event.speakers) && event.speakers.length
+      ? event.speakers.map(function (speaker) { return escapeHtml(speaker); }).join(', ')
+      : (event.speaker ? escapeHtml(event.speaker) : '');
+
+    const winnerMarkup = Array.isArray(event.winners) && event.winners.length
+      ? `<div class="event-detail-block">
+          <h4>Winners</h4>
+          <ul>${event.winners.map(function (winner) {
+            const names = (winner.names || []).map(function (name) { return escapeHtml(name); }).join(', ');
+            return `<li><strong>${escapeHtml(winner.position || 'Result')}</strong> — ${names}</li>`;
+          }).join('')}</ul>
+        </div>`
+      : '';
+
+    const sessionsMarkup = Array.isArray(event.sessions) && event.sessions.length
+      ? `<div class="event-detail-block">
+          <h4>Sessions</h4>
+          <div class="event-detail-session-list">${event.sessions.map(function (session) {
+            const sessionSpeakers = Array.isArray(session.speakers) ? session.speakers.join(', ') : '';
+            return `
+              <article class="event-detail-session">
+                <h5>${escapeHtml(session.title)}</h5>
+                <p>${sessionSpeakers ? `<strong>Speakers:</strong> ${escapeHtml(sessionSpeakers)}` : ''}</p>
+                <p>${escapeHtml(session.summary || '')}</p>
+              </article>
+            `;
+          }).join('')}</div>
+        </div>`
+      : '';
+
+    const competitionMarkup = Array.isArray(event.competitionSections) && event.competitionSections.length
+      ? `<div class="event-detail-block">
+          <h4>Competition highlights</h4>
+          <ul>${event.competitionSections.map(function (section) {
+            return `<li><strong>${escapeHtml(section.title || 'Competition')}</strong>${section.type ? ` — ${escapeHtml(section.type)}` : ''}</li>`;
+          }).join('')}</ul>
+        </div>`
+      : '';
+
+    const detailTitle = {
+      workshop: 'Workshop highlights',
+      competition: 'Competition outcomes',
+      festival: 'Festival overview',
+      speaker: 'Speaker session'
+    }[layout] || 'Event details';
+
+    panel.innerHTML = `
+      <article class="event-detail-card">
+        <div class="event-detail-header">
+          <p class="section-badge section-badge--dark">BLITZ / ${escapeHtml((event.category || 'EVENT').toUpperCase())}</p>
+          <button type="button" class="event-detail-close" aria-label="Close event details">Close</button>
+        </div>
+        <div class="event-detail-body">
+          <div class="event-detail-topline">
+            <span class="event-detail-tag">${escapeHtml(formatDate(event.date))}</span>
+            <span class="event-detail-tag">${escapeHtml(event.location || 'Campus')}</span>
+          </div>
+          <h3>${escapeHtml(event.title)}</h3>
+          <p class="event-detail-summary">${escapeHtml(event.description || '')}</p>
+          <dl class="event-detail-meta">
+            <div><dt>Format</dt><dd>${escapeHtml(event.format || event.category || 'Event')}</dd></div>
+            <div><dt>Time</dt><dd>${escapeHtml(event.time || 'To be announced')}</dd></div>
+            <div><dt>Speaker(s)</dt><dd>${escapeHtml(speakerText || 'To be announced')}</dd></div>
+          </dl>
+          <div class="event-detail-section">
+            <h4>${detailTitle}</h4>
+            ${keyPoints ? `<ul class="event-detail-points">${keyPoints}</ul>` : '<p>No key points have been published yet.</p>'}
+          </div>
+          ${winnerMarkup}
+          ${sessionsMarkup}
+          ${competitionMarkup}
+          ${event.additionalInfo ? `<div class="event-detail-block"><h4>Notes</h4><p>${escapeHtml(event.additionalInfo)}</p></div>` : ''}
+        </div>
+      </article>
+    `;
+
+    const closeBtn = panel.querySelector('.event-detail-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        section.classList.remove('is-visible');
+        updateEventDetailRoute('');
+      });
+    }
+
+    section.classList.add('is-visible');
+  }
+
+  function syncEventDetailFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get('event');
+    if (eventId) {
+      renderEventDetail(eventId);
+    } else {
+      const detailSection = document.querySelector('#event-detail');
+      if (detailSection) {
+        detailSection.classList.remove('is-visible');
+      }
+    }
+  }
+
+  window.addEventListener('popstate', syncEventDetailFromUrl);
 
   /**
    * Sticky stacking only works when a panel fits inside the visible area below its
@@ -548,6 +702,11 @@
     track.innerHTML = galleryList.map(function (item, index) {
       return `
         <figure class="gallery-item">
+          <figcaption class="gallery-item-copy">
+            <span class="gallery-item-number">${padZero(index + 1, 2)}</span>
+            <strong class="gallery-item-title">${escapeHtml(item.title)}</strong>
+            ${item.description ? `<small class="gallery-item-description">${escapeHtml(item.description)}</small>` : ''}
+          </figcaption>
           <div class="gallery-img-shell">
             <img
               src="${safeAssetUrl(item.image)}"
@@ -558,10 +717,6 @@
               height="600"
             />
           </div>
-          <figcaption>
-            <span>${padZero(index + 1, 2)}</span>
-            <span>${escapeHtml(item.title)}</span>
-          </figcaption>
         </figure>
       `;
     }).join('');
@@ -613,7 +768,26 @@
 
     const list = DATA.collaborations || [];
     if (list.length === 0) {
-      grid.innerHTML = '<p class="events-empty">Collaborative initiatives are currently in progress.</p>';
+      grid.innerHTML = `
+        <div class="collab-card collab-card--placeholder">
+          <div class="collab-logo-box collab-logo-box--placeholder" aria-hidden="true"><span>01</span></div>
+          <h3 class="collab-name">Campus collaborations</h3>
+          <p class="collab-placeholder-copy">A space for confirmed society and department partnerships.</p>
+          <span class="collab-type">Placeholder / awaiting confirmation</span>
+        </div>
+        <div class="collab-card collab-card--placeholder">
+          <div class="collab-logo-box collab-logo-box--placeholder" aria-hidden="true"><span>02</span></div>
+          <h3 class="collab-name">Developer communities</h3>
+          <p class="collab-placeholder-copy">Future community connections will be published here after verification.</p>
+          <span class="collab-type">Placeholder / awaiting confirmation</span>
+        </div>
+        <div class="collab-card collab-card--placeholder">
+          <div class="collab-logo-box collab-logo-box--placeholder" aria-hidden="true"><span>03</span></div>
+          <h3 class="collab-name">Open opportunities</h3>
+          <p class="collab-placeholder-copy">Partner-led workshops, initiatives, and opportunities will appear here.</p>
+          <span class="collab-type">Placeholder / awaiting confirmation</span>
+        </div>
+      `;
       return;
     }
 
@@ -1080,9 +1254,9 @@
     setUpMarquee();
     renderAnnouncements();
     renderEvents();
+    syncEventDetailFromUrl();
     renderTeam();
     renderGallery();
-    renderAchievements();
     renderCollaborations();
     renderContact();
 
@@ -1091,9 +1265,6 @@
     setUpHeroLogo();
 
     setUpHorizontalRail('#gallery-scroller', '#gallery-rail-prev', '#gallery-rail-next');
-    setUpHorizontalRail('#highlights-scroller', '#achievements-rail-prev', '#achievements-rail-next');
-
-    setUpHighlightCards();
     setUpReveals();
   }
 

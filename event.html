@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <script>document.documentElement.classList.add('js');</script>
+    <title>Events | BLITZ Computer Science Society</title>
+    <meta
+      name="description"
+      content="Explore BLITZ events, workshops, competitions, speaker sessions, and technical festivals."
+    />
+    <link rel="canonical" href="https://keshav.du.ac.in/blitz/event.html" />
+    <meta name="theme-color" content="#0b0506" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="event-page">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a id="nav-brand" class="nav-brand" href="index.html#home" aria-label="BLITZ home">
+          <img class="nav-brand-logo" src="assets/logo/blitz-logo.png" alt="" width="56" height="32" decoding="async" />
+        </a>
+        <button
+          id="menu-toggle"
+          class="nav-menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="primary-navigation-links"
+          aria-label="Open navigation menu"
+        >
+          <span></span><span></span><span></span>
+        </button>
+        <div id="primary-navigation-links" class="nav-links">
+          <a href="index.html#home" class="nav-link">Home</a>
+          <a href="index.html#about" class="nav-link">About</a>
+          <a href="index.html#events" class="nav-link is-active" aria-current="page">Events</a>
+          <a href="index.html#team" class="nav-link">Team</a>
+          <a href="index.html#gallery" class="nav-link">Gallery</a>
+          <a href="index.html#collaborations" class="nav-link">Collaborations</a>
+          <a href="index.html#contact" class="nav-link">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="event-launchpad surface surface--ink" aria-labelledby="events-page-title">
+        <div class="event-launchpad-shell">
+          <header class="event-launchpad-heading">
+            <div>
+              <p class="section-badge">BLITZ / EVENT LAUNCHPAD</p>
+              <h1 id="events-page-title">Events</h1>
+              <p class="event-launchpad-intro">
+                Select an event to open its programme, speakers, outcomes, and published notes.
+              </p>
+            </div>
+            <a class="event-back-link" href="index.html#events">Back to calendar</a>
+          </header>
+
+          <div class="event-launchpad-layout">
+            <nav id="event-launchpad-grid" class="event-launchpad-grid" aria-label="Choose an event"></nav>
+            <section id="event-page-detail" class="event-page-detail" aria-live="polite" aria-label="Selected event details"></section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+    <script src="event-page.js"></script>
+  </body>
+</html>
