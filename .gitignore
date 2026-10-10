@@ -4,6 +4,23 @@
 !.env.example
 atlas-credentials.env
 
+# Local Python environments
+.venv/
+venv/
+env/
+
 # Python-generated files
 __pycache__/
 *.py[cod]
+
+# Local editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated archives and source documents
+*.zip
+*.docx
+*.xlsx
+*.pdf
