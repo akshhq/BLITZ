@@ -6,9 +6,8 @@ engineering work is recorded separately at the end.
 
 ## 1. Manual content verification
 
-- [ ] Confirm the official date for **Agentic AI Speaker Session 2026** from one
-  authoritative society source. The earlier 5 February / 6 February conflict
-  remains unresolved, so the public date and time are intentionally omitted.
+- [ ] Verify the official dates and times for all events using authoritative
+  society sources. Resolve any conflicts before publishing them.
 - [ ] Confirm that the published event titles, descriptions, speakers,
   locations, schedules, session summaries, competition names, and Code Verse
   winners are approved for public release. This prevents the site from
@@ -105,8 +104,8 @@ engineering work is recorded separately at the end.
 - [x] Verified locally that the mobile menu opens, locks scrolling, closes with
   Escape, and restores focus to its toggle.
 
-## Team UI refresh — visual QA still required
+## Team UI refinement — visual QA still required
 - [ ] Preview the redesigned Teams section in a real browser at desktop, tablet, and mobile widths.
-- [ ] Confirm the roster summary displays 20 people split into 4 faculty, 3 core team members, 6 senior executives, 2 junior executives, and 5 volunteers.
+- [ ] Confirm the Teams section displays 20 people split into 4 faculty, 3 core team members, 6 senior executives, 2 junior executives, and 5 volunteers.
 - [ ] Review contrast on the maroon faculty/core cards and cream cards, including hover and reduced-motion states.
 - [ ] Replace neutral teacher/member avatars with approved portraits only when supplied and optimized.

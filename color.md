@@ -39,6 +39,12 @@ These variables are defined in `:root` in [`styles.css`](./styles.css).
 | `--cream-dim` | `rgba(244, 241, 232, 0.78)` | Secondary light text and descriptions |
 | `--cream-faint` | `rgba(244, 241, 232, 0.58)` | Low-emphasis light text |
 | `--cream-subtle` | `rgba(244, 241, 232, 0.16)` | Subtle separators and borders |
+| `--text-dark-muted` | `rgba(11, 5, 6, 0.76)` | Secondary text on the cream Team surface |
+| `--surface-cream-top` / `--surface-cream-bottom` | `#fcfaf4` / `#ebe6d8` | Cream surface gradient stops |
+| `--team-card-bg` | `rgba(255, 255, 255, 0.58)` | Shared Team card background |
+| `--team-card-border` | `rgba(76, 0, 0, 0.14)` | Shared Team card border |
+| `--team-card-image-bg` | `#e7d9c9` | Neutral avatar placeholder background |
+| `--team-card-accent` | `#b5232b` | Restrained Team card hover accent |
 | `--accent` | `#ffb000` | Terminal amber: labels, focus rings, badges, active states |
 | `--accent-hover` | `#ffc233` | Hover/focus variation for amber controls |
 | `--accent-dim` | `rgba(255, 176, 0, 0.18)` | Soft amber fills and backgrounds |
@@ -48,6 +54,10 @@ These variables are defined in `:root` in [`styles.css`](./styles.css).
 | `--state-hover-dark` | `rgba(255, 176, 0, 0.2)` | Dark-surface hover/keyboard state fill |
 | `--state-selected-dark` | `rgba(255, 176, 0, 0.12)` | Selected event and winner emphasis fill |
 | `--state-disabled-border` | `rgba(244, 241, 232, 0.24)` | Disabled-control boundary |
+| `--section-space-top` / `--section-space-bottom` | `clamp(96px, 12vh, 148px)` / `clamp(64px, 8vh, 112px)` | Shared major-section vertical rhythm |
+| `--card-radius` | `8px` | Standard content-card radius |
+| `--control-radius` | `6px` | Standard compact-control radius |
+| `--duration-normal` | `280ms` | Shared transition duration |
 
 ## 3. Base colors
 

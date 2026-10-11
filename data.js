@@ -164,18 +164,18 @@ return {
   // Faculty and confirmed society members. Cards show photo, name and position only.
   // Photos: 400x400 WebP in assets/images/team/ (see tools/optimize-team-images.py).
   team: [
-    { name: 'Prof. (Dr.) Vinita Jindal', position: 'Convenor', tier: 'faculty' },
-    { name: 'Dr. Ashutosh Singh', position: 'Faculty Member', tier: 'faculty' },
-    { name: 'Ms. Jyoti Kumari', position: 'Faculty Member', tier: 'faculty' },
-    { name: 'Mr. Anand', position: 'Faculty Member', tier: 'faculty' },
+    { name: 'Prof. (Dr.) Vinita Jindal', position: 'Convenor', tier: 'faculty', photo: 'assets/images/team/vinita-jindal.webp' },
+    { name: 'Dr. Ashutosh Singh', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/ashutosh-singh.webp' },
+    { name: 'Ms. Jyoti Kumari', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/jyoti-kumari.webp' },
+    { name: 'Mr. Anand', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/anand.webp' },
     { name: 'Aksh Kumar', position: 'President', tier: 'core', photo: 'assets/images/team/aksh-kumar.webp' },
     { name: 'Priyal Vatsa', position: 'Secretary', tier: 'core', photo: 'assets/images/team/priyal-vatsa.webp' },
-    { name: 'Vrinda Goyal', position: 'Treasurer', tier: 'core' },
+    { name: 'Vrinda Goyal', position: 'Treasurer', tier: 'core', photo: 'assets/images/team/vrinda-goel.webp' },
 
-    { name: 'Ayushi Jain', position: 'Senior Executive', tier: 'senior' },
+    { name: 'Ayushi Jain', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/ayushi-jain.webp' },
     { name: 'Dev Narayan', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/dev-narayan.webp' },
     { name: 'Kavya Gera', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/kavya-gera.webp' },
-    { name: 'Lavanya Sharma', position: 'Senior Executive', tier: 'senior' },
+    { name: 'Lavanya Sharma', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/lavanya-sharma.webp' },
     { name: 'Parth Arora', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/parth-arora.webp' },
     { name: 'Riya Solanki', position: 'Senior Executive', tier: 'senior', photo: 'assets/images/team/riya-solanki.webp' },
 
