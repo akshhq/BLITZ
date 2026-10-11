@@ -35,7 +35,7 @@ return {
     {
       id: 'internal-sih-results-out',
       title: 'Internal SIH Results Are Out',
-      date: '2026-09-10',
+      date: '',
       summary: 'Internal SIH results are now available.',
       body: '',
       link: 'https://drive.google.com/file/d/1T6O1p8VMs4UZNCT3o1bfY7rn_g5OriPZ/view?usp=sharing'
@@ -161,9 +161,13 @@ return {
     }
   ],
 
-  // Confirmed society members. Cards show photo, name and position only.
+  // Faculty and confirmed society members. Cards show photo, name and position only.
   // Photos: 400x400 WebP in assets/images/team/ (see tools/optimize-team-images.py).
   team: [
+    { name: 'Prof. (Dr.) Vinita Jindal', position: 'Convenor', tier: 'faculty' },
+    { name: 'Dr. Ashutosh Singh', position: 'Faculty Member', tier: 'faculty' },
+    { name: 'Ms. Jyoti Kumari', position: 'Faculty Member', tier: 'faculty' },
+    { name: 'Mr. Anand', position: 'Faculty Member', tier: 'faculty' },
     { name: 'Aksh Kumar', position: 'President', tier: 'core', photo: 'assets/images/team/aksh-kumar.webp' },
     { name: 'Priyal Vatsa', position: 'Secretary', tier: 'core', photo: 'assets/images/team/priyal-vatsa.webp' },
     { name: 'Vrinda Goyal', position: 'Treasurer', tier: 'core' },

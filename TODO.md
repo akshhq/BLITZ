@@ -27,8 +27,7 @@ engineering work is recorded separately at the end.
   the supplied sharing setting works for the public announcement.
 - [ ] Verify the Instagram, LinkedIn, email, and Google Maps contact details
   against the society's current official accounts.
-- [ ] Confirm permission and attribution for every team photograph and gallery
-  asset before production publication.
+- [ ] Supply approved faculty portraits or confirm that neutral avatar placeholders are preferred; confirm permission and attribution for every team photograph and gallery asset before production publication.
 - [ ] Confirm the canonical host, Open Graph image URL, JSON-LD URLs, sitemap
   URL, and parent-college URL with the hosting owner.
 
@@ -78,6 +77,10 @@ engineering work is recorded separately at the end.
 
 ## Completed and verified
 
+- [x] Added the four supplied faculty names to the Team section, with Prof. (Dr.) Vinita Jindal identified as Convenor; missing portraits use the existing neutral avatar.
+- [x] Added section-specific color modifiers for About, Events, event details, Gallery, Collaborations, and Contact, and documented their tokens in `color.md`.
+- [x] Removed the conflicting SIH announcement date from public output until an authoritative date is confirmed.
+
 - [x] Added reusable validation for event IDs, required fields, malformed dates,
   gallery media classification, and missing local assets.
 - [x] Added `tools/validate-site.js` for canonical URLs, metadata, local
@@ -101,3 +104,9 @@ engineering work is recorded separately at the end.
   no observed horizontal overflow.
 - [x] Verified locally that the mobile menu opens, locks scrolling, closes with
   Escape, and restores focus to its toggle.
+
+## Team UI refresh — visual QA still required
+- [ ] Preview the redesigned Teams section in a real browser at desktop, tablet, and mobile widths.
+- [ ] Confirm the roster summary displays 20 people split into 4 faculty, 3 core team members, 6 senior executives, 2 junior executives, and 5 volunteers.
+- [ ] Review contrast on the maroon faculty/core cards and cream cards, including hover and reduced-motion states.
+- [ ] Replace neutral teacher/member avatars with approved portraits only when supplied and optimized.

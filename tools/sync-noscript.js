@@ -23,6 +23,7 @@ const DATA = ctx.window.BLITZ_DATA;
 
 // Keep in sync with the `tiers` array in script.js (renderTeam).
 const TIERS = [
+  ['faculty', 'Faculty & Convenor'],
   ['core', 'Leadership'],
   ['senior', 'Senior Executives'],
   ['junior', 'Junior Executives'],
@@ -52,7 +53,8 @@ const blocks = {
   announcements() {
     const latest = sortByDateDesc([...DATA.announcements])[0];
     if (!latest) return '';
-    return `<noscript><span class="announcement-item-btn"><span class="announcement-item-date">${esc(fmt(latest.date))}</span><span class="announcement-item-title">${esc(latest.title)}</span></span></noscript>`;
+    const date = dateValue(latest.date) ? `<span class="announcement-item-date">${esc(fmt(latest.date))}</span>` : '';
+    return `<noscript><span class="announcement-item-btn">${date}<span class="announcement-item-title">${esc(latest.title)}</span></span></noscript>`;
   },
   events() {
     const items = sortByDateDesc([...DATA.events]).slice(0, 5).map((e) => {

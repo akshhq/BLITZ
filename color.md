@@ -29,6 +29,12 @@ These variables are defined in `:root` in [`styles.css`](./styles.css).
 | `--maroon` | `#4c0000` | Primary BLITZ maroon surface |
 | `--maroon-deep` | `#260000` | Deep maroon gradient stop and footer/event depth |
 | `--maroon-bright` | `#7a1010` | Brighter maroon gradient stop |
+| `--section-plum-top` / `--section-plum-base` | `#1b0c19` / `#10080f` | About section, subtle plum variation |
+| `--section-event-top` | `#641010` | Brighter top of the Events section gradient |
+| `--section-detail-top` / `--section-detail-base` | `#26080d` / `#170609` | Selected event detail surface |
+| `--section-gallery-top` / `--section-gallery-base` | `#1b1725` / `#100e17` | Gallery surface, restrained plum-charcoal |
+| `--section-network-top` / `--section-network-base` | `#2b080d` / `#180709` | Collaborations/network surface |
+| `--section-contact-top` / `--section-contact-base` | `#100608` / `#080405` | Deep contact/footer surface |
 | `--cream` | `#f4f1e8` | Primary light text and cream-section background |
 | `--cream-dim` | `rgba(244, 241, 232, 0.78)` | Secondary light text and descriptions |
 | `--cream-faint` | `rgba(244, 241, 232, 0.58)` | Low-emphasis light text |
@@ -88,7 +94,10 @@ Texture values:
 
 ### `.surface--ink`
 
-Used by the About, Gallery, Network, Contact, and event detail areas.
+Base dark surface, also used by the standalone event page. Homepage sections layer
+specific modifiers over it where distinct section colors improve orientation:
+`.surface--about`, `.surface--event-detail`, `.surface--gallery`, `.surface--network`,
+and `.surface--contact`. The modifiers stay within the ink/maroon/plum brand family.
 
 ```css
 background-color: var(--ink);
@@ -108,7 +117,8 @@ Texture values:
 
 ### `.surface--cream`
 
-Used by the Team section for a high-contrast visual break.
+Used by the Team section for a high-contrast visual break. Faculty and student cards
+share the same light surface; faculty appears first as a separate tier.
 
 ```css
 background-color: var(--cream);

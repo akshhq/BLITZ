@@ -602,10 +602,11 @@
     if (!container) return;
 
     const tiers = [
-      { key: 'core', label: 'Leadership', gridClass: 'team-grid--core' },
-      { key: 'senior', label: 'Senior Executives', gridClass: 'team-grid--senior' },
-      { key: 'junior', label: 'Junior Executives', gridClass: 'team-grid--junior' },
-      { key: 'volunteer', label: 'Volunteers', gridClass: 'team-grid--volunteer' }
+      { key: 'faculty', label: 'Faculty & Convenor', shortLabel: 'FACULTY', gridClass: 'team-grid--faculty' },
+      { key: 'core', label: 'Core Team', shortLabel: 'CORE TEAM', gridClass: 'team-grid--core' },
+      { key: 'senior', label: 'Senior Executives', shortLabel: 'SENIOR EXECUTIVES', gridClass: 'team-grid--senior' },
+      { key: 'junior', label: 'Junior Executives', shortLabel: 'JUNIOR EXECUTIVES', gridClass: 'team-grid--junior' },
+      { key: 'volunteer', label: 'Volunteers', shortLabel: 'VOLUNTEERS', gridClass: 'team-grid--volunteer' }
     ];
 
     const defaultAvatar = 'assets/images/team/avatar-placeholder.svg';
@@ -628,7 +629,7 @@
       });
       if (members.length === 0) return '';
 
-      const cardsHtml = members.map(function (member) {
+      const cardsHtml = members.map(function (member, index) {
         const photo = safeAssetUrl(member.photo);
         const hasPhoto = !!photo;
         // Real photos get a descriptive alt; the placeholder avatar is decorative.
@@ -637,7 +638,7 @@
           : '';
 
         return `
-          <div class="team-card">
+          <article class="team-card team-card--${tier.key}" style="--member-index:${index}">
             <div class="team-card-image">
               <img
                 src="${hasPhoto ? photo : defaultAvatar}"
@@ -652,14 +653,15 @@
               <h4 class="team-card-name">${escapeHtml(member.name)}</h4>
               ${member.position ? `<p class="team-card-position">${escapeHtml(member.position)}</p>` : ''}
             </div>
-          </div>
+          </article>
         `;
       }).join('');
 
       return `
-        <section class="team-tier reveal-tier" aria-labelledby="team-tier-${tier.key}">
+        <section class="team-tier team-tier--${tier.key} reveal-tier" aria-labelledby="team-tier-${tier.key}">
           <div class="team-tier-heading">
-            <h3 id="team-tier-${tier.key}">${escapeHtml(tier.label)}</h3>
+            <div class="team-tier-title-wrap"><span class="team-tier-kicker">${escapeHtml(tier.shortLabel)}</span><h3 id="team-tier-${tier.key}">${escapeHtml(tier.label)}</h3></div>
+            <span class="team-tier-count" aria-label="${members.length} members">${String(members.length).padStart(2, '0')} <span>MEMBERS</span></span>
           </div>
           <div class="team-grid ${tier.gridClass}">
             ${cardsHtml}
