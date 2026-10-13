@@ -241,6 +241,12 @@ on conflict (id) do update
   set public = true, file_size_limit = 2097152,
       allowed_mime_types = array['image/webp', 'image/jpeg', 'image/png'];
 
+-- Storage object privileges are separate from storage RLS policies. Keep the
+-- bucket public for website delivery, but only let authenticated admins use
+-- the browser upload client.
+grant usage on schema storage to authenticated;
+grant select, insert, update, delete on storage.objects to authenticated;
+
 drop policy if exists media_select on storage.objects;
 drop policy if exists media_insert on storage.objects;
 drop policy if exists media_update on storage.objects;

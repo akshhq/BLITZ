@@ -76,6 +76,12 @@ Open **SQL Editor → New query**. Paste each file's contents and press **Run**,
 
 Each should end with “Success”. If a step fails, stop and see [Troubleshooting](#11-troubleshooting).
 
+The admin panel stores every newly selected event image, team photo, gallery image
+and collaboration logo in the public `media` Storage bucket before saving its
+`storage:<folder>/<generated-name>` reference in the corresponding table. The
+bucket is public for website delivery, while uploads remain restricted to
+authenticated owners and editors by both database privileges and RLS policies.
+
 ## 3. Create the admin accounts
 
 1. **Authentication → Users → Add user → Create new user.** Enter the person's email and a temporary password, and tick **Auto Confirm User**. Do this for each person (owners, editors, viewers).
