@@ -3,7 +3,22 @@
 
 Official website for **BLITZ**, the Computer Science departmental society of Keshav Mahavidyalaya, University of Delhi.
 
-This project is **dependency-free, zero-build and static**. It runs by opening `index.html` directly (`file://`) or from any static host. The `tools/` folder holds optional one-off maintainer scripts (Python/Node); the site itself never needs them.
+This project is **zero-build and static**: plain HTML/CSS/JS files that any web server can host. The public site has no dependencies; the admin panel ships one vendored, version-pinned library (`prezi_panel/vendor/supabase.js`). The `tools/` and `supabase/` folders hold maintainer scripts and database files; the site itself never needs them to run.
+
+## 0. How content works (read this first)
+
+```
+ https://keshav.du.ac.in/blitz/                    https://keshav.du.ac.in/blitz/prezi_panel/
+   public site (read only)                           admin panel (login required)
+          │  one public call: site_content()                │  sign in, create / edit / delete / reorder
+          └──────────────►  Supabase (free)  ◄──────────────┘
+                            database + login + image storage
+```
+
+- **Announcements, events, team, gallery and collaborations** live in the database and are edited in the admin panel. A save appears on the website immediately (visitors with the page already open see it within about two minutes or on their next visit); nobody has to redeploy anything.
+- **`data.js`** now holds (a) the **contact details** and (b) a **fallback snapshot** of the content, shown only if the database cannot be reached and used for the no-JavaScript text. The site is never blank.
+- **Setup, accounts, password reset, deployment and troubleshooting:** see **[SETUP-ADMIN.md](SETUP-ADMIN.md)**.
+- Until `config.js` is filled in, the site simply shows the content in `data.js`, exactly as before.
 
 ---
 
@@ -18,6 +33,20 @@ BLITZ/
 ├── script.js             # Vanilla JS: ticker, modal, nav sheet, rails, hero logo
 ├── event-renderer.js      # Shared, escaped event-detail markup for both pages
 ├── event-page.js          # Data-driven event selector and route-aware page shell
+├── .env.example          # Local Supabase configuration template
+├── config.js             # PUBLIC runtime config generated from .env
+├── content-map.js        # database rows -> site objects (shared by site and admin)
+├── content-loader.js     # loads live content (cached), falls back to data.js
+├── prezi_panel/          # THE ADMIN PANEL (own folder, own strict CSP, noindex)
+│   ├── index.html  admin.css  admin-core.js  admin-forms.js  admin-app.js
+│   ├── preview.html  preview.js   # live event preview (sandboxed frame)
+│   ├── .htaccess.example          # recommended security headers (give to the server admin)
+│   └── vendor/supabase.js         # pinned supabase-js 2.117.2 (MIT)
+├── supabase/
+│   ├── schema.sql  seed.sql  admins.sql   # run in the Supabase SQL editor (see SETUP-ADMIN.md)
+│   └── tests/                             # database + end-to-end tests (optional)
+├── .github/workflows/keepalive.yml        # stops the free database being paused
+├── SETUP-ADMIN.md
 ├── favicon.ico           # 16/32/48 (generated)
 ├── favicon-16.png  favicon-32.png  apple-touch-icon.png  icon-192.png  icon-512.png
 ├── site.webmanifest      # PWA/theme colours + icons
@@ -38,9 +67,23 @@ BLITZ/
 │   ├── optimize-team-images.py  # photos -> 400x400 WebP
 │   ├── set-site-url.py          # change the production URL everywhere
 │   ├── validate-site.js         # metadata, URL, sitemap, robots, asset checks
+│   ├── generate-seed.js         # data.js -> supabase/seed.sql (one-time import)
 │   └── sync-noscript.js         # regenerate <noscript> blocks from data.js
 └── README.md
 ```
+
+### Local configuration
+
+This is a zero-build static site, so browsers cannot read `.env` directly. To configure
+the public site and admin panel:
+
+1. Copy `.env.example` to `.env`.
+2. Fill in `SUPABASE_URL` and the public `SUPABASE_ANON_KEY`.
+3. Run `node tools/configure-env.js`.
+4. Deploy the generated `config.js` with the rest of the site.
+
+`.env` is ignored by Git. Only the public anon/publishable key belongs in this
+configuration; never use a Supabase `service_role` or secret key.
 
 ---
 
@@ -105,7 +148,9 @@ Defined in `styles.css`:
 
 ---
 
-## 4. How to Update Content (`data.js`)
+## 4. The shape of the content (`data.js` snapshot, contact)
+
+> Day-to-day edits are made in the **admin panel**, not here. Edit `data.js` only for the **contact details**, or to refresh the fallback snapshot (the admin's **Backup / export** page writes a ready-made `data.js` for you). The field shapes below are still the shapes used everywhere.
 
 All dynamic content lives in `window.BLITZ_DATA` in `data.js`, and it is intentionally kept separate from rendering logic for easy future replacement or admin integration.
 
@@ -140,7 +185,7 @@ selected event from `data.js`, so adding an event to the shared data source auto
 adds its selector tile and detail view without creating another HTML file.
 
 ### C. Team member
-Tiers: `'core'` (Leadership), `'senior'` (Senior Executives), `'junior'` (Junior Executives), `'volunteer'` (Volunteers). Cards show photo, name and position only.
+Tiers: `'faculty'` (Faculty & Convenor), `'core'` (Core Team), `'senior'` (Senior Executives), `'junior'` (Junior Executives), `'volunteer'` (Volunteers). Cards show photo, name and position only.
 ```javascript
 { name: 'First Last', position: 'Volunteer', tier: 'volunteer',
   photo: 'assets/images/team/first-last.webp' } // omit photo => decorative avatar placeholder

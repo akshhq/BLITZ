@@ -1,37 +1,13 @@
-/* =============================================================================
-   BLITZ — Computer Science Departmental Society
-   Keshav Mahavidyalaya, University of Delhi
-   -----------------------------------------------------------------------------
-   TABLE OF CONTENTS:
-   01. DESIGN TOKENS & ROOT VARIABLES
-   02. RESET & BASE STYLES
-   03. TYPOGRAPHY & ACCESSIBILITY UTILITIES
-   04. SHARED SURFACE SYSTEM (Textures, Gradients, Scanlines)
-   05. SITE HEADER & NAVIGATION
-   06. BRAND LOGO & HERO SECTION
-   07. MARQUEE COMPONENT
-   08. ABOUT SECTION (Department Focus)
-   09. ANNOUNCEMENTS TICKER & MODAL
-   10. EVENTS STACK (Sticky Panels)
-   11. TEAM SECTION (High-Contrast Cream Surface)
-   12. GALLERY RAIL
-   13. COLLABORATIONS SECTION
-   15. SITE FOOTER (Contact & Landmarks)
-   16. REVEAL ANIMATIONS & PERFORMANCE
-   17. MEDIA QUERIES & RESPONSIVE ADAPTATIONS
-   18. PREFERS-REDUCED-MOTION OVERRIDES
-   ============================================================================= */
 
-/* -----------------------------------------------------------------------------
-   01. DESIGN TOKENS & ROOT VARIABLES
-   ----------------------------------------------------------------------------- */
+
+
 :root {
-  /* Warm Ink & Dark Palettes */
+  
   --ink: #0b0506;
   --ink-surface: #140709;
   --ink-elevated: #1e0b0e;
 
-  /* Brand Maroon Palettes */
+  
   --maroon: #4c0000;
   --maroon-deep: #260000;
   --maroon-bright: #7a1010;
@@ -47,7 +23,7 @@
   --section-contact-top: #100608;
   --section-contact-base: #080405;
 
-  /* Warm Cream & Neutral Palettes */
+  
   --cream: #f4f1e8;
   --cream-dim: rgba(244, 241, 232, 0.78);
   --cream-faint: rgba(244, 241, 232, 0.58);
@@ -60,36 +36,36 @@
   --team-card-image-bg: #e7d9c9;
   --team-card-accent: #b5232b;
 
-  /* Vibrant Accents */
-  --accent: #ffb000;       /* Terminal Amber */
+  
+  --accent: #ffb000;       
   --accent-hover: #ffc233;
   --accent-dim: rgba(255, 176, 0, 0.18);
-  --accent-hot: #ff3d2e;   /* Alert / Upcoming Accent */
+  --accent-hot: #ff3d2e;   
 
-  /* Semantic states */
+  
   --focus-ring-dark: var(--accent);
   --focus-ring-light: var(--maroon-bright);
   --state-hover-dark: rgba(255, 176, 0, 0.2);
   --state-selected-dark: rgba(255, 176, 0, 0.12);
   --state-disabled-border: rgba(244, 241, 232, 0.24);
 
-  /* Navigation Dimensions (--nav-height is 64px on phones/tablets, see section 17) */
+  
   --nav-height: 74px;
   --header-h: calc(var(--nav-height) + env(safe-area-inset-top, 0px));
-  --tap: 44px; /* minimum touch target */
+  --tap: 44px; 
 
-  /* Events stack: how much of each earlier panel stays visible */
+  
   --stack-step: 48px;
 
-  /* Hero logo: width, aspect ratio of assets/logo/blitz-logo.png (512x293) */
+  
   --hero-logo-ratio: 1.7474;
   --hero-logo-w: clamp(200px, 60vw, 520px);
 
-  /* Typography */
+  
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Geist Mono", "Courier New", monospace;
 
-  /* Layout Containers */
+  
   --container-max: 1320px;
   --container-pad: clamp(16px, 5.2vw, 64px);
   --section-space-top: clamp(96px, 12vh, 148px);
@@ -97,14 +73,12 @@
   --card-radius: 8px;
   --control-radius: 6px;
 
-  /* Transitions */
+  
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-normal: 280ms;
 }
 
-/* -----------------------------------------------------------------------------
-   02. RESET & BASE STYLES
-   ----------------------------------------------------------------------------- */
+
 *,
 *::before,
 *::after {
@@ -118,10 +92,10 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scrollbar-gutter: stable; /* no layout shift when scroll is locked (menu / dialog) */
+  scrollbar-gutter: stable; 
 }
 
-/* Scroll lock while the mobile menu or the announcement dialog is open */
+
 html.nav-open,
 html.modal-open {
   overflow: hidden;
@@ -156,7 +130,7 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* No 300ms delay / accidental double-tap zoom on interactive elements */
+
 button,
 a,
 summary,
@@ -170,16 +144,14 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Section Anchor Offsets (Prevents fixed nav overlap) */
+
 section,
 footer {
   scroll-margin-top: var(--header-h);
 }
 
-/* -----------------------------------------------------------------------------
-   03. TYPOGRAPHY & ACCESSIBILITY UTILITIES
-   ----------------------------------------------------------------------------- */
-/* Skip Link */
+
+
 .skip-link {
   position: absolute;
   top: -999px;
@@ -199,7 +171,7 @@ footer {
   top: 16px;
 }
 
-/* Global Focus Ring */
+
 button:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible,
@@ -232,7 +204,7 @@ button:disabled,
   border: 0;
 }
 
-/* Meta & Badge Labels */
+
 .section-badge {
   display: inline-block;
   margin: 0 0 14px;
@@ -252,9 +224,7 @@ button:disabled,
   color: var(--accent);
 }
 
-/* -----------------------------------------------------------------------------
-   04. SHARED SURFACE SYSTEM (Dry Textures, Gradients, Scanlines)
-   ----------------------------------------------------------------------------- */
+
 .surface {
   position: relative;
   overflow: hidden;
@@ -269,7 +239,7 @@ button:disabled,
   content: "";
 }
 
-/* Scanline Texture Overlay */
+
 .surface::before {
   background: repeating-linear-gradient(
     to bottom,
@@ -281,7 +251,7 @@ button:disabled,
   mix-blend-mode: screen;
 }
 
-/* Dot Grain Pattern Overlay */
+
 .surface::after {
   background-image: repeating-radial-gradient(
     circle at 70% 35%,
@@ -294,7 +264,7 @@ button:disabled,
   opacity: 0.26;
 }
 
-/* Surface Modifiers */
+
 .surface--maroon {
   background-color: var(--maroon);
   background-image: linear-gradient(
@@ -342,7 +312,7 @@ button:disabled,
   --surface-grain: rgba(11, 5, 6, 0.035);
 }
 
-/* Section-specific surfaces: related brand colors, intentionally distinct section moods. */
+
 .surface--about {
   background-color: var(--section-plum-base);
   background-image: linear-gradient(180deg, var(--section-plum-top) 0%, var(--section-plum-base) 58%, #090509 100%);
@@ -385,9 +355,7 @@ button:disabled,
   --surface-grain: rgba(244, 241, 232, 0.02);
 }
 
-/* -----------------------------------------------------------------------------
-   05. SITE HEADER & NAVIGATION
-   ----------------------------------------------------------------------------- */
+
 .site-header {
   position: fixed;
   top: 0;
@@ -396,11 +364,11 @@ button:disabled,
   z-index: 100;
   height: var(--header-h);
   padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
-  background: rgba(11, 5, 6, 0.97); /* solid fallback */
+  background: rgba(11, 5, 6, 0.97); 
   border-bottom: 1px solid rgba(255, 176, 0, 0.22);
 }
 
-/* Blur only where it is supported, and only on this small bar (never on large areas) */
+
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .site-header {
     background: rgba(11, 5, 6, 0.88);
@@ -419,7 +387,7 @@ button:disabled,
   padding: 0 clamp(16px, 4vw, 42px);
 }
 
-/* Brand link in navbar: logo mark + wordmark */
+
 .nav-brand {
   display: inline-flex;
   align-items: center;
@@ -489,9 +457,7 @@ button:disabled,
   display: none;
 }
 
-/* -----------------------------------------------------------------------------
-   06. BRAND LOGO & HERO SECTION
-   ----------------------------------------------------------------------------- */
+
 .introduction {
   min-height: 100vh;
   min-height: 100svh;
@@ -503,7 +469,7 @@ button:disabled,
   }
 }
 
-/* Hero logo image (fixed; JS docks it into the nav on scroll) */
+
 .transition-logo {
   position: fixed;
   top: 41.4vh;
@@ -518,7 +484,7 @@ button:disabled,
   transition: opacity 180ms ease;
 }
 
-/* Slow float/tilt: transform only, so it stays on the compositor */
+
 .hero-logo-tilt {
   animation: logo-float 9s ease-in-out infinite alternate;
   will-change: transform;
@@ -542,18 +508,18 @@ button:disabled,
   }
 }
 
-/* Paused while the hero is off-screen (class toggled by script.js) */
+
 .introduction.is-offscreen .hero-logo-tilt,
 .introduction.is-offscreen .marquee-track {
   animation-play-state: paused;
 }
 
-/* Without JS the logo can't be docked, so keep it inside the hero instead of fixed to the screen */
+
 html:not(.js) .transition-logo {
   position: absolute;
 }
 
-/* Hero Semantic H1 */
+
 .hero-heading-shell {
   position: absolute;
   top: calc(41.4vh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + clamp(16px, 3vh, 36px));
@@ -595,7 +561,7 @@ html:not(.js) .transition-logo {
   text-transform: uppercase;
 }
 
-/* Hero Bottom Info Stack */
+
 .introduction-copy-stack {
   position: absolute;
   bottom: clamp(32px, 5.5vh, 64px);
@@ -644,9 +610,7 @@ html:not(.js) .transition-logo {
   line-height: 1.6;
 }
 
-/* -----------------------------------------------------------------------------
-   07. MARQUEE COMPONENT
-   ----------------------------------------------------------------------------- */
+
 .department-marquee {
   position: absolute;
   top: clamp(96px, 14vh, 120px);
@@ -703,9 +667,7 @@ html:not(.js) .transition-logo {
   }
 }
 
-/* -----------------------------------------------------------------------------
-   08. ABOUT SECTION (Department Focus)
-   ----------------------------------------------------------------------------- */
+
 .home-section {
   min-height: 100vh;
 }
@@ -825,9 +787,7 @@ html:not(.js) .transition-logo {
   line-height: 1.6;
 }
 
-/* -----------------------------------------------------------------------------
-   09. ANNOUNCEMENTS TICKER & MODAL
-   ----------------------------------------------------------------------------- */
+
 .announcements-bar {
   position: relative;
   z-index: 10;
@@ -963,7 +923,7 @@ html:not(.js) .transition-logo {
   color: var(--accent);
 }
 
-/* Accessible Modal (centred dialog on desktop, bottom sheet on phones: see section 17) */
+
 .announcement-modal {
   padding: 0;
   border: none;
@@ -977,7 +937,7 @@ html:not(.js) .transition-logo {
 }
 
 .announcement-modal::backdrop {
-  /* Solid dim, no blur: blurring a full-screen layer is expensive on mid-range phones */
+  
   background: rgba(11, 5, 6, 0.9);
 }
 
@@ -1106,9 +1066,7 @@ html:not(.js) .transition-logo {
   background: var(--accent-hover);
 }
 
-/* -----------------------------------------------------------------------------
-   10. EVENTS STACK (Sticky Panels)
-   ----------------------------------------------------------------------------- */
+
 .events-section {
   position: relative;
   overflow: clip;
@@ -1197,8 +1155,7 @@ html:not(.js) .transition-logo {
   --top-row-h: 28px;
 }
 
-/* Each panel sticks BELOW the fixed header; later panels stack --stack-step lower so a strip
-   (number + badge) of every earlier panel stays visible. */
+
 .events-panel {
   position: sticky;
   top: calc(var(--header-h) + var(--event-index, 0) * var(--stack-step));
@@ -1207,11 +1164,11 @@ html:not(.js) .transition-logo {
   flex-direction: column;
   min-height: max(420px, calc(100vh - var(--header-h) - var(--event-index, 0) * var(--stack-step)));
   min-height: max(420px, calc(100svh - var(--header-h) - var(--event-index, 0) * var(--stack-step)));
-  overflow: visible; /* never clip long titles/descriptions */
+  overflow: visible; 
   border-top: 1px solid rgba(255, 176, 0, 0.28);
 }
 
-/* Set by script.js for panels taller than the visible area, so their lower part stays reachable */
+
 .events-panel.is-tall {
   position: relative;
   top: auto;
@@ -1228,7 +1185,7 @@ html:not(.js) .transition-logo {
   width: 100%;
   max-width: var(--container-max);
   margin: 0 auto;
-  /* the number + badge row sits inside the strip that earlier panels leave visible */
+  
   padding: calc((var(--stack-step) - var(--top-row-h)) / 2) var(--container-pad) clamp(40px, 6vh, 84px);
 }
 
@@ -1558,9 +1515,7 @@ html:not(.js) .transition-logo {
   padding-top: 30px;
 }
 
-/* -----------------------------------------------------------------------------
-   10A. EVENT LAUNCHPAD PAGE
-   ----------------------------------------------------------------------------- */
+
 .event-launchpad {
   min-height: 100vh;
   padding-top: var(--header-h);
@@ -1835,9 +1790,7 @@ html:not(.js) .transition-logo {
   color: var(--cream);
 }
 
-/* -----------------------------------------------------------------------------
-   11. TEAM SECTION (High-Contrast Cream Surface)
-   ----------------------------------------------------------------------------- */
+
 .team-section {
   min-height: 100vh;
 }
@@ -1895,7 +1848,7 @@ html:not(.js) .transition-logo {
   text-transform: uppercase;
 }
 
-/* Semantic Team Grids */
+
 .team-grid {
   display: grid;
   gap: clamp(20px, 2.5vw, 36px);
@@ -1987,9 +1940,7 @@ html:not(.js) .transition-logo {
   text-transform: uppercase;
 }
 
-/* -----------------------------------------------------------------------------
-   12. GALLERY RAIL
-   ----------------------------------------------------------------------------- */
+
 .gallery-section {
   min-height: 100vh;
 }
@@ -2187,9 +2138,7 @@ html:not(.js) .transition-logo {
   text-transform: uppercase;
 }
 
-/* -----------------------------------------------------------------------------
-   13. COLLABORATIONS SECTION
-   ----------------------------------------------------------------------------- */
+
 .collaborations-section {
   min-height: 70vh;
 }
@@ -2331,9 +2280,7 @@ html:not(.js) .transition-logo {
   text-transform: uppercase;
 }
 
-/* -----------------------------------------------------------------------------
-   15. SITE FOOTER (Contact & Landmarks)
-   ----------------------------------------------------------------------------- */
+
 .blitz-contact-footer {
   position: relative;
   z-index: 10;
@@ -2465,7 +2412,7 @@ html:not(.js) .transition-logo {
   letter-spacing: 0.04em;
 }
 
-/* Keep disabled controls visibly unavailable without hiding their labels. */
+
 button:disabled:hover,
 button:disabled:focus-visible,
 [aria-disabled="true"]:hover,
@@ -2480,10 +2427,8 @@ button:disabled:focus-visible,
   text-decoration: none;
 }
 
-/* -----------------------------------------------------------------------------
-   16. REVEAL ANIMATIONS & PERFORMANCE
-   ----------------------------------------------------------------------------- */
-/* Scoped to html.js so content remains visible if JS fails */
+
+
 html.js [data-reveal],
 html.js .reveal-tier {
   opacity: 0;
@@ -2497,12 +2442,9 @@ html.js .reveal-tier.is-revealed {
   transform: translateY(0);
 }
 
-/* -----------------------------------------------------------------------------
-   17. MEDIA QUERIES & RESPONSIVE ADAPTATIONS
-   Desktop (>= 900px) is the approved layout and is left untouched.
-   ----------------------------------------------------------------------------- */
 
-/* Touch-size controls on anything that is not a fine pointer */
+
+
 @media (max-width: 899px), (pointer: coarse) {
   .announcements-btn {
     width: var(--tap);
@@ -2513,13 +2455,13 @@ html.js .reveal-tier.is-revealed {
     min-height: var(--tap);
   }
 
-  /* big full-section blend layers are costly on phones; plain alpha looks the same */
+  
   .surface::before {
     mix-blend-mode: normal;
   }
 }
 
-/* Snap rails only for touch (a mouse wheel keeps the smooth custom scrolling) */
+
 @media (hover: none), (pointer: coarse) {
   .gallery-scroller {
     scroll-snap-type: x mandatory;
@@ -2531,7 +2473,7 @@ html.js .reveal-tier.is-revealed {
   }
 }
 
-/* ---- Phones & tablets (mobile layout) ------------------------------------ */
+
 @media (max-width: 899px) {
   :root {
     --nav-height: 64px;
@@ -2542,7 +2484,7 @@ html.js .reveal-tier.is-revealed {
     --top-row-h: 22px;
   }
 
-  /* Nav: full-width slide-down sheet */
+  
   .nav-menu-toggle {
     display: flex;
     flex-direction: column;
@@ -2634,7 +2576,7 @@ html.js .reveal-tier.is-revealed {
     display: none;
   }
 
-  /* Hero */
+  
   .department-marquee {
     top: calc(var(--header-h) + clamp(10px, 2.6svh, 28px));
     height: clamp(56px, 10svh, 76px);
@@ -2668,7 +2610,7 @@ html.js .reveal-tier.is-revealed {
     bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 20px));
   }
 
-  /* About */
+  
   .home-section,
   .home-layout {
     min-height: 0;
@@ -2703,7 +2645,7 @@ html.js .reveal-tier.is-revealed {
     text-wrap: balance;
   }
 
-  /* Section paddings clear the fixed header */
+  
   .events-heading,
   .team-layout,
   .gallery-layout,
@@ -2717,7 +2659,7 @@ html.js .reveal-tier.is-revealed {
     min-height: 0;
   }
 
-  /* Events */
+  
   .events-panel-inner {
     gap: 8px;
     padding-bottom: 40px;
@@ -2737,7 +2679,7 @@ html.js .reveal-tier.is-revealed {
     font-size: 16px;
   }
 
-  /* Date / location / format become a clean stacked list */
+  
   .events-panel-details {
     display: block;
     padding-top: 0;
@@ -2760,7 +2702,7 @@ html.js .reveal-tier.is-revealed {
     overflow-wrap: break-word;
   }
 
-  /* Rails */
+  
   .gallery-heading {
     display: block;
   }
@@ -2771,7 +2713,7 @@ html.js .reveal-tier.is-revealed {
   }
 
   .gallery-scroller {
-    /* bleed to the screen edges so the next card visibly peeks */
+    
     margin-inline: calc(var(--container-pad) * -1);
     padding-inline: var(--container-pad);
     width: auto;
@@ -2781,15 +2723,15 @@ html.js .reveal-tier.is-revealed {
     flex-basis: min(82vw, 420px);
   }
 
-  /* Contact */
+  
   .blitz-contact-header {
     margin-bottom: 24px;
   }
 }
 
-/* ---- Phones ----------------------------------------------------------------- */
+
 @media (max-width: 640px) {
-  /* Announcements: chip row / headline row / controls row */
+  
   .announcements-bar-inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -2809,7 +2751,7 @@ html.js .reveal-tier.is-revealed {
 
   .announcements-viewport {
     grid-area: headline;
-    touch-action: pan-y; /* horizontal swipe changes item, vertical scroll stays native */
+    touch-action: pan-y; 
   }
 
   .announcements-controls {
@@ -2850,7 +2792,7 @@ html.js .reveal-tier.is-revealed {
     font-size: 20px;
   }
 
-  /* Modal becomes a bottom sheet */
+  
   .announcement-modal {
     width: 100%;
     max-width: 100%;
@@ -2874,7 +2816,7 @@ html.js .reveal-tier.is-revealed {
     margin-bottom: 12px;
   }
 
-  /* Team: 2 columns, leadership as full-width rows with larger photos */
+  
   .team-grid--senior,
   .team-grid--junior,
   .team-grid--volunteer {
@@ -2927,7 +2869,7 @@ html.js .reveal-tier.is-revealed {
     padding-top: 18px;
   }
 
-  /* Collaborations */
+  
   .collaborations-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
@@ -2950,7 +2892,7 @@ html.js .reveal-tier.is-revealed {
     font-size: 15px;
   }
 
-  /* Contact: one column of 48px+ tappable rows */
+  
   .blitz-contact-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
@@ -2972,7 +2914,7 @@ html.js .reveal-tier.is-revealed {
     padding-top: 24px;
   }
 
-  /* Hero copy: centred with a comfortable line length */
+  
   .introduction-copy-stack {
     justify-content: center;
   }
@@ -2995,7 +2937,7 @@ html.js .reveal-tier.is-revealed {
   }
 }
 
-/* ---- Short landscape phones (e.g. 740x360) ------------------------------- */
+
 @media (max-height: 520px) and (orientation: landscape) {
   .introduction {
     min-height: max(100svh, 420px);
@@ -3027,7 +2969,7 @@ html.js .reveal-tier.is-revealed {
   }
 }
 
-/* ---- No-JS fallbacks --------------------------------------------------------- */
+
 html:not(.js) .nav-menu-toggle {
   display: none;
 }
@@ -3096,9 +3038,7 @@ html:not(.js) .nav-menu-toggle {
 .ns-list a {
   text-decoration: underline;
 }
-/* -----------------------------------------------------------------------------
-   18. PREFERS-REDUCED-MOTION OVERRIDES
-   ----------------------------------------------------------------------------- */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -3161,9 +3101,17 @@ html:not(.js) .nav-menu-toggle {
   }
 }
 
-/* -----------------------------------------------------------------------------
-   TEAM EXPERIENCE REFRESH — bold editorial hierarchy, roster counts and accents
-   ----------------------------------------------------------------------------- */
+
+@media (max-width: 400px) {
+  .events-view-all {
+    flex: 0 1 auto;
+    max-width: 100%;
+    padding: 12px 16px;
+    gap: 8px;
+  }
+}
+
+
 .team-section {
   position: relative;
   overflow: clip;
@@ -3309,7 +3257,7 @@ html:not(.js) .nav-menu-toggle {
 }
 
 
-/* TEAM SECTION — compact, balanced roster (replaces oversized refresh) */
+
 .team-section { min-height: 0; }
 .team-layout { padding-top: clamp(64px, 8vh, 96px); padding-bottom: clamp(48px, 6vh, 76px); }
 .team-heading { padding-bottom: clamp(22px, 3vw, 34px); }

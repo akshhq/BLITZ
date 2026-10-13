@@ -2,7 +2,10 @@
 .env
 .env.*
 !.env.example
+*.local
+config.local.js
 atlas-credentials.env
+BLITZ.zip
 
 # Local Python environments
 .venv/

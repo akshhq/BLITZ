@@ -2,7 +2,10 @@
   'use strict';
 
   var DATA = window.BLITZ_DATA || { events: [] };
-  var events = Array.isArray(DATA.events) ? DATA.events : [];
+  var events = [];
+  function loadEvents() {
+    events = Array.isArray(window.BLITZ_DATA && window.BLITZ_DATA.events) ? window.BLITZ_DATA.events : [];
+  }
   var grid = document.querySelector('#event-launchpad-grid');
   var detail = document.querySelector('#event-page-detail');
 
@@ -19,8 +22,6 @@
       date.getDate() !== Number(match[3])) return 0;
     return date.getTime();
   }
-
-  // Valid dates sort newest-first; undated or invalid records stay last in source order.
   function sortEventsByDate(items) {
     return (Array.isArray(items) ? items : []).map(function (event, index) {
       var parsedDate = parseDate(event && event.date);
@@ -96,6 +97,7 @@
   }
 
   function render() {
+    loadEvents();
     if (events.length === 0) {
       updatePageMetadata(null);
       grid.innerHTML = '<div class="event-page-empty"><h2>No events published</h2><p>Check back soon for the next BLITZ event.</p></div>';
@@ -115,10 +117,16 @@
         clickEvent.preventDefault();
         setRoute(tile.getAttribute('data-event-id'));
         render();
+        if (window.matchMedia('(max-width: 899px)').matches) {
+          detail.setAttribute('tabindex', '-1');
+          detail.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+          detail.focus({ preventScroll: true });
+        }
       });
     });
   }
 
   window.addEventListener('popstate', render);
   render();
+  if (window.BLITZ_LIVE) window.BLITZ_LIVE.onChange(render);
 }());

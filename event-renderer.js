@@ -1,7 +1,4 @@
-/**
- * Shared event-detail markup for the homepage preview and Events Launchpad.
- * Loaded before either page-specific script; it has no dependencies.
- */
+
 (function (window) {
   'use strict';
 
@@ -39,7 +36,8 @@
 
   function mediaMarkup(event) {
     var image = String(event.image || event.imageUrl || '').trim();
-    var imageUrl = image && !/^[a-z][a-z0-9+.-]*:/i.test(image) && image.indexOf('//') !== 0
+    var imageUrl = image && (/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/)[^\s"'<>]+$/i.test(image) ||
+      (!/^[a-z][a-z0-9+.-]*:/i.test(image) && image.indexOf('//') !== 0))
       ? escapeHtml(image) : '';
     var imageMarkup = imageUrl
       ? '<figure class="event-detail-media"><img src="' + imageUrl + '" alt="' +

@@ -1,15 +1,5 @@
 #!/usr/bin/env node
-/**
- * Regenerates the <noscript> fallbacks in index.html from data.js, so visitors without
- * JavaScript (and link scrapers / simple crawlers) still get the team, events, contact
- * details and latest announcement as plain HTML.
- *
- *     node tools/sync-noscript.js
- *
- * Optional maintainer tool: Node.js only, no packages. The site itself never needs it.
- * It rewrites whatever sits between the `<!-- ns:NAME:start -->` / `<!-- ns:NAME:end -->`
- * markers in index.html. Run it after editing events, team, announcements or contact.
- */
+
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -20,11 +10,9 @@ const ctx = { window: {} };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), ctx);
 const DATA = ctx.window.BLITZ_DATA;
-
-// Keep in sync with the `tiers` array in script.js (renderTeam).
 const TIERS = [
   ['faculty', 'Faculty & Convenor'],
-  ['core', 'Leadership'],
+  ['core', 'Core Team'],
   ['senior', 'Senior Executives'],
   ['junior', 'Junior Executives'],
   ['volunteer', 'Volunteers']

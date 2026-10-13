@@ -31,8 +31,6 @@ def save_png(im, path, colors=None):
         im = im.quantize(colors=colors, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
     im.save(path, optimize=True)
     print(f"{os.path.relpath(path, ROOT):38s} {os.path.getsize(path)/1024:7.1f} KB  {im.size}")
-
-# ---- 1. trim the empty canvas around the mark ------------------------------
 src = Image.open(SRC).convert("RGBA")
 bbox = src.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox()
 pad = int(0.012 * (bbox[2] - bbox[0]))          # ~1.2% breathing room so AA edges never clip
@@ -48,13 +46,9 @@ os.makedirs(p("assets", "logo"), exist_ok=True)
 logo512 = resized(mark, 512)
 save_png(logo512, p("assets", "logo", "blitz-logo.png"), colors=32)
 save_png(resized(mark, 1024), p("assets", "logo", "blitz-logo-1024.png"), colors=32)
-
-# dark variant: same alpha, ink colour
 dark = Image.new("RGBA", logo512.size, INK + (255,))
 dark.putalpha(logo512.getchannel("A"))
 save_png(dark, p("assets", "logo", "blitz-logo-dark.png"), colors=32)
-
-# ---- 2. icons ----------------------------------------------------------------
 hi = resized(mark, 1600)   # high-res master for downsampling
 
 def tile(size, bg, width_frac, rounded=0):
@@ -69,26 +63,18 @@ def tile(size, bg, width_frac, rounded=0):
         ImageDraw.Draw(m).rounded_rectangle((0, 0, S-1, S-1), radius=round(S*rounded), fill=255)
         im.putalpha(m)
     return im.resize((size, size), Image.Resampling.LANCZOS)
-
-# small favicons: logo fills ~90% of the tile; slightly rounded so it sits nicely in a tab
 f16, f32, f48 = (tile(s, INK, 0.92, rounded=0.18) for s in (16, 32, 48))
 save_png(f16, p("favicon-16.png"))
 save_png(f32, p("favicon-32.png"))
 f48.save(p("favicon.ico"), format="ICO", sizes=[(16,16),(32,32),(48,48)],
          append_images=[f32, f16])
 print(f"{'favicon.ico':38s} {os.path.getsize(p('favicon.ico'))/1024:7.1f} KB  16/32/48")
-
-# solid, full-bleed tiles (no transparency) – OS applies its own mask.
-# 62% width keeps the whole mark inside the 80% maskable safe-zone circle.
 save_png(tile(180, INK, 0.70), p("apple-touch-icon.png"))
 save_png(tile(192, INK, 0.62), p("icon-192.png"))
 save_png(tile(512, INK, 0.62), p("icon-512.png"))
-
-# ---- 3. Open Graph banner 1200x630 -------------------------------------------
 W, H = 1200, 630
 og = Image.new("RGB", (W, H), INK)
 px = og.load()
-# brand gradient: maroon glow top-centre fading to ink (same palette as the hero surface)
 cx, cy = W * 0.5, H * 0.38
 maxd = (W**2 + H**2) ** 0.5 * 0.62
 for y in range(H):
@@ -98,7 +84,6 @@ for y in range(H):
         t = t * t * (3 - 2*t)
         px[x, y] = tuple(round(INK[i] + (MAROON_BRIGHT[i]*0.78 - INK[i]) * t) for i in range(3))
 og = og.convert("RGBA")
-# amber hairlines echo the site's dotted marquee rules
 dr = ImageDraw.Draw(og)
 for y in (58, 502):
     for x in range(64, W-64, 8):
@@ -124,5 +109,4 @@ def centred(text, y, fnt, fill, spacing=0):
 dr = ImageDraw.Draw(og)
 centred("COMPUTER SCIENCE SOCIETY", 524, font(22), (255, 176, 0, 255), spacing=4)
 centred("Keshav Mahavidyalaya, University of Delhi", 562, font(20), CREAM + (255,), spacing=1)
-# Full-colour PNG: the radial gradient bands badly when palette-quantised.
 save_png(og.convert("RGB"), p("assets", "og.png"))

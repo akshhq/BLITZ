@@ -32,8 +32,6 @@ SIZE = 400
 QUALITY = 80
 MAX_BYTES = 50 * 1024
 DEFAULT_CENTER_Y = 0.35          # crop centre, as a fraction of image height (portraits)
-
-# source file stem (case-insensitive, any extension) -> output slug
 PHOTOS = {
     "aksh": "aksh-kumar",
     "priyal": "priyal-vatsa",
@@ -49,10 +47,6 @@ PHOTOS = {
     "neha": "neha-bisht",
     "yashika": "yashika-gupta",
 }
-
-# Per-photo overrides chosen after visually reviewing every crop:
-#   slug -> (centre_x, centre_y, zoom)   centre as fractions of the full image,
-#   zoom = crop side as a fraction of the shorter edge (1.0 = widest square, 0.5 = 2x closer)
 CROP_CENTER = {
     "priyal-vatsa": (0.50, 0.45, 1.0),    # face was sitting low in the frame
     "shaurya":      (0.50, 0.44, 1.0),

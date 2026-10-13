@@ -1,8 +1,7 @@
 # BLITZ Website TODO
 
-This checklist contains only work that still needs verified information,
-permissions, a deployed environment, or physical-device testing. Completed
-engineering work is recorded separately at the end.
+This checklist contains work that still needs verified information, permissions,
+a deployed environment, or physical-device testing.
 
 ## 1. Manual content verification
 
@@ -73,36 +72,6 @@ engineering work is recorded separately at the end.
   fallback synchronization, link/asset checks, and accessibility smoke tests.
 - [ ] Add a production social-preview regression check for event query URLs if
   the society regularly publishes event-specific links.
-
-## Completed and verified
-
-- [x] Added the four supplied faculty names to the Team section, with Prof. (Dr.) Vinita Jindal identified as Convenor; missing portraits use the existing neutral avatar.
-- [x] Added section-specific color modifiers for About, Events, event details, Gallery, Collaborations, and Contact, and documented their tokens in `color.md`.
-- [x] Removed the conflicting SIH announcement date from public output until an authoritative date is confirmed.
-
-- [x] Added reusable validation for event IDs, required fields, malformed dates,
-  gallery media classification, and missing local assets.
-- [x] Added `tools/validate-site.js` for canonical URLs, metadata, local
-  references, sitemap, and robots consistency.
-- [x] Regenerated the homepage no-JavaScript fallbacks from `data.js`.
-- [x] Published the Internal SIH Results announcement dated 11 Oct 2026 with
-  the society-supplied Google Drive result PDF link.
-- [x] Removed the unresolved Agentic AI date/time text from public output.
-- [x] Preserved stable event IDs and query-based event URLs.
-- [x] Limited the homepage to five sorted event previews while keeping all six
-  records on the full Launchpad page.
-- [x] Added safe unknown-event and empty-event states.
-- [x] Consolidated event detail rendering and safely escaped data-driven output.
-- [x] Removed unused Honors & Milestones data, renderer, interactions, and CSS.
-- [x] Added truthful gallery illustration labels and neutral missing-image
-  handling.
-- [x] Kept collaboration placeholders non-clickable until verified records exist.
-- [x] Added dynamic metadata for selected homepage and Launchpad events.
-- [x] Removed unverifiable sitemap `lastmod` values.
-- [x] Verified locally at 320px, 375px, 768px, and 1440px viewport widths with
-  no observed horizontal overflow.
-- [x] Verified locally that the mobile menu opens, locks scrolling, closes with
-  Escape, and restores focus to its toggle.
 
 ## Team UI refinement — visual QA still required
 - [ ] Preview the redesigned Teams section in a real browser at desktop, tablet, and mobile widths.

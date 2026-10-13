@@ -1,33 +1,6 @@
-/**
- * BLITZ Society Data Store
- * =============================================================================
- * Central content configuration for BLITZ (Computer Science Society,
- * Keshav Mahavidyalaya, University of Delhi).
- *
- * HOW TO ADD / EDIT CONTENT:
- * 1. Announcements: Add objects to `announcements` with id, title, ISO date (YYYY-MM-DD),
- *    summary, full body text, and optional URL.
- * 2. Events: Add objects to `events` with id, title, ISO date (YYYY-MM-DD), location,
- *    description, and category/type. The website automatically tags upcoming vs past.
- * 3. Team: Add members to `team` with name, position, tier ('core' | 'senior' | 'junior' | 'volunteer').
- *    Optional field: photo (relative path, e.g. 'assets/images/team/first-last.webp').
- *    Members without a photo get the decorative avatar placeholder automatically.
- *    Cards show photo, name and position only.
- * 4. Gallery: Add items to `gallery` with image path, title, and descriptive alt text.
- *    Mark supplied illustrations as `mediaType: 'illustration'`; place approved
- *    event photos inside assets/images/gallery/ and update paths here.
- * 5. Collaborations: Add partner societies, sponsors, and communities to `collaborations`.
- * 6. Contact: Update official links, email, handle and address in `contact`.
- *    The footer, the Maps link and the <noscript> block are all derived from it
- *    (after editing run `node tools/sync-noscript.js`; JSON-LD in index.html is static).
- *
- * All content should be verified before publication. Keep the front-end data source
- * centralised and consistent with the live society information.
- * =============================================================================
- */
+
 
 window.BLITZ_DATA = (function () {
-// Used verbatim for display and for the Maps link. Do not reword or prefix.
 var ADDRESS = 'H-4, 5 Zone, near Sainik Vihar, Co-operative Group Housing Societies Pitampura, Pitampura, Delhi, 110034';
 
 return {
@@ -160,9 +133,6 @@ return {
       additionalInfo: 'Featured sub-events: Eleven’s Logic Lab — Quiz; Between the 2 Worlds — Debate; Upside Showdown — BGMI Tournament; Hawkings Hack — Hackathon; Escape the Upside Down — Treasure Hunt.'
     }
   ],
-
-  // Faculty and confirmed society members. Cards show photo, name and position only.
-  // Photos: 400x400 WebP in assets/images/team/ (see tools/optimize-team-images.py).
   team: [
     { name: 'Prof. (Dr.) Vinita Jindal', position: 'Convenor', tier: 'faculty', photo: 'assets/images/team/vinita-jindal.webp' },
     { name: 'Dr. Ashutosh Singh', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/ashutosh-singh.webp' },
@@ -243,8 +213,6 @@ return {
   ],
 
   collaborations: [],
-
-  // Official, confirmed contact details.
   contact: {
     mail: 'team.blitzkmv@gmail.com',
     instagram: 'https://www.instagram.com/blitzkmv/',

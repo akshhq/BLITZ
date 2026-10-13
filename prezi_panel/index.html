@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://*.supabase.co data: blob:; connect-src 'self' https://*.supabase.co; frame-src 'self'; font-src 'self'; form-action 'none'; base-uri 'none'"
+    />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0b0506" />
+    <title>BLITZ Admin</title>
+    <link rel="icon" href="../favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header id="topbar" class="topbar" hidden>
+      <div class="topbar-inner">
+        <a class="brand" href="#/">
+          <img src="../assets/logo/blitz-logo.png" alt="" width="56" height="32" />
+          <span>Admin</span>
+        </a>
+        <nav id="mainnav" class="mainnav" aria-label="Sections"></nav>
+        <div class="topbar-user">
+          <span id="whoami" class="whoami"></span>
+          <button id="signout" type="button" class="btn btn--ghost">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="main" tabindex="-1">
+      <p class="loading">Loading…</p>
+      <noscript><p class="notice">This admin panel needs JavaScript.</p></noscript>
+    </main>
+
+    <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+    <dialog id="dialog" class="dialog"></dialog>
+
+    <script src="../config.js"></script>
+    <script src="../content-map.js"></script>
+    <script src="../data.js"></script>
+    <script src="vendor/supabase.js"></script>
+    <script src="admin-core.js"></script>
+    <script src="admin-forms.js"></script>
+    <script src="admin-app.js"></script>
+  </body>
+</html>

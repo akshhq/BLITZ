@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <script>
-      // Progressive enhancement hook: enable reveal animations only when JS is active
       document.documentElement.classList.add('js');
     </script>
     <title>BLITZ | Computer Science Society, Keshav Mahavidyalaya, DU</title>
@@ -13,15 +12,12 @@
       content="BLITZ is the departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi. Fostering technical excellence, hackathons, workshops, and open computing."
     />
 
-    <!--
-      Production URL: https://keshav.du.ac.in/blitz/
-      Update the canonical URL and the crawler/social metadata together whenever the site is moved.
-    -->
+    
     <link rel="canonical" href="https://keshav.du.ac.in/blitz/" />
     <meta name="theme-color" content="#0b0506" />
     <meta name="color-scheme" content="dark" />
 
-    <!-- Open Graph Metadata (absolute URLs required by social scrapers) -->
+    
     <meta property="og:type" content="website" />
     <meta property="og:title" content="BLITZ | Computer Science Society, Keshav Mahavidyalaya" />
     <meta
@@ -35,7 +31,7 @@
     <meta property="og:url" content="https://keshav.du.ac.in/blitz/" />
     <meta property="og:site_name" content="BLITZ Keshav Mahavidyalaya" />
 
-    <!-- Twitter Card Metadata -->
+    
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="BLITZ | Computer Science Society, Keshav Mahavidyalaya" />
     <meta
@@ -44,14 +40,14 @@
     />
     <meta name="twitter:image" content="https://keshav.du.ac.in/blitz/assets/og.png" />
 
-    <!-- Favicons (generated from the logo by tools/build-brand-assets.py) -->
+    
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="manifest" href="site.webmanifest" />
 
-    <!-- Fonts -->
+    
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -59,10 +55,10 @@
       rel="stylesheet"
     />
 
-    <!-- Stylesheet -->
+    
     <link rel="stylesheet" href="styles.css" />
 
-    <!-- JSON-LD Structured Data -->
+    
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -104,10 +100,10 @@
     </script>
   </head>
   <body>
-    <!-- Accessibility Skip Link -->
+    
     <a class="skip-link" href="#main-content">Skip to content</a>
 
-    <!-- Fixed Header Landmark with Navigation -->
+    
     <header class="site-header">
       <nav class="site-nav" aria-label="Primary navigation">
         <a id="nav-brand" class="nav-brand" href="#home" aria-label="BLITZ home">
@@ -137,9 +133,9 @@
       </nav>
     </header>
 
-    <!-- Main Content Landmark -->
+    
     <main id="main-content">
-      <!-- 1. HOME (Hero) -->
+      
       <section id="home" class="introduction surface surface--maroon" aria-label="Hero Overview">
         <div id="transition-logo" class="transition-logo">
           <div class="hero-logo-tilt">
@@ -168,7 +164,7 @@
           <div class="marquee-line"></div>
         </div>
 
-        <!-- Semantic H1 for Page Hierarchy -->
+        
         <div class="hero-heading-shell">
           <h1 class="hero-h1">
             <span class="hero-h1-brand">BLITZ</span>
@@ -187,7 +183,7 @@
         </div>
       </section>
 
-      <!-- 2. ABOUT -->
+      
       <section id="about" class="home-section surface surface--ink surface--about" aria-labelledby="about-title">
         <div class="home-layout">
           <aside class="home-meta"><span class="home-meta-title">BLITZ / ABOUT</span></aside>
@@ -225,7 +221,7 @@
         </div>
       </section>
 
-      <!-- 3. ANNOUNCEMENTS (Slim Headline Strip Under About) -->
+      
       <section id="announcements" class="announcements-bar" aria-labelledby="announcements-title">
         <h2 id="announcements-title" class="sr-only">Announcements</h2>
         <div class="announcements-bar-inner">
@@ -277,11 +273,11 @@
             </button>
           </div>
         </div>
-        <!-- Only written to when the user changes item manually (never on auto-rotation) -->
+        
         <p id="announcements-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
       </section>
 
-      <!-- 4. EVENTS (Sticky Stacking Panels, Newest to Oldest) -->
+      
       <section id="events" class="events-section surface surface--maroon surface--events" aria-labelledby="events-title">
         <header class="events-heading">
           <div class="events-heading-main">
@@ -314,7 +310,7 @@
         </div>
       </section>
 
-      <!-- 5. TEAM (Light Cream Section with High Contrast Dark Typography) -->
+      
       <section id="team" class="team-section surface surface--cream" aria-labelledby="team-title">
         <div class="team-layout">
           <header class="team-heading">
@@ -368,7 +364,7 @@
         </div>
       </section>
 
-      <!-- 6. GALLERY (Lazy-loaded images on rail with manual controls) -->
+      
       <section id="gallery" class="gallery-section surface surface--ink surface--gallery" aria-labelledby="gallery-title">
         <div class="gallery-layout">
           <header class="gallery-heading">
@@ -411,7 +407,7 @@
         </div>
       </section>
 
-      <!-- 7. NETWORK (Partner Societies, Sponsors & Communities) -->
+      
       <section id="collaborations" class="collaborations-section surface surface--ink surface--network" aria-labelledby="collaborations-title">
         <div class="collaborations-layout">
           <header class="collaborations-heading">
@@ -426,7 +422,7 @@
       </section>
     </main>
 
-    <!-- 9. CONTACT FOOTER (Outside Main) -->
+    
     <footer id="contact" class="blitz-contact-footer surface surface--ink surface--contact" aria-label="Contact and social links">
       <div class="blitz-contact-footer-inner">
         <div class="blitz-contact-header">
@@ -456,7 +452,7 @@
       </div>
     </footer>
 
-    <!-- Accessible Announcement Detail Modal -->
+    
     <dialog
       id="announcement-modal"
       class="announcement-modal"
@@ -497,8 +493,11 @@
       </div>
     </dialog>
 
-    <!-- Dependencies: Plain Scripts Without Build Steps (Works on file://) -->
+    
     <script src="data.js"></script>
+    <script src="config.js"></script>
+    <script src="content-map.js"></script>
+    <script src="content-loader.js"></script>
     <script src="event-renderer.js"></script>
     <script src="script.js"></script>
   </body>

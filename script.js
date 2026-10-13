@@ -1,27 +1,7 @@
-/**
- * BLITZ Website Interactive Engine
- * =============================================================================
- * Dependency-free, vanilla JavaScript for the BLITZ website.
- * Works seamlessly via file:// and any static hosting provider.
- *
- * Sections
- *   01 Utilities & data validation      09 Contact footer
- *   02 Marquee                          10 Navigation sheet & active link
- *   03 Announcements ticker & modal     11 Hero logo (scroll-driven dock)
- *   04 Events                           12 Horizontal rails
- *   05 Team                             13 Achievement cards
- *   06 Gallery                          14 Reveals
- *   07 Achievements                     15 Init
- *   08 Collaborations
- * =============================================================================
- */
+
 
 (function () {
   'use strict';
-
-  // ---------------------------------------------------------------------------
-  // 01. UTILITIES & DATA VALIDATION
-  // ---------------------------------------------------------------------------
   const DATA = window.BLITZ_DATA || {
     announcements: [],
     events: [],
@@ -57,7 +37,7 @@
     return issues;
   }
 
-  /** Escape HTML entities to prevent injection. */
+  
   function escapeHtml(value) {
     if (value === null || value === undefined) return '';
     return String(value).replace(/[&<>'"]/g, function (char) {
@@ -72,7 +52,7 @@
     });
   }
 
-  /** Link URLs: only http(s) and mailto are allowed. Returns an HTML-escaped value. */
+  
   function safeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
     const trimmed = url.trim();
@@ -82,11 +62,7 @@
     return '#';
   }
 
-  /**
-   * Asset URLs (images): only relative paths or http(s) are allowed.
-   * Rejects javascript:, data:, protocol-relative (//host) and any other scheme.
-   * Returns an HTML-escaped value, or '' when unusable.
-   */
+  
   function safeAssetUrl(url) {
     if (!url || typeof url !== 'string') return '';
     const trimmed = url.trim();
@@ -100,10 +76,7 @@
     return String(num).padStart(length, '0');
   }
 
-  /**
-   * Parse "YYYY-MM-DD" as a LOCAL calendar date (new Date('2026-10-08') would be
-   * UTC midnight and shift by a day in some timezones). Returns null if invalid.
-   */
+  
   function parseLocalDate(iso) {
     if (typeof iso !== 'string') return null;
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
@@ -120,8 +93,6 @@
     const d = parseLocalDate(iso);
     return d ? d.getTime() : 0;
   }
-
-  // Valid dates sort newest-first; undated or invalid records stay last in source order.
   function sortEventsByDate(events) {
     return (Array.isArray(events) ? events : []).map(function (event, index) {
       const parsedDate = parseLocalDate(event && event.date);
@@ -135,7 +106,7 @@
     });
   }
 
-  /** "2026-11-20" -> "20 Nov 2026" */
+  
   function formatDate(isoString) {
     if (!isoString) return '';
     const d = parseLocalDate(isoString);
@@ -144,7 +115,7 @@
     return `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
   }
 
-  /** Nav height from the --nav-height CSS variable (+ any safe-area padding on the header). */
+  
   function readNavHeight() {
     const header = document.querySelector('.site-header');
     let height = parseFloat(getComputedStyle(root).getPropertyValue('--nav-height'));
@@ -152,10 +123,6 @@
     const safeTop = header ? parseFloat(getComputedStyle(header).paddingTop) || 0 : 0;
     return height + safeTop;
   }
-
-  // ---------------------------------------------------------------------------
-  // 02. MARQUEE
-  // ---------------------------------------------------------------------------
   function setUpMarquee() {
     document.querySelectorAll('.marquee-group').forEach(function (group) {
       group.innerHTML = Array.from({ length: 4 }, function () {
@@ -163,10 +130,8 @@
       }).join('');
     });
   }
+  let announcementsTeardown = null;
 
-  // ---------------------------------------------------------------------------
-  // 03. ANNOUNCEMENTS TICKER & ACCESSIBLE MODAL
-  // ---------------------------------------------------------------------------
   function renderAnnouncements() {
     const section = document.querySelector('#announcements');
     const track = document.querySelector('#announcements-ticker-track');
@@ -180,6 +145,20 @@
     const modalClose = document.querySelector('#modal-close-btn');
 
     if (!track) return;
+    if (announcementsTeardown) {
+      announcementsTeardown();
+      announcementsTeardown = null;
+    }
+    if (modal && modal.open) {
+      modal.addEventListener('close', function () { renderAnnouncements(); }, { once: true });
+      return;
+    }
+    const controller = new AbortController();
+    const signal = controller.signal;
+    let observer = null;
+    if (prevBtn) prevBtn.disabled = false;
+    if (nextBtn) nextBtn.disabled = false;
+    if (toggleBtn) toggleBtn.disabled = false;
 
     const items = [...(DATA.announcements || [])].sort(function (a, b) {
       return dateValue(b.date) - dateValue(a.date);
@@ -198,7 +177,7 @@
     const state = { paused: false, hovered: false, focused: false, onScreen: true, modalOpen: false };
     let lastFocusedElement = null;
 
-    /** Render the current item. `announce` is only true for manual changes. */
+    
     function updateTicker(announce) {
       const current = items[index];
       track.innerHTML = `
@@ -207,7 +186,7 @@
           class="announcement-item-btn"
           data-id="${escapeHtml(current.id)}"
         >
-          <span class="announcement-item-date">${escapeHtml(formatDate(current.date))}</span>
+          ${current.date ? `<span class="announcement-item-date">${escapeHtml(formatDate(current.date))}</span>` : ''}
           <span class="announcement-item-title">${escapeHtml(current.title)}</span>
           <span class="sr-only">(opens full details)</span>
           <span class="announcement-item-arrow" aria-hidden="true">&#8599;</span>
@@ -217,11 +196,8 @@
       track.querySelector('.announcement-item-btn').addEventListener('click', function () {
         openModal(current);
       });
-
-      // The auto-rotating track is NOT a live region (it would be read out every 5s).
-      // Screen-reader feedback is given only when the user changes item themselves.
       if (announce && status) {
-        status.textContent = `Announcement ${index + 1} of ${items.length}: ${current.title}, ${formatDate(current.date)}`;
+        status.textContent = `Announcement ${index + 1} of ${items.length}: ${current.title}${current.date ? ', ' + formatDate(current.date) : ''}`;
       }
     }
 
@@ -256,29 +232,27 @@
     }
 
     if (toggleBtn) {
-      toggleBtn.addEventListener('click', function () { setPaused(!state.paused); });
+      toggleBtn.addEventListener('click', function () { setPaused(!state.paused); }, { signal });
     }
     if (prevBtn) {
-      prevBtn.addEventListener('click', function () { step(-1, true); setPaused(true); });
+      prevBtn.addEventListener('click', function () { step(-1, true); setPaused(true); }, { signal });
     }
     if (nextBtn) {
-      nextBtn.addEventListener('click', function () { step(1, true); setPaused(true); });
+      nextBtn.addEventListener('click', function () { step(1, true); setPaused(true); }, { signal });
     }
 
     if (viewport) {
-      viewport.addEventListener('mouseenter', function () { state.hovered = true; syncTicker(); });
-      viewport.addEventListener('mouseleave', function () { state.hovered = false; syncTicker(); });
-      viewport.addEventListener('focusin', function () { state.focused = true; syncTicker(); });
-      viewport.addEventListener('focusout', function () { state.focused = false; syncTicker(); });
-
-      // Swipe left/right on the headline to change item (vertical scrolling stays native).
+      viewport.addEventListener('mouseenter', function () { state.hovered = true; syncTicker(); }, { signal });
+      viewport.addEventListener('mouseleave', function () { state.hovered = false; syncTicker(); }, { signal });
+      viewport.addEventListener('focusin', function () { state.focused = true; syncTicker(); }, { signal });
+      viewport.addEventListener('focusout', function () { state.focused = false; syncTicker(); }, { signal });
       let startX = 0;
       let startY = 0;
       viewport.addEventListener('touchstart', function (event) {
         const t = event.changedTouches[0];
         startX = t.clientX;
         startY = t.clientY;
-      }, { passive: true });
+      }, { passive: true, signal });
       viewport.addEventListener('touchend', function (event) {
         const t = event.changedTouches[0];
         const dx = t.clientX - startX;
@@ -287,19 +261,16 @@
           step(dx < 0 ? 1 : -1, true);
           setPaused(true);
         }
-      }, { passive: true });
+      }, { passive: true, signal });
     }
-
-    // Do not tick while the bar is off-screen or the tab is hidden.
     if (section && 'IntersectionObserver' in window) {
-      new IntersectionObserver(function (entries) {
+      observer = new IntersectionObserver(function (entries) {
         state.onScreen = entries[0].isIntersecting;
         syncTicker();
-      }).observe(section);
+      });
+      observer.observe(section);
     }
-    document.addEventListener('visibilitychange', syncTicker);
-
-    // ---- Modal ------------------------------------------------------------
+    document.addEventListener('visibilitychange', syncTicker, { signal });
     function openModal(item) {
       if (!modal) return;
       lastFocusedElement = document.activeElement;
@@ -314,7 +285,8 @@
       if (titleEl) titleEl.textContent = item.title;
       if (dateEl) {
         dateEl.textContent = formatDate(item.date);
-        dateEl.setAttribute('datetime', item.date || '');
+        dateEl.hidden = !item.date; // announcements may have no date
+        if (item.date) dateEl.setAttribute('datetime', item.date); else dateEl.removeAttribute('datetime');
       }
       if (summaryEl) summaryEl.textContent = item.summary || '';
       if (textEl) textEl.textContent = item.body || '';
@@ -343,7 +315,7 @@
       if (modalClose) modalClose.focus();
     }
 
-    /** Runs however the dialog was closed (button, ESC, backdrop tap). */
+    
     function afterClose() {
       state.modalOpen = false;
       root.classList.remove('modal-open');
@@ -365,28 +337,30 @@
       }
     }
 
-    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalClose) modalClose.addEventListener('click', closeModal, { signal });
 
     if (modal) {
       modal.addEventListener('click', function (event) {
         if (event.target === modal) closeModal(); // tap on the backdrop
-      });
+      }, { signal });
       modal.addEventListener('cancel', function (event) {
         event.preventDefault();
         closeModal();
-      });
+      }, { signal });
       modal.addEventListener('close', function () {
         if (state.modalOpen) afterClose();
-      });
+      }, { signal });
     }
+
+    announcementsTeardown = function () {
+      controller.abort();
+      if (timer) clearInterval(timer);
+      if (observer) observer.disconnect();
+    };
 
     updateTicker(false);
     syncTicker();
   }
-
-  // ---------------------------------------------------------------------------
-  // 04. EVENTS RENDERING (Newest to Oldest with Dynamic Badge)
-  // ---------------------------------------------------------------------------
   function renderEvents() {
     const container = document.querySelector('#events-stack');
     if (!container) return;
@@ -397,8 +371,6 @@
       container.innerHTML = '<p class="events-empty">No events scheduled at this time.</p>';
       return;
     }
-
-    // Local midnight "today": an event dated today is still UPCOMING in every timezone.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -550,53 +522,45 @@
 
   window.addEventListener('popstate', syncEventDetailFromUrl);
 
-  /**
-   * Sticky stacking only works when a panel fits inside the visible area below its
-   * stuck position; otherwise its lower part could never be scrolled into view.
-   * Panels that are too tall (long copy on small screens) fall back to normal flow.
-   */
-  function setUpStickyGuard() {
+  
+  let stickyGuardBound = false;
+  let stickyFrame = null;
+  let stickyLastWidth = -1;
+
+  function evaluateStickyGuard() {
+    stickyFrame = null;
     const panels = [...document.querySelectorAll('.events-panel')];
-    if (panels.length === 0) return;
-
-    let lastWidth = -1;
-    let frame = null;
-
-    function evaluate() {
-      frame = null;
-      const viewportHeight = window.innerHeight;
-      panels.forEach(function (panel) {
-        panel.classList.remove('is-tall');
-      });
-      panels.forEach(function (panel) {
-        const stuckTop = parseFloat(getComputedStyle(panel).top) || 0;
-        // +2: a panel sized exactly to the visible area (its min-height) is not 'too tall'
-        const tooTall = panel.offsetHeight > viewportHeight - stuckTop + 2;
-        panel.classList.toggle('is-tall', tooTall);
-      });
-    }
-
-    function schedule() {
-      if (frame) return;
-      frame = requestAnimationFrame(evaluate);
-    }
-
-    window.addEventListener('resize', function () {
-      // Ignore height-only changes (mobile toolbars showing/hiding).
-      if (window.innerWidth !== lastWidth) {
-        lastWidth = window.innerWidth;
-        schedule();
-      }
+    const viewportHeight = window.innerHeight;
+    panels.forEach(function (panel) {
+      panel.classList.remove('is-tall');
     });
-    lastWidth = window.innerWidth;
-    evaluate();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
-    window.addEventListener('load', schedule);
+    panels.forEach(function (panel) {
+      const stuckTop = parseFloat(getComputedStyle(panel).top) || 0;
+      const tooTall = panel.offsetHeight > viewportHeight - stuckTop + 2;
+      panel.classList.toggle('is-tall', tooTall);
+    });
   }
 
-  // ---------------------------------------------------------------------------
-  // 05. TEAM RENDERING (Contrast Break: Light Cream Surface)
-  // ---------------------------------------------------------------------------
+  function scheduleStickyGuard() {
+    if (stickyFrame) return;
+    stickyFrame = requestAnimationFrame(evaluateStickyGuard);
+  }
+
+  function setUpStickyGuard() {
+    if (!stickyGuardBound) {
+      stickyGuardBound = true;
+      window.addEventListener('resize', function () {
+        if (window.innerWidth !== stickyLastWidth) {
+          stickyLastWidth = window.innerWidth;
+          scheduleStickyGuard();
+        }
+      });
+      window.addEventListener('load', scheduleStickyGuard);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleStickyGuard);
+    }
+    stickyLastWidth = window.innerWidth;
+    evaluateStickyGuard();
+  }
   function renderTeam() {
     const container = document.querySelector('#team-content');
     if (!container) return;
@@ -610,8 +574,6 @@
     ];
 
     const defaultAvatar = 'assets/images/team/avatar-placeholder.svg';
-
-    // Normalise once; a record without a name is skipped instead of throwing.
     const teamList = (DATA.team || []).map(function (member) {
       return {
         name: String((member && member.name) || '').trim(),
@@ -632,7 +594,6 @@
       const cardsHtml = members.map(function (member, index) {
         const photo = safeAssetUrl(member.photo);
         const hasPhoto = !!photo;
-        // Real photos get a descriptive alt; the placeholder avatar is decorative.
         const altText = hasPhoto
           ? escapeHtml(member.position ? `${member.name}, ${member.position}` : member.name)
           : '';
@@ -670,10 +631,6 @@
       `;
     }).join('');
   }
-
-  // ---------------------------------------------------------------------------
-  // 06. GALLERY RENDERING (Real Images, Lazy Loading)
-  // ---------------------------------------------------------------------------
   function renderGallery() {
     const track = document.querySelector('#gallery-track');
     if (!track) return;
@@ -712,9 +669,6 @@
       `;
     }).join('');
   }
-  // ---------------------------------------------------------------------------
-  // 07. COLLABORATIONS RENDERING (Partners, Societies, Sponsors)
-  // ---------------------------------------------------------------------------
   function renderCollaborations() {
     const grid = document.querySelector('#collaborations-grid');
     if (!grid) return;
@@ -759,10 +713,6 @@
       `;
     }).join('');
   }
-
-  // ---------------------------------------------------------------------------
-  // 08. CONTACT FOOTER RENDERING & DYNAMIC COPYRIGHT
-  // ---------------------------------------------------------------------------
   const ICONS = {
     mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6.5L21 7"/>',
     instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="0.6" fill="currentColor"/>',
@@ -814,10 +764,6 @@
 
     grid.innerHTML = items.join('');
   }
-
-  // ---------------------------------------------------------------------------
-  // 10. NAVIGATION SHEET & ACTIVE LINK OBSERVER
-  // ---------------------------------------------------------------------------
   function setUpMenu() {
     const toggle = document.querySelector('#menu-toggle');
     const links = document.querySelector('#primary-navigation-links');
@@ -857,8 +803,6 @@
         toggle.focus();
         return;
       }
-
-      // Focus trap: Tab cycles through brand, toggle and the sheet's links only.
       if (event.key === 'Tab') {
         const focusables = [brand, toggle].concat([...links.querySelectorAll('a')]).filter(Boolean);
         const first = focusables[0];
@@ -876,15 +820,11 @@
         }
       }
     });
-
-    // Outside tap closes
     document.addEventListener('click', function (event) {
       if (isOpen() && !header.contains(event.target)) {
         setOpen(false);
       }
     });
-
-    // Rotating a tablet / resizing to desktop must never leave the page scroll-locked.
     function onBreakpoint() {
       if (desktopQuery.matches && isOpen()) setOpen(false);
     }
@@ -924,8 +864,6 @@
     sections.forEach(function (sec) {
       observer.observe(sec);
     });
-
-    // The footer is shorter than the viewport band above, so it would never activate on its own.
     let frame = null;
     window.addEventListener('scroll', function () {
       if (frame) return;
@@ -936,10 +874,6 @@
       });
     }, { passive: true });
   }
-
-  // ---------------------------------------------------------------------------
-  // 11. HERO LOGO (scroll-driven shrink/fade into the nav)
-  // ---------------------------------------------------------------------------
   function setUpHeroLogo() {
     const logo = document.querySelector('#transition-logo');
     const hero = document.querySelector('#home');
@@ -951,8 +885,6 @@
       logo.style.transform = 'none';
       return;
     }
-
-    // Cached geometry: the scroll handler only reads window.scrollY and writes styles.
     let navHeight = 64;
     let heroHeight = 1;
     let startCenterY = 0;
@@ -964,7 +896,6 @@
     function measure() {
       navHeight = readNavHeight();
       heroHeight = hero.offsetHeight;
-      // `top` of the fixed logo resolves to px (its centre line, see translate(-50%,-50%)).
       startCenterY = parseFloat(getComputedStyle(logo).top) || window.innerHeight * 0.414;
       const logoHeight = logo.offsetHeight || 1;
       endScale = Math.max(0.14, Math.min(0.6, (navHeight * 0.5) / logoHeight));
@@ -980,11 +911,9 @@
 
       const range = Math.max(1, heroHeight - navHeight);
       const progress = Math.max(0, Math.min(1, window.scrollY / range));
-      // the subtitle pill fades out early so the travelling logo never visibly crosses it
       if (shell) shell.style.opacity = String(Math.max(0, 1 - progress * 4));
 
       if (progress >= 1) {
-        // Docked: hide so it doesn't duplicate the nav brand
         logo.style.opacity = '0';
       } else {
         logo.style.opacity = String(1 - Math.pow(progress, 2.5));
@@ -1000,7 +929,6 @@
 
     window.addEventListener('scroll', requestUpdate, { passive: true });
     window.addEventListener('resize', function () {
-      // Height-only resizes (mobile toolbars) don't change any of the cached values.
       if (window.innerWidth !== lastWidth) {
         measure();
         requestUpdate();
@@ -1010,8 +938,6 @@
       setTimeout(function () { measure(); requestUpdate(); }, 250);
     });
     window.addEventListener('load', function () { measure(); requestUpdate(); });
-
-    // Pause logo float + marquee (pure CSS, driven by this class) when the hero is off-screen.
     const heroObserver = new IntersectionObserver(function (entries) {
       isHeroVisible = entries[0].isIntersecting;
       hero.classList.toggle('is-offscreen', !isHeroVisible);
@@ -1022,10 +948,6 @@
     measure();
     update();
   }
-
-  // ---------------------------------------------------------------------------
-  // 12. HORIZONTAL RAIL LOGIC (wheel assist, arrow keys, prev/next by card)
-  // ---------------------------------------------------------------------------
   function setUpHorizontalRail(scrollerSelector, prevBtnSelector, nextBtnSelector) {
     const scroller = document.querySelector(scrollerSelector);
     if (!scroller) return;
@@ -1040,7 +962,7 @@
       return Math.max(min, Math.min(max, val));
     }
 
-    /** Distance of one card (+ gap), so buttons/keys always land on the next card. */
+    
     function cardStep() {
       const track = scroller.firstElementChild;
       const card = track && track.firstElementChild;
@@ -1052,9 +974,6 @@
     function scrollByCards(direction) {
       const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
       target = clamp(scroller.scrollLeft + direction * cardStep(), 0, maxScroll);
-      // Use a direct position update for button and keyboard controls. This works
-      // reliably on static file URLs as well as deployed pages; wheel input keeps
-      // the custom animation below.
       scroller.scrollLeft = target;
     }
 
@@ -1068,9 +987,6 @@
       scroller.scrollLeft += distance * 0.16;
       frame = requestAnimationFrame(animate);
     }
-
-    // Wheel assist for mice: converts vertical wheel to horizontal ONLY while the rail can still
-    // move that way; at either edge (or for horizontal / modified wheel) the page scrolls normally.
     scroller.addEventListener('wheel', function (event) {
       const maxScroll = scroller.scrollWidth - scroller.clientWidth;
       if (maxScroll <= 0 || !event.deltaY) return;
@@ -1106,10 +1022,6 @@
     if (prevBtn) prevBtn.addEventListener('click', function () { scrollByCards(-1); });
     if (nextBtn) nextBtn.addEventListener('click', function () { scrollByCards(1); });
   }
-
-  // ---------------------------------------------------------------------------
-  // 13. PROGRESSIVE REVEALS (Fallback Scoped to html.js)
-  // ---------------------------------------------------------------------------
   function setUpReveals() {
     const revealItems = [...document.querySelectorAll('[data-reveal], .reveal-tier')];
     if (revealItems.length === 0) return;
@@ -1137,10 +1049,17 @@
       observer.observe(item);
     });
   }
+  
+  function refreshContent() {
+    renderAnnouncements();
+    renderEvents();
+    syncEventDetailFromUrl();
+    renderTeam();
+    renderGallery();
+    renderCollaborations();
+    setUpReveals();
+  }
 
-  // ---------------------------------------------------------------------------
-  // 14. INITIALIZATION
-  // ---------------------------------------------------------------------------
   function init() {
     setUpMarquee();
     renderAnnouncements();
@@ -1157,6 +1076,8 @@
 
     setUpHorizontalRail('#gallery-scroller', '#gallery-rail-prev', '#gallery-rail-next');
     setUpReveals();
+    window.BLITZ_APP = { refresh: refreshContent };
+    if (window.BLITZ_LIVE) window.BLITZ_LIVE.onChange(refreshContent);
   }
 
   if (document.readyState === 'loading') {
