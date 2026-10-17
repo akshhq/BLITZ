@@ -35,9 +35,18 @@
     });
   }
 
+  function formatMonthYear(value) {
+    var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+    if (!match) return '';
+    var date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    if (date.getFullYear() !== Number(match[1]) || date.getMonth() !== Number(match[2]) - 1) return '';
+    return date.toLocaleString('en', { month: 'short' }) + ' ' + match[1];
+  }
+
+  var windowState = { minimized: false, maximized: false };
+
   function selectedId() {
-    var id = new URLSearchParams(window.location.search).get('event');
-    return id || (events[0] && events[0].id);
+    return new URLSearchParams(window.location.search).get('event');
   }
 
   function eventById(id) {
@@ -46,8 +55,42 @@
 
   function setRoute(id) {
     var url = new URL(window.location.href);
-    url.searchParams.set('event', id);
+    if (id) url.searchParams.set('event', id);
+    else url.searchParams.delete('event');
     window.history.pushState({ eventId: id }, '', url);
+  }
+
+  function isMobile() {
+    return window.matchMedia('(max-width: 899px)').matches;
+  }
+
+  function closeWindow(updateRoute) {
+    windowState.minimized = false;
+    windowState.maximized = false;
+    detail.hidden = true;
+    detail.classList.remove('is-minimized', 'is-maximized');
+    document.documentElement.classList.remove('modal-open');
+    if (updateRoute) setRoute('');
+    var dock = document.querySelector('#event-window-dock');
+    if (dock) dock.hidden = true;
+  }
+
+  function updateWindowState() {
+    detail.classList.toggle('is-minimized', windowState.minimized);
+    detail.classList.toggle('is-maximized', windowState.maximized);
+    var minimize = detail.querySelector('[data-window-action="minimize"]');
+    var maximize = detail.querySelector('[data-window-action="maximize"]');
+    if (minimize) minimize.setAttribute('aria-label', windowState.minimized ? 'Restore event window' : 'Minimize event window');
+    if (maximize) maximize.setAttribute('aria-label', windowState.maximized ? 'Restore event window size' : 'Maximize event window');
+    var dock = document.querySelector('#event-window-dock');
+    if (dock) {
+      dock.hidden = !windowState.minimized;
+      dock.innerHTML = windowState.minimized
+        ? '<button type="button" class="event-window-dock-item" data-window-action="restore">' +
+          '<span class="event-window-dock-dot" aria-hidden="true"></span><span>' +
+          escapeHtml((eventById(selectedId()) || {}).title || 'Event') + '</span></button>'
+        : '';
+    }
   }
 
   function setMetaContent(selector, value) {
@@ -74,14 +117,20 @@
   }
 
   function listMarkup(selected) {
-    return sortEventsByDate(events).map(function (event) {
+    return sortEventsByDate(events).map(function (event, index) {
       var active = selected && event.id === selected.id;
+      var layout = ['workshop', 'competition', 'festival', 'speaker'].indexOf(event.layout) >= 0
+        ? event.layout : 'event';
       return '<a class="event-launchpad-tile' + (active ? ' is-selected' : '') + '" href="event.html?event=' +
         encodeURIComponent(event.id) + '" data-event-id="' + escapeHtml(event.id) + '"' +
         ' aria-label="' + escapeHtml(event.title) + '"' +
         ' title="' + escapeHtml(event.title) + '"' +
         (active ? ' aria-current="true"' : '') + '>' +
+        '<span class="event-launchpad-icon event-launchpad-icon--' + layout + '" aria-hidden="true">' +
+        '<svg viewBox="0 0 48 48" focusable="false"><rect x="8" y="9" width="32" height="31" rx="6"></rect><path d="M14 6v8M34 6v8M8 18h32M15 25h6M27 25h6M15 32h6M27 32h6"></path></svg>' +
+        '</span>' +
         '<span class="event-launchpad-tile-title">' + escapeHtml(event.title) + '</span>' +
+        (event.date ? '<span class="event-launchpad-tile-date">' + escapeHtml(formatMonthYear(event.date)) + '</span>' : '') +
         '</a>';
     }).join('');
   }
@@ -89,11 +138,36 @@
   function renderDetail(event) {
     if (!event) {
       updatePageMetadata(null);
-      detail.innerHTML = '<div class="event-page-empty"><h2>Event not found</h2><p>Select an event from the Launchpad to continue.</p></div>';
+      closeWindow(false);
       return;
     }
     updatePageMetadata(event);
-    detail.innerHTML = window.BLITZ_EVENT_RENDERER.render(event, 'launchpad');
+    detail.innerHTML = '<div class="event-desktop-window" role="dialog" aria-modal="true" aria-labelledby="event-window-title">' +
+      '<header class="event-window-header">' +
+      '<div class="event-window-controls" aria-label="Window controls">' +
+      '<button type="button" class="event-window-control event-window-control--close" data-window-action="close" aria-label="Close event window" title="Close"></button>' +
+      '<button type="button" class="event-window-control event-window-control--minimize" data-window-action="minimize" aria-label="Minimize event window" title="Minimize"></button>' +
+      '<button type="button" class="event-window-control event-window-control--maximize" data-window-action="maximize" aria-label="Maximize event window" title="Maximize"></button>' +
+      '</div><h2 id="event-window-title">' + escapeHtml(event.title) + '</h2><span class="event-window-status">BLITZ EVENT DESK</span></header>' +
+      '<div class="event-window-body">' + window.BLITZ_EVENT_RENDERER.render(event, 'launchpad') + '</div></div>';
+    detail.hidden = false;
+    document.documentElement.classList.add('modal-open');
+    windowState.minimized = false;
+    windowState.maximized = false;
+    updateWindowState();
+    detail.querySelectorAll('[data-window-action]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var action = button.getAttribute('data-window-action');
+        if (action === 'close') closeWindow(true);
+        if (action === 'minimize') { windowState.minimized = true; updateWindowState(); }
+        if (action === 'maximize') { windowState.maximized = !windowState.maximized; updateWindowState(); }
+      });
+    });
+    var dock = document.querySelector('#event-window-dock');
+    if (dock) dock.onclick = function () { windowState.minimized = false; updateWindowState(); };
+    detail.onclick = function (clickEvent) {
+      if (clickEvent.target === detail && isMobile()) closeWindow(true);
+    };
   }
 
   function render() {
@@ -108,7 +182,7 @@
     grid.innerHTML = listMarkup(event);
     if (!event) {
       updatePageMetadata(null);
-      detail.innerHTML = '<div class="event-page-empty"><h2>Event not found</h2><p>The requested event could not be located. Select another event from the Launchpad.</p></div>';
+      closeWindow(false);
       return;
     }
     renderDetail(event);
@@ -117,16 +191,18 @@
         clickEvent.preventDefault();
         setRoute(tile.getAttribute('data-event-id'));
         render();
-        if (window.matchMedia('(max-width: 899px)').matches) {
-          detail.setAttribute('tabindex', '-1');
-          detail.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-          detail.focus({ preventScroll: true });
-        }
       });
     });
   }
 
   window.addEventListener('popstate', render);
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !detail.hidden) closeWindow(true);
+  });
+  window.addEventListener('resize', function () {
+    if (isMobile() && !detail.hidden) windowState.maximized = false;
+    updateWindowState();
+  });
   render();
   if (window.BLITZ_LIVE) window.BLITZ_LIVE.onChange(render);
 }());

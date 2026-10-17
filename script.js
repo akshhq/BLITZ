@@ -365,7 +365,7 @@
     const container = document.querySelector('#events-stack');
     if (!container) return;
 
-    const eventsList = sortEventsByDate(DATA.events).slice(0, 5);
+    const eventsList = sortEventsByDate(DATA.events).slice(0, 3);
 
     if (eventsList.length === 0) {
       container.innerHTML = '<p class="events-empty">No events scheduled at this time.</p>';
@@ -566,19 +566,42 @@
     if (!container) return;
 
     const tiers = [
-      { key: 'faculty', label: 'Faculty & Convenor', shortLabel: 'FACULTY', gridClass: 'team-grid--faculty' },
-      { key: 'core', label: 'Core Team', shortLabel: 'CORE TEAM', gridClass: 'team-grid--core' },
-      { key: 'senior', label: 'Senior Executives', shortLabel: 'SENIOR EXECUTIVES', gridClass: 'team-grid--senior' },
-      { key: 'junior', label: 'Junior Executives', shortLabel: 'JUNIOR EXECUTIVES', gridClass: 'team-grid--junior' },
+      { key: 'faculty', label: 'Faculty Team', shortLabel: 'FACULTY TEAM', gridClass: 'team-grid--faculty' },
+      { key: 'core', label: 'Core Student Team', shortLabel: 'CORE STUDENT TEAM', gridClass: 'team-grid--core' },
+      { key: 'executive', label: 'Executives', shortLabel: 'EXECUTIVES', gridClass: 'team-grid--executive' },
       { key: 'volunteer', label: 'Volunteers', shortLabel: 'VOLUNTEERS', gridClass: 'team-grid--volunteer' }
     ];
 
     const defaultAvatar = 'assets/images/team/avatar-placeholder.svg';
-    const teamList = (DATA.team || []).map(function (member) {
+    const requiredFaculty = [
+      { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: defaultAvatar },
+      { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: defaultAvatar }
+    ];
+    const sourceTeam = Array.isArray(DATA.team) ? DATA.team.slice() : [];
+    requiredFaculty.forEach(function (requiredMember) {
+      const exists = sourceTeam.some(function (member) {
+        return member && member.name === requiredMember.name && member.tier === 'faculty';
+      });
+      if (!exists) sourceTeam.push(requiredMember);
+    });
+    const facultyMembers = requiredFaculty.map(function (requiredMember) {
+      return sourceTeam.find(function (member) {
+        return member && member.name === requiredMember.name && member.tier === 'faculty';
+      });
+    }).concat(sourceTeam.filter(function (member) {
+      return !requiredFaculty.some(function (requiredMember) {
+        return member && member.name === requiredMember.name && member.tier === 'faculty';
+      }) && member && member.tier === 'faculty';
+    }));
+    const nonFacultyMembers = sourceTeam.filter(function (member) {
+      return !member || member.tier !== 'faculty';
+    });
+    const orderedTeam = facultyMembers.concat(nonFacultyMembers);
+    const teamList = orderedTeam.map(function (member) {
       return {
         name: String((member && member.name) || '').trim(),
         position: String((member && member.position) || '').trim(),
-        tier: member && member.tier,
+        tier: member && (member.tier === 'senior' || member.tier === 'junior' ? 'executive' : member.tier),
         photo: member && member.photo
       };
     }).filter(function (member) {

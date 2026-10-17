@@ -134,10 +134,12 @@ return {
     }
   ],
   team: [
+    { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/avatar-placeholder.svg' },
+    { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: 'assets/images/team/avatar-placeholder.svg' },
     { name: 'Prof. (Dr.) Vinita Jindal', position: 'Convenor', tier: 'faculty', photo: 'assets/images/team/vinita-jindal.webp' },
-    { name: 'Dr. Ashutosh Singh', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/ashutosh-singh.webp' },
     { name: 'Ms. Jyoti Kumari', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/jyoti-kumari.webp' },
     { name: 'Mr. Anand', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/anand.webp' },
+    { name: 'Dr. Ashutosh Singh', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/ashutosh-singh.webp' },
     { name: 'Aksh Kumar', position: 'President', tier: 'core', photo: 'assets/images/team/aksh-kumar.webp' },
     { name: 'Priyal Vatsa', position: 'Secretary', tier: 'core', photo: 'assets/images/team/priyal-vatsa.webp' },
     { name: 'Vrinda Goyal', position: 'Treasurer', tier: 'core', photo: 'assets/images/team/vrinda-goel.webp' },
