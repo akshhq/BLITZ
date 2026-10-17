@@ -270,3 +270,9 @@ What is actually implemented (and checked with Lighthouse mobile, headless Chrom
 - **Mobile menu:** body scroll lock, focus trap, ESC and outside-tap close, `aria-expanded` kept in sync.
 - **Motion:** `prefers-reduced-motion` disables the logo float, marquee and reveals; animations pause when the hero is off-screen.
 - **Touch rails:** the gallery snaps to cards and can be swiped.
+
+## Event Launchpad (event.html)
+
+- Layout and behaviour live in `event-launchpad.css` and `event-page.js`; the wine palette comes from `styles.css`.
+- Windows are non-modal (no backdrop or blur), so several events can be open at once. Minimized windows sit in the dock; the trash icon closes them all. `?event=<id>` opens that event on load.
+- The admin preview (`prezi_panel/preview.html`) also loads `event-launchpad.css`.
