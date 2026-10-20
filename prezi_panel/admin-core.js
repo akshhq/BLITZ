@@ -255,6 +255,12 @@
     if (!error) return 'Something went wrong.';
     var code = error.code || '';
     var msg = error.message || String(error);
+    var schemaMatch = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(msg);
+    if (schemaMatch) {
+      return "Database schema out of date: column '" + schemaMatch[1] + "' is missing in table '" + schemaMatch[2] +
+        "'. In Supabase SQL Editor run: ALTER TABLE public." + schemaMatch[2] + " ADD COLUMN IF NOT EXISTS " + schemaMatch[1] +
+        " text; NOTIFY pgrst, 'reload schema'; (or reload schema cache in Project Settings > API).";
+    }
     if (code === '23505') return 'An item with this web address (ID) already exists. Choose a different ID.';
     if (code === '23514') return 'The database rejected a value (too long, wrong format, or a link that is not https://). ' + (error.details ? '' : '');
     if (code === '42501' || /row-level security|permission denied/i.test(msg)) return 'You do not have permission to do that. Ask an owner to check your role.';

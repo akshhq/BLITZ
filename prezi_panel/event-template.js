@@ -88,10 +88,11 @@
     details.media = source.media && typeof source.media === 'object' ? clone(source.media) : {};
     details.media.gallery = array(details.media.gallery);
     details.media.documents = array(details.media.documents);
+    details.media.logo = text(source.media && source.media.logo);
     details.registration = source.registration && typeof source.registration === 'object' ? clone(source.registration) : {};
     details.seo = source.seo && typeof source.seo === 'object' ? clone(source.seo) : {};
     details.template_version = VERSION;
-    if (details.media.poster || details.media.cover || details.media.brochure ||
+    if (details.media.poster || details.media.cover || details.media.logo || details.media.brochure ||
       details.media.gallery.length || details.media.documents.length) {
       warnings.push('Media references are notes only; upload each asset in the panel.');
     }
@@ -104,6 +105,9 @@
     event.links = details.links;
     event.speakers = details.speakers;
     event.sessions = details.sessions;
+    event.logo = /^https:\/\//i.test(text(details.media.logo)) ||
+      /^(assets\/|storage:)[A-Za-z0-9/_.-]{1,200}$/.test(text(details.media.logo))
+      ? text(details.media.logo) : '';
     event.brochure = /^https:\/\//i.test(text(details.media.brochure)) ||
       /^assets\/[A-Za-z0-9/_.-]{1,200}$/.test(text(details.media.brochure))
       ? text(details.media.brochure) : '';

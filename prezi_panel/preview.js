@@ -8,8 +8,12 @@
     if (!msg || msg.type !== 'render' || !msg.event || !window.BLITZ_EVENT_RENDERER) return;
     out.innerHTML = window.BLITZ_EVENT_RENDERER.render(msg.event, 'launchpad'); // renderer escapes every value
     if (msg.imageSrc && /^(blob:|https:\/\/|\.\.\/assets\/)/.test(msg.imageSrc)) {
-      var img = out.querySelector('.event-detail-media img, .event-page-media img, figure img');
+      var img = out.querySelector('.event-detail-media img, .event-page-media img');
       if (img) img.src = msg.imageSrc;
+    }
+    if (msg.logoSrc && /^(blob:|https:\/\/|\.\.\/assets\/)/.test(msg.logoSrc)) {
+      var logoImg = out.querySelector('.event-page-logo img, .event-detail-logo img');
+      if (logoImg) logoImg.src = msg.logoSrc;
     }
     if (window.parent) window.parent.postMessage({ type: 'preview-height', height: document.documentElement.scrollHeight }, '*');
   });

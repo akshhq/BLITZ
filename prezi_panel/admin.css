@@ -122,9 +122,9 @@ details.group > .group-body { padding: 0 14px 14px; display: grid; gap: 12px; }
 
 .imgfield { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .imgfield-preview { width: 120px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: #000; }
-.imgfield-preview--square { width: 100px; height: 100px; }
+.imgfield-preview--square { width: 100px; height: 100px; object-fit: contain; background: #1d1013; }
 .imgfield-preview--round { width: 100px; height: 100px; border-radius: 50%; }
-.imgfield-preview--logo { object-fit: contain; background: #1d1013; }
+.imgfield-preview--logo { width: 120px; height: 90px; object-fit: contain; background: #1d1013; padding: 6px; }
 .imgfield-empty { display: grid; place-items: center; width: 120px; height: 90px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; text-align: center; }
 
 

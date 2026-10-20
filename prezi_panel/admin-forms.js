@@ -88,6 +88,7 @@
 
         { group: 'Image & links', key: 'image', type: 'image', label: 'Event image (optional)', folder: 'events', outW: 1200, outH: 675, mode: 'cover', shape: 'wide', maxBytes: 220 * 1024 },
         { group: 'Image & links', key: 'image_alt', label: 'Image description', max: 300, help: 'Describe the picture for people using screen readers.' },
+        { group: 'Image & links', key: 'logo', type: 'image', label: 'Event logo (optional)', folder: 'event-logos', outW: 800, outH: 800, mode: 'contain', shape: 'logo', maxBytes: 180 * 1024, help: 'Shown in event.html launchpad tiles, window header and event details. Transparent PNG or WebP recommended.' },
         { group: 'Image & links', key: 'brochure', kind: 'url', label: 'Brochure link (optional)', max: 1000, placeholder: 'https://…', help: 'Add a PDF or brochure URL. Leave empty when unavailable.' },
         { group: 'Template details', key: 'event_details', type: 'json', label: 'Objectives, people, agenda, results, registration & SEO', help: 'Review imported details as JSON. Media names are references only; upload actual files separately.' },
         { group: 'Image & links', key: 'links', type: 'repeater', label: 'Links', addLabel: 'Add a link', maxItems: 20,

@@ -77,6 +77,16 @@
     return imageMarkup + linksMarkup;
   }
 
+  function logoMarkup(event, mode) {
+    var logo = String(event && event.logo || '').trim();
+    if (!logo) return '';
+    if (/^[a-z][a-z0-9+.-]*:/i.test(logo) && !/^(https?:\/\/|blob:)/i.test(logo)) return '';
+    var url = escapeHtml(logo);
+    var prefix = mode === 'homepage' ? 'event-detail' : 'event-page';
+    return '<figure class="' + prefix + '-logo"><img src="' + url + '" alt="' +
+      escapeHtml((event.title || 'Event') + ' logo') + '" loading="lazy"></figure>';
+  }
+
   function listItems(items, renderItem) {
     if (!Array.isArray(items) || items.length === 0) return '';
     var content = items.map(renderItem).filter(Boolean).join('');
@@ -202,7 +212,7 @@
         '</div><div class="event-detail-body">' +
           '<div class="event-detail-topline">' + (kicker ? '<span class="event-detail-tag">' + kicker + '</span>' : '') + locationTag + '</div>' +
           '<h3>' + escapeHtml(event.title) + '</h3>' +
-          media + descriptionMarkup + placeholderMarkup + brochureMarkup(event, mode) +
+          logoMarkup(event, mode) + media + descriptionMarkup + placeholderMarkup + brochureMarkup(event, mode) +
           '<dl class="event-detail-meta">' + meta + '</dl>' + detailBlocks +
         '</div></article>';
     }
@@ -210,7 +220,7 @@
     return '<article class="event-page-detail-card event-page-detail-card--' + escapeHtml(layout) + '">' +
       '<div class="event-page-detail-kicker"><span>' + escapeHtml(layout) + '</span>' + kicker + '</div>' +
       '<h2>' + escapeHtml(event.title) + '</h2>' +
-      media + descriptionMarkup + placeholderMarkup + brochureMarkup(event, mode) +
+      logoMarkup(event, mode) + media + descriptionMarkup + placeholderMarkup + brochureMarkup(event, mode) +
       '<dl class="event-page-meta">' + meta + '</dl>' + detailBlocks +
       '</article>';
   }

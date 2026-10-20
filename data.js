@@ -63,6 +63,7 @@ return {
       description: 'Six coding questions across easy, medium, and hard categories on HackerRank, with nine teams participating.',
       category: 'Coding Competition',
       layout: 'competition',
+      logo: 'assets/images/collaborations/partner-hack.svg',
       format: 'Hackerrank Competition',
       platform: 'HackerRank',
       participants: 'Nine teams',

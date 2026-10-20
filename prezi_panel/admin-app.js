@@ -298,7 +298,8 @@
   }
   function thumbFor(coll, row) {
     var key = coll.item.thumb;
-    var src = key && row[key] ? PP.imgSrc(row[key]) : '';
+    var path = key && row[key] ? row[key] : (key === 'image' && row.logo ? row.logo : '');
+    var src = path ? PP.imgSrc(path) : '';
     if (src) return el('img', { class: 'item-thumb' + (coll.item.round ? ' item-thumb--round' : ''), src: src, alt: '', width: '56', height: '56', loading: 'lazy' });
     return el('span', { class: 'item-thumb--empty' + (coll.item.round ? ' item-thumb--round' : ''), 'aria-hidden': 'true', text: key ? 'No image' : '' });
   }
@@ -435,10 +436,12 @@
   }
   function previewEvent(form) {
     var row = form.peek();
-    var mapped = PP.map.event(Object.assign({}, row, { image: null }));
+    var mapped = PP.map.event(Object.assign({}, row, { image: null, logo: null }));
     var src = form.previewImageSrc('image');
     if (src) mapped.image = 'preview-image'; // passes the renderer's check; the real picture is swapped in by preview.js
-    return { event: mapped, imageSrc: src || '' };
+    var logoSrc = form.previewImageSrc('logo');
+    if (logoSrc) mapped.logo = 'preview-logo';
+    return { event: mapped, imageSrc: src || '', logoSrc: logoSrc || '' };
   }
 
   function templateImportPanel(coll, key, isNew, record, existingIds, form) {
@@ -618,9 +621,28 @@
           });
         }
       }).then(function () {
-        if (isNew) return sb.from(coll.table).insert(row);
-        var change = Object.assign({}, row); delete change[coll.pk];
-        return sb.from(coll.table).update(change).eq(coll.pk, record[coll.pk]);
+        function executeSave(data) {
+          var op = isNew ? sb.from(coll.table).insert(data) : (function () {
+            var change = Object.assign({}, data); delete change[coll.pk];
+            return sb.from(coll.table).update(change).eq(coll.pk, record[coll.pk]);
+          }());
+          return op.then(function (res) {
+            if (res && res.error) {
+              var match = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(res.error.message || '');
+              if (match && match[1]) {
+                var missingCol = match[1];
+                // If the missing column has no user value (null/empty), strip it and retry so save succeeds
+                if (data[missingCol] === null || data[missingCol] === undefined || data[missingCol] === '') {
+                  delete data[missingCol];
+                  return executeSave(data);
+                }
+              }
+              throw res.error;
+            }
+            return res;
+          });
+        }
+        return executeSave(row);
       }).then(function (res) {
         if (res && res.error) throw res.error;
         PP.toast(isNew ? 'Created. It is now on the website.' : 'Saved. The website is updated.', 'ok');

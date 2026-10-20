@@ -58,6 +58,13 @@
   }
   function iconHtml(event) {
     var layout = layoutOf(event);
+    var logo = event && event.logo ? String(event.logo).trim() : '';
+    if (logo && (!/^[a-z][a-z0-9+.-]*:/i.test(logo) || /^(https?:\/\/|blob:)/i.test(logo))) {
+      return '<span class="lp-icon lp-icon--' + layout + ' lp-icon--has-logo" aria-hidden="true">' +
+        '<img class="lp-icon-img" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.classList.add(\'is-hidden\');var fb=this.nextElementSibling;if(fb)fb.classList.remove(\'is-hidden\');" />' +
+        '<svg class="lp-icon-fallback is-hidden" viewBox="0 0 48 48" focusable="false"><path d="' + GLYPHS[layout] + '"></path></svg>' +
+        '</span>';
+    }
     return '<span class="lp-icon lp-icon--' + layout + '" aria-hidden="true"><svg viewBox="0 0 48 48" focusable="false"><path d="' + GLYPHS[layout] + '"></path></svg></span>';
   }
 
@@ -211,11 +218,16 @@
     afterChange(null);
   }
   function windowInner(event, titleId) {
+    var logo = event && event.logo ? String(event.logo).trim() : '';
+    var hasLogo = logo && (!/^[a-z][a-z0-9+.-]*:/i.test(logo) || /^(https?:\/\/|blob:)/i.test(logo));
+    var headerLogo = hasLogo
+      ? '<img class="lp-window-title-logo" src="' + esc(logo) + '" alt="" aria-hidden="true" onerror="this.remove()" />'
+      : '';
     return '<header class="lp-window-header"><div class="lp-window-controls" aria-label="Window controls">' +
       '<button type="button" class="lp-window-control lp-window-control--close" data-act="close" aria-label="Close event window" title="Close"></button>' +
       '<button type="button" class="lp-window-control lp-window-control--minimize" data-act="minimize" aria-label="Minimize event window" title="Minimize"></button>' +
       '<button type="button" class="lp-window-control lp-window-control--maximize" data-act="maximize" aria-label="Maximize event window" title="Maximize"></button>' +
-      '</div><h2 id="' + titleId + '">' + esc(event.title) + '</h2></header>' +
+      '</div><div class="lp-window-title-wrap">' + headerLogo + '<h2 id="' + titleId + '">' + esc(event.title) + '</h2></div></header>' +
       '<div class="lp-window-body">' + R.render(event, 'launchpad') + '</div>';
   }
   function makeDraggable(w) {

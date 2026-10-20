@@ -299,6 +299,7 @@ content and history.
 | Image upload fails | The file must be PNG/JPEG/WebP and under 20 MB before cropping; check you are an `owner` or `editor`. |
 | Site still shows old content | Refresh once; check the item is **published**; check `config.js` on the server is filled in. |
 | Schema step fails in the SQL editor | Run it again from the top (it is safe to repeat). If it still fails, copy the red error message to a developer. |
+| Saving an event says “Could not find the 'brochure' (or 'logo') column in schema cache” | Run `supabase/migration_add_brochure_and_logo.sql` in the SQL Editor and reload the schema cache under **Project Settings → API**. |
 | `seed.sql` complains about a value | A piece of content breaks a database rule (e.g. a link not starting with `https://`). Fix it in `data.js`, run `node tools/generate-seed.js`, and run it again. |
 
 ## For developers: tests

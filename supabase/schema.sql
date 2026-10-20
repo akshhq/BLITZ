@@ -85,6 +85,7 @@ create table if not exists public.events (
   links                jsonb not null default '[]' check (public.valid_links(links)),
   image                text check (public.valid_image(image)),
   image_alt            text check (char_length(image_alt) <= 300),
+  logo                 text check (public.valid_image(logo)),
   brochure             text check (brochure is null or (
                            brochure ~* '^https://[^[:space:]<>"'']+$' or
                            brochure ~ '^assets/[A-Za-z0-9/_.-]{1,200}$')),
@@ -101,6 +102,7 @@ alter table public.events drop constraint if exists events_description_check;
 alter table public.events alter column description set default '';
 alter table public.events add constraint events_description_check check (char_length(description) between 0 and 2000);
 alter table public.events add column if not exists brochure text;
+alter table public.events add column if not exists logo text;
 alter table public.events add column if not exists event_details jsonb not null default '{}'::jsonb;
 alter table public.events add column if not exists placeholder boolean not null default false;
 
@@ -230,7 +232,7 @@ language sql stable security definer set search_path = public, pg_temp as $$
       select jsonb_agg(to_jsonb(x) order by x.date desc nulls last, x.id)
       from (select id, title, date, time, location, description, category, layout, format, platform,
                    participants, speakers, key_points, winners, sessions, competition_sections,
-                   links, image, image_alt, brochure, event_details, placeholder, additional_info
+                   links, image, image_alt, logo, brochure, event_details, placeholder, additional_info
             from public.events where published) x), '[]'),
     'team', coalesce((
       select jsonb_agg(to_jsonb(x) order by x.sort_order, x.name)

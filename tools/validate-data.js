@@ -49,6 +49,8 @@ function validDate(value) {
   if (event.location && /conflict|pending|to be confirmed|to be announced/i.test(event.location)) {
     warnings.push(`${label}: unresolved text in location`);
   }
+  if (event.image) checkLocalAsset(event.image, `${label}: image`);
+  if (event.logo) checkLocalAsset(event.logo, `${label}: logo`);
 });
 
 (Array.isArray(data.announcements) ? data.announcements : []).forEach((item, index) => {
