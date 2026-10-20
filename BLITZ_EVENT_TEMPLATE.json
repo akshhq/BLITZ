@@ -1,0 +1,140 @@
+{
+  "template": "BLITZ_EVENT",
+  "version": 1,
+  "event": {
+    "id": "",
+    "title": "",
+    "tagline": "",
+    "category": "",
+    "event_type": "",
+    "academic_year": "",
+    "organizing_department": "",
+    "date": "",
+    "start_date": "",
+    "end_date": "",
+    "time": "",
+    "start_time": "",
+    "end_time": "",
+    "location": "",
+    "format": "",
+    "status": "",
+    "platform": "",
+    "participants": "",
+    "participant_count": null,
+    "team_count": null,
+    "summary": "",
+    "description": "",
+    "theme": "",
+    "objectives": [],
+    "highlights": [],
+    "activities": [],
+    "rules": [],
+    "eligibility": [],
+    "target_audience": [],
+    "registration": {
+      "url": "",
+      "instructions": "",
+      "deadline": "",
+      "entry_fee": "",
+      "feedback_url": ""
+    },
+    "organizers": [],
+    "faculty_coordinators": [],
+    "student_organizers": [],
+    "faculty": [],
+    "guests": [],
+    "speakers": [],
+    "judges": [],
+    "mentors": [],
+    "partners": [],
+    "sponsors": [],
+    "collaborators": [],
+    "agenda": [],
+    "sessions": [
+      {
+        "title": "",
+        "date": "",
+        "start_time": "",
+        "end_time": "",
+        "venue": "",
+        "description": "",
+        "speakers": []
+      }
+    ],
+    "teams": [
+      {
+        "name": "",
+        "institution": "",
+        "members": [
+          {
+            "name": "",
+            "position": ""
+          }
+        ]
+      }
+    ],
+    "participating_institutions": [],
+    "winners": [
+      {
+        "position": "",
+        "title": "",
+        "names": [],
+        "team_members": []
+      }
+    ],
+    "runner_ups": [],
+    "results": [],
+    "special_mentions": [],
+    "prizes": [],
+    "outcomes": [],
+    "acknowledgements": [],
+    "key_points": [],
+    "competition_sections": [],
+    "modules": {
+      "workshop": {},
+      "competition": {},
+      "speaker": {},
+      "festival": {},
+      "orientation": {},
+      "celebration": {},
+      "seminar": {},
+      "exhibition": {},
+      "awareness": {},
+      "other": []
+    },
+    "media": {
+      "poster": "",
+      "cover": "",
+      "thumbnail": "",
+      "gallery": [
+        {
+          "filename": "",
+          "caption": "",
+          "alt": ""
+        }
+      ],
+      "promotional_posters": [],
+      "brochure": "",
+      "booklets": [],
+      "certificates": [],
+      "result_sheets": [],
+      "documents": []
+    },
+    "links": [],
+    "official_website": "",
+    "social_links": [],
+    "resource_links": [],
+    "result_links": [],
+    "registration_links": [],
+    "homepage_featured": false,
+    "published": false,
+    "display_order": null,
+    "seo": {
+      "title": "",
+      "description": "",
+      "social_image": ""
+    },
+    "additional_info": "",
+    "placeholder": false
+  }
+}

@@ -27,7 +27,10 @@
           format: str(e.format), platform: str(e.platform), participants: str(e.participants),
           speakers: list(e.speakers), keyPoints: list(e.key_points), winners: list(e.winners),
           sessions: list(e.sessions), competitionSections: list(e.competition_sections), links: list(e.links),
-          image: imageUrl(e.image), imageAlt: str(e.image_alt), additionalInfo: str(e.additional_info)
+          image: imageUrl(e.image), imageAlt: str(e.image_alt), additionalInfo: str(e.additional_info),
+          brochure: str(e.brochure),
+          event_details: e.event_details && typeof e.event_details === 'object' ? e.event_details : {},
+          placeholder: e.placeholder === true
         };
       },
       team: function (t) {

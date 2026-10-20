@@ -34,6 +34,31 @@
     return /^(https?:\/\/|mailto:)/i.test(url) ? escapeHtml(url) : '';
   }
 
+  function safeDocumentUrl(value) {
+    var url = String(value || '').trim();
+    if (/^https?:\/\//i.test(url)) return escapeHtml(url);
+    if (!url || /^[a-z][a-z0-9+.-]*:/i.test(url) || url.indexOf('//') === 0 ||
+      url.indexOf('..') >= 0 || /[\s"'<>]/.test(url)) return '';
+    return escapeHtml(url);
+  }
+
+  function brochureMarkup(event, mode) {
+    var brochure = event && event.brochure;
+    var url = safeDocumentUrl(brochure);
+    if (!url) return '';
+    var label = 'View brochure';
+    var title = 'Event brochure';
+    var prefix = mode === 'homepage' ? 'event-detail' : 'event-page';
+    return '<section class="' + prefix + '-brochure" data-brochure>' +
+      '<div class="' + prefix + '-brochure-heading"><h4>' + escapeHtml(title) + '</h4>' +
+      '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a></div>' +
+      '<a class="' + prefix + '-brochure-preview" href="' + url + '" target="_blank" rel="noopener noreferrer">' +
+      '<object data="' + url + '" type="application/pdf" aria-label="' + escapeHtml(title) + '" onerror="this.closest(\'[data-brochure]\').remove()">' +
+      '<span>Open the brochure to view it.</span></object></a>' +
+      '<p class="' + prefix + '-brochure-actions"><a href="' + url + '" target="_blank" rel="noopener noreferrer">Open or download original</a></p>' +
+      '</section>';
+  }
+
   function mediaMarkup(event) {
     var image = String(event.image || event.imageUrl || '').trim();
     var imageUrl = image && (/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/)[^\s"'<>]+$/i.test(image) ||
@@ -56,6 +81,35 @@
     if (!Array.isArray(items) || items.length === 0) return '';
     var content = items.map(renderItem).filter(Boolean).join('');
     return content ? '<ul>' + content + '</ul>' : '';
+  }
+
+  function detailItem(item) {
+    if (typeof item === 'string') return item;
+    if (!item || typeof item !== 'object') return '';
+    return item.title || item.name || item.label || item.position || item.summary || '';
+  }
+
+  function renderTemplateDetails(event, options) {
+    var details = event && event.event_details;
+    if (!details || typeof details !== 'object') return '';
+    var labels = {
+      objectives: 'Objectives',
+      highlights: 'Highlights',
+      activities: 'Activities',
+      organizers: 'Organizers',
+      faculty: 'Faculty',
+      guests: 'Guests',
+      judges: 'Judges',
+      agenda: 'Agenda',
+      teams: 'Teams',
+      results: 'Results'
+    };
+    return Object.keys(labels).map(function (key) {
+      var values = Array.isArray(details[key]) ? details[key].map(detailItem).filter(Boolean) : [];
+      return values.length ? block(labels[key], listItems(values, function (value) {
+        return '<li>' + escapeHtml(value) + '</li>';
+      }), options) : '';
+    }).join('');
   }
 
   function block(title, content, options) {
@@ -125,12 +179,17 @@
       layout === 'festival' ? renderSessions(event, options) : '',
       layout === 'festival' || layout === 'competition' ? block('Competition highlights', competitions, options) : '',
       layout !== 'festival' ? renderSessions(event, options) : '',
+      renderTemplateDetails(event, options),
       event.additionalInfo ? block('Notes', '<p>' + escapeHtml(event.additionalInfo) + '</p>', options) : ''
     ].join('');
     var media = mediaMarkup(event);
     var descriptionMarkup = event.description
       ? '<p class="' + (mode === 'homepage' ? 'event-detail-summary' : 'event-page-summary') + '">' +
         escapeHtml(event.description) + '</p>'
+      : '';
+    var placeholderMarkup = event.placeholder
+      ? '<div class="' + (mode === 'homepage' ? 'event-detail-placeholder' : 'event-page-placeholder') + '" role="note">' +
+        '<span>Event details reserved</span><p>Description, date and media will be added here.</p></div>'
       : '';
     var kicker = date ? '<span>' + escapeHtml(date) + '</span>' : '';
     var locationTag = event.location ? '<span class="' + prefix + '-tag">' + escapeHtml(event.location) + '</span>' : '';
@@ -143,7 +202,7 @@
         '</div><div class="event-detail-body">' +
           '<div class="event-detail-topline">' + (kicker ? '<span class="event-detail-tag">' + kicker + '</span>' : '') + locationTag + '</div>' +
           '<h3>' + escapeHtml(event.title) + '</h3>' +
-          media + descriptionMarkup +
+          media + descriptionMarkup + placeholderMarkup + brochureMarkup(event, mode) +
           '<dl class="event-detail-meta">' + meta + '</dl>' + detailBlocks +
         '</div></article>';
     }
@@ -151,7 +210,7 @@
     return '<article class="event-page-detail-card event-page-detail-card--' + escapeHtml(layout) + '">' +
       '<div class="event-page-detail-kicker"><span>' + escapeHtml(layout) + '</span>' + kicker + '</div>' +
       '<h2>' + escapeHtml(event.title) + '</h2>' +
-      media + descriptionMarkup +
+      media + descriptionMarkup + placeholderMarkup + brochureMarkup(event, mode) +
       '<dl class="event-page-meta">' + meta + '</dl>' + detailBlocks +
       '</article>';
   }

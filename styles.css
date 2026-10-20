@@ -1448,6 +1448,98 @@ html:not(.js) .transition-logo {
   margin-top: 28px;
 }
 
+.event-detail-brochure,
+.event-page-brochure {
+  margin-top: 28px;
+  padding: 18px;
+  border: 1px solid rgba(212, 164, 92, 0.28);
+  border-radius: 14px;
+  background: rgba(255, 249, 242, 0.035);
+}
+
+.event-detail-brochure-heading,
+.event-page-brochure-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.event-detail-brochure-heading h4,
+.event-page-brochure-heading h4 {
+  margin: 0;
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.event-detail-brochure-heading a,
+.event-page-brochure-heading a,
+.event-detail-brochure-actions a,
+.event-page-brochure-actions a {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.event-detail-brochure-preview,
+.event-page-brochure-preview {
+  display: block;
+  overflow: hidden;
+  min-height: 220px;
+  border: 1px solid rgba(255, 249, 242, 0.14);
+  border-radius: 10px;
+  background: rgba(38, 21, 26, 0.35);
+}
+
+.event-detail-brochure-preview object,
+.event-page-brochure-preview object {
+  display: block;
+  width: 100%;
+  height: clamp(240px, 42vw, 520px);
+  border: 0;
+}
+
+.event-detail-brochure-actions,
+.event-page-brochure-actions {
+  margin: 12px 0 0;
+}
+
+.event-detail-placeholder,
+.event-page-placeholder,
+.events-panel-placeholder {
+  padding: 18px 20px;
+  border: 1px dashed rgba(212, 164, 92, 0.4);
+  border-radius: 12px;
+  color: var(--cream-dim);
+}
+
+.event-detail-placeholder span,
+.event-page-placeholder span,
+.events-panel-placeholder span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.event-detail-placeholder p,
+.event-page-placeholder p,
+.events-panel-placeholder p {
+  margin: 0;
+  line-height: 1.55;
+}
+
 .event-detail-links h4 {
   margin: 0 0 10px;
   color: var(--cream);
@@ -3070,12 +3162,10 @@ html:not(.js) .nav-menu-toggle {
 .team-overview-stats span { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; color: rgba(255,249,242,.8); border: 1px solid rgba(255,249,242,.2); border-radius: 2px; font-size: 12px; }
 .team-overview-stats b { color: #E7BB7D; font-family: var(--font-mono, monospace); font-size: 15px; }
 .team-tier { margin-bottom: clamp(52px, 7vw, 88px); }
-.team-tier-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; padding-top: 18px; border-top: 1px solid rgba(101,28,42,.25); }
+.team-tier-heading { display: flex; justify-content: flex-start; align-items: end; gap: 16px; margin-bottom: 24px; padding-top: 18px; border-top: 1px solid rgba(101,28,42,.25); }
 .team-tier-title-wrap { display: grid; gap: 7px; }
 .team-tier-kicker { color: var(--maroon); font-size: 9px; }
 .team-tier-heading h3 { color: var(--ink); font-size: clamp(25px, 3vw, 38px); font-weight: 800; letter-spacing: -.055em; line-height: 1; text-transform: none; }
-.team-tier-count { display: inline-flex; align-items: baseline; gap: 7px; flex-shrink: 0; color: var(--maroon); font-family: var(--font-mono, monospace); font-size: 25px; font-weight: 800; letter-spacing: -.05em; }
-.team-tier-count span { font-size: 9px; letter-spacing: .14em; }
 .team-grid { gap: 14px; }
 .team-card {
   position: relative;
@@ -3136,7 +3226,6 @@ html:not(.js) .nav-menu-toggle {
   .team-overview-stats { gap: 6px; padding-top: 14px; }
   .team-overview-stats span { padding: 7px 9px; font-size: 11px; }
   .team-tier-heading h3 { font-size: 27px; }
-  .team-tier-count { font-size: 21px; }
   .team-grid--faculty, .team-grid--core, .team-grid--executive, .team-grid--volunteer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .team-card { padding: 15px 13px; }
   .team-card-image { width: 70px; height: 70px; }
@@ -3163,8 +3252,6 @@ html:not(.js) .nav-menu-toggle {
 .team-tier-heading { margin-bottom: 14px; padding-top: 12px; }
 .team-tier-heading h3 { font-size: clamp(20px, 2.2vw, 27px); }
 .team-tier-kicker { font-size: 9px; }
-.team-tier-count { font-size: 17px; }
-.team-tier-count span { font-size: 8px; }
 .team-grid { gap: 12px; }
 .team-card { padding: 14px; border-radius: 4px 10px 4px 4px; box-shadow: 0 3px 10px rgba(38,21,26,.025); animation: none; }
 .team-card-image { width: 64px; height: 64px; margin: 0 0 10px; border-width: 2px; box-shadow: none; }

@@ -131,6 +131,28 @@ return {
         { title: 'Escape the Upside Down', type: 'Treasure Hunt' }
       ],
       additionalInfo: 'Featured sub-events: Eleven’s Logic Lab — Quiz; Between the 2 Worlds — Debate; Upside Showdown — BGMI Tournament; Hawkings Hack — Hackathon; Escape the Upside Down — Treasure Hunt.'
+    },
+    {
+      id: 'teachers-day-placeholder',
+      title: "Teachers' Day",
+      date: '',
+      location: '',
+      description: '',
+      category: 'Event placeholder',
+      layout: 'event',
+      format: '',
+      placeholder: true
+    },
+    {
+      id: 'sih-internal-hackathon-placeholder',
+      title: 'SIH Internal Hackathon',
+      date: '',
+      location: '',
+      description: '',
+      category: 'Event placeholder',
+      layout: 'competition',
+      format: '',
+      placeholder: true
     }
   ],
   team: [

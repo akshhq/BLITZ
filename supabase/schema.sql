@@ -70,7 +70,7 @@ create table if not exists public.events (
   date                 date,                       -- null = "date to be confirmed"
   time                 text check (char_length(time) <= 60),
   location             text check (char_length(location) <= 200),
-  description          text not null check (char_length(description) between 1 and 2000),
+  description          text not null default '' check (char_length(description) between 0 and 2000),
   category             text not null check (char_length(category) between 1 and 80),
   layout               text not null default 'event'
                          check (layout in ('event', 'workshop', 'competition', 'festival', 'speaker')),
@@ -85,12 +85,24 @@ create table if not exists public.events (
   links                jsonb not null default '[]' check (public.valid_links(links)),
   image                text check (public.valid_image(image)),
   image_alt            text check (char_length(image_alt) <= 300),
+  brochure             text check (brochure is null or (
+                           brochure ~* '^https://[^[:space:]<>"'']+$' or
+                           brochure ~ '^assets/[A-Za-z0-9/_.-]{1,200}$')),
+  event_details        jsonb not null default '{}'::jsonb check (
+                           jsonb_typeof(event_details) = 'object' and octet_length(event_details::text) <= 50000),
+  placeholder          boolean not null default false,
   additional_info      text check (char_length(additional_info) <= 1500),
   published            boolean not null default true,
   created_at           timestamptz not null default now(),
   updated_at           timestamptz not null default now(),
   updated_by           uuid
 );
+alter table public.events drop constraint if exists events_description_check;
+alter table public.events alter column description set default '';
+alter table public.events add constraint events_description_check check (char_length(description) between 0 and 2000);
+alter table public.events add column if not exists brochure text;
+alter table public.events add column if not exists event_details jsonb not null default '{}'::jsonb;
+alter table public.events add column if not exists placeholder boolean not null default false;
 
 create table if not exists public.team_members (
   id         uuid primary key default gen_random_uuid(),
@@ -218,7 +230,7 @@ language sql stable security definer set search_path = public, pg_temp as $$
       select jsonb_agg(to_jsonb(x) order by x.date desc nulls last, x.id)
       from (select id, title, date, time, location, description, category, layout, format, platform,
                    participants, speakers, key_points, winners, sessions, competition_sections,
-                   links, image, image_alt, additional_info
+                   links, image, image_alt, brochure, event_details, placeholder, additional_info
             from public.events where published) x), '[]'),
     'team', coalesce((
       select jsonb_agg(to_jsonb(x) order by x.sort_order, x.name)

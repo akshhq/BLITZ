@@ -62,7 +62,7 @@
         { group: 'Basics', key: 'format', label: 'Format', max: 120 },
         { group: 'Basics', key: 'platform', label: 'Platform (optional)', max: 80 },
         { group: 'Basics', key: 'participants', label: 'Participants (optional)', max: 80, placeholder: 'e.g. Nine teams' },
-        { group: 'Basics', key: 'description', label: 'Description', type: 'textarea', required: true, max: 2000 },
+        { group: 'Basics', key: 'description', label: 'Description', type: 'textarea', max: 2000, help: 'Leave empty for a placeholder event; add the confirmed description when available.' },
 
         { group: 'Speakers & highlights', key: 'speakers', type: 'stringlist', label: 'Speakers', itemMax: 120, maxItems: 30, help: 'One name per line.' },
         { group: 'Speakers & highlights', key: 'key_points', type: 'stringlist', label: 'Key points', itemMax: 300, maxItems: 30, help: 'One point per line.' },
@@ -88,6 +88,8 @@
 
         { group: 'Image & links', key: 'image', type: 'image', label: 'Event image (optional)', folder: 'events', outW: 1200, outH: 675, mode: 'cover', shape: 'wide', maxBytes: 220 * 1024 },
         { group: 'Image & links', key: 'image_alt', label: 'Image description', max: 300, help: 'Describe the picture for people using screen readers.' },
+        { group: 'Image & links', key: 'brochure', kind: 'url', label: 'Brochure link (optional)', max: 1000, placeholder: 'https://…', help: 'Add a PDF or brochure URL. Leave empty when unavailable.' },
+        { group: 'Template details', key: 'event_details', type: 'json', label: 'Objectives, people, agenda, results, registration & SEO', help: 'Review imported details as JSON. Media names are references only; upload actual files separately.' },
         { group: 'Image & links', key: 'links', type: 'repeater', label: 'Links', addLabel: 'Add a link', maxItems: 20,
           fields: [
             { key: 'label', label: 'Label', required: true, max: 100 },
@@ -200,6 +202,34 @@
       node: s.node, control: control, setError: s.setError, focus: function () { control.focus(); },
       get: get,
       check: function () { var m = checkString(def, control.value.trim()); s.setError(m); return m; }
+    };
+  }
+
+  function jsonWidget(def, value, ctx) {
+    var id = PP.uid('f');
+    var initial = value && typeof value === 'object' ? JSON.stringify(value, null, 2) : (value || '{}');
+    var control = el('textarea', { id: id, name: def.key, value: initial, spellcheck: 'false', wrap: 'off' });
+    if (ctx.readOnly) control.disabled = true;
+    var s = shell(def, control, id);
+    function parse() {
+      var raw = control.value.trim();
+      if (!raw) return {};
+      return JSON.parse(raw);
+    }
+    return {
+      node: s.node, control: control, setError: s.setError, focus: function () { control.focus(); },
+      get: function () { try { return parse(); } catch (e) { return value && typeof value === 'object' ? value : {}; } },
+      check: function () {
+        try {
+          var parsed = parse();
+          if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error();
+          s.setError('');
+          return '';
+        } catch (e) {
+          s.setError('Enter a valid JSON object.');
+          return 'Enter a valid JSON object.';
+        }
+      }
     };
   }
 
@@ -373,6 +403,7 @@
       case 'stringlist': return stringListWidget(def, value, ctx);
       case 'repeater': return repeaterWidget(def, value, ctx);
       case 'image': return imageWidget(def, value, ctx);
+      case 'json': return jsonWidget(def, value, ctx);
       default: return textWidget(def, value, ctx);
     }
   }

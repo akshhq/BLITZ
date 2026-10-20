@@ -313,7 +313,10 @@
     show(coll.label, [
       el('div', { class: 'pagehead' }, [
         el('p', { class: 'muted', text: coll.ordered ? 'Use the arrows to change the order shown on the website.' : 'Newest first.' }),
-        canEdit() ? el('a', { class: 'btn btn--primary', href: '#/' + key + '/new', text: 'New ' + coll.singular }) : null
+        canEdit() ? el('div', { class: 'pagehead-actions' }, [
+          key === 'events' ? el('a', { class: 'btn', href: '../BLITZ_EVENT_TEMPLATE.json', download: 'BLITZ_EVENT_TEMPLATE.json', text: 'Download Event Template (.json)' }) : null,
+          el('a', { class: 'btn btn--primary', href: '#/' + key + '/new', text: 'New ' + coll.singular })
+        ]) : null
       ]),
       el('div', { class: 'toolbar' }, [search, status]), info, listHost
     ]);
@@ -438,6 +441,90 @@
     return { event: mapped, imageSrc: src || '' };
   }
 
+  function templateImportPanel(coll, key, isNew, record, existingIds, form) {
+    var input = el('input', { type: 'file', accept: '.json,application/json', class: 'sr-only', tabindex: '-1' });
+    var drop = el('label', { class: 'template-drop', text: 'Choose a completed template or drop it here' }, [input]);
+    var result = el('div', { class: 'template-result', hidden: true });
+    var importBtn = el('button', { type: 'button', class: 'btn btn--primary', text: 'Import into form', disabled: true });
+    var state = { parsed: null };
+    var panel = el('section', { class: 'template-panel', 'aria-labelledby': 'template-title' }, [
+      el('div', { class: 'template-panel-head' }, [
+        el('div', null, [
+          el('h2', { id: 'template-title', text: 'Template import' }),
+          el('p', { class: 'hint', text: 'Download the official JSON template, complete it with AI or manually, then validate it here. Importing never saves or publishes an event.' })
+        ]),
+        el('a', { class: 'btn', href: '../BLITZ_EVENT_TEMPLATE.json', download: 'BLITZ_EVENT_TEMPLATE.json', text: 'Download Event Template (.json)' })
+      ]),
+      el('p', { class: 'hint', text: 'Supported format: JSON · Maximum size: 1 MB · Media filenames are references only; upload actual assets below.' }),
+      drop,
+      result,
+      importBtn
+    ]);
+
+    function showResult(parsed) {
+      state.parsed = parsed.errors && parsed.errors.length ? null : parsed;
+      PP.clear(result);
+      result.hidden = false;
+      if (parsed.errors && parsed.errors.length) {
+        result.className = 'template-result notice notice--error';
+        result.appendChild(el('strong', { text: 'Template needs attention' }));
+        parsed.errors.forEach(function (message) { result.appendChild(el('div', { text: message })); });
+      } else {
+        result.className = 'template-result notice notice--ok';
+        result.appendChild(el('strong', { text: 'Template validated' }));
+        result.appendChild(el('p', { text: 'Fields found: ' + Object.keys(parsed.details || {}).filter(function (k) { return Array.isArray(parsed.details[k]) && parsed.details[k].length; }).length + ' repeatable sections.' }));
+        (parsed.warnings || []).forEach(function (message) { result.appendChild(el('div', { class: 'hint', text: message })); });
+      }
+      importBtn.disabled = !state.parsed;
+    }
+    function handle(file) {
+      window.BLITZ_TEMPLATE.read(file).then(showResult);
+    }
+    input.addEventListener('change', function () { handle(input.files && input.files[0]); });
+    ['dragenter', 'dragover'].forEach(function (type) {
+      drop.addEventListener(type, function (e) { e.preventDefault(); drop.classList.add('is-dragging'); });
+    });
+    ['dragleave', 'drop'].forEach(function (type) {
+      drop.addEventListener(type, function (e) {
+        e.preventDefault(); drop.classList.remove('is-dragging');
+        if (type === 'drop') handle(e.dataTransfer.files && e.dataTransfer.files[0]);
+      });
+    });
+    importBtn.addEventListener('click', function () {
+      if (!state.parsed) return;
+      var apply = function (mode) {
+        var imported = state.parsed.event;
+        var current = form.peek();
+        var next = mode === 'merge' ? Object.assign({}, current, imported) : Object.assign({}, record, imported);
+        if (mode === 'merge') {
+          Object.keys(imported).forEach(function (field) {
+            if (Array.isArray(imported[field]) && !imported[field].length) next[field] = current[field];
+            if (typeof imported[field] === 'string' && !imported[field]) next[field] = current[field];
+            if (field === 'event_details' && imported[field] && current[field]) {
+              next[field] = Object.assign({}, current[field], imported[field]);
+            }
+          });
+        }
+        if (!isNew) next.id = record.id;
+        next.published = isNew ? false : record.published;
+        buildEditor(coll, key, isNew, next, existingIds);
+      };
+      if (isNew) return apply('replace');
+      PP.dialog(function (dlg, close) {
+        dlg.appendChild(el('h2', { text: 'Apply imported event data' }));
+        dlg.appendChild(el('p', { text: record.published ? 'This event is published. Review the imported values carefully; nothing is saved until you confirm.' : 'Choose how the imported values should fill this draft.' }));
+        var cancel = el('button', { type: 'button', class: 'btn', text: 'Cancel', onclick: function () { close('cancel'); } });
+        var merge = el('button', { type: 'button', class: 'btn', text: 'Merge with current draft', onclick: function () { close('merge'); } });
+        var replace = el('button', { type: 'button', class: 'btn btn--primary', text: 'Replace form values', onclick: function () { close('replace'); } });
+        dlg.appendChild(el('div', { class: 'dialog-actions' }, [cancel, merge, replace]));
+        cancel.focus();
+      }).then(function (mode) {
+        if (mode === 'merge' || mode === 'replace') apply(mode);
+      });
+    });
+    return panel;
+  }
+
   function viewEdit(key, id) {
     var coll = COLLS[key];
     var isNew = id === null;
@@ -468,10 +555,21 @@
     var actions = el('div', { class: 'form-actions' }, readOnly ? [cancel] : [saveBtn, cancel]);
     form.node.appendChild(actions);
 
+    var mode = el('select', { 'aria-label': 'Event editor mode' }, [
+      el('option', { value: 'manual', text: 'Manual entry' }),
+      el('option', { value: 'template', text: 'Import template' })
+    ]);
+    var templatePanel = coll.preview && !readOnly ? templateImportPanel(coll, key, isNew, record, existingIds, form) : null;
     var editorChildren = [el('div', null, [
       readOnly ? el('p', { class: 'notice', text: 'View only: your role does not allow changes.' }) : null,
+      coll.preview && !readOnly ? el('div', { class: 'mode-selector field' }, [
+        el('label', { for: 'event-editor-mode', text: 'Creation mode' }), mode,
+        el('p', { class: 'hint', text: 'Both modes use the same editor, preview, draft and publish workflow.' })
+      ]) : null,
+      templatePanel,
       form.node
     ])];
+    mode.id = 'event-editor-mode';
     var frame = null;
     if (coll.preview) {
       frame = el('iframe', { class: 'preview-frame', src: 'preview.html', title: 'Live preview of the event page', sandbox: 'allow-scripts' }); // no allow-same-origin: the preview cannot reach this page's login session
@@ -479,6 +577,10 @@
       window.addEventListener('message', onPreviewMessage);
     }
     var h1 = show((isNew ? 'New ' : 'Edit ') + coll.singular, [el('div', { class: 'editor' + (coll.preview ? ' editor--preview' : '') }, editorChildren)]);
+    if (coll.preview && templatePanel) {
+      templatePanel.hidden = true;
+      mode.addEventListener('change', function () { templatePanel.hidden = mode.value !== 'template'; });
+    }
     dirty = false;
 
     function onPreviewMessage(e) {
@@ -502,9 +604,10 @@
         PP.toast('Please fix ' + result.errors.length + ' problem' + (result.errors.length === 1 ? '' : 's') + ' and save again.', 'error');
         return;
       }
-      saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
-      var row = Object.assign({}, result.row);
-      result.pending.reduce(function (chain, p) {
+      function persist() {
+        saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+        var row = Object.assign({}, result.row);
+        return result.pending.reduce(function (chain, p) {
         return chain.then(function () {
           return PP.uploadImage(p.def.folder, p.blob).then(function (path) { row[p.key] = path; form.widgets[p.key].commit(path); });
         });
@@ -526,6 +629,18 @@
         saveBtn.disabled = false; saveBtn.textContent = isNew ? 'Create ' + coll.singular : 'Save changes';
         PP.toast(PP.explain(err), 'error');
       });
+      }
+      if (coll.preview && result.row.published) {
+        PP.confirm({
+          title: isNew ? 'Publish this event?' : 'Publish changes to this event?',
+          message: 'Published content becomes visible on the public website immediately.',
+          confirmLabel: 'Publish'
+        }).then(function (ok) {
+          if (ok) persist();
+        });
+      } else {
+        persist();
+      }
     });
     h1.focus({ preventScroll: true });
   }

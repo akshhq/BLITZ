@@ -28,7 +28,7 @@
       seen.add(event.id);
       if (!event.title || typeof event.title !== 'string') issues.push(`${event.id || `events[${index}]`} is missing a title`);
       if (event.date && !parseLocalDate(event.date)) issues.push(`${event.id || `events[${index}]`} has an invalid date`);
-      if (!event.description || typeof event.description !== 'string') issues.push(`${event.id || `events[${index}]`} is missing a description`);
+      if ((!event.description || typeof event.description !== 'string') && !event.placeholder) issues.push(`${event.id || `events[${index}]`} is missing a description`);
       if (!event.category || typeof event.category !== 'string') issues.push(`${event.id || `events[${index}]`} is missing a category`);
     });
     if (issues.length && typeof console !== 'undefined' && console.warn) {
@@ -400,7 +400,11 @@
             </div>
             <div class="events-panel-content">
               <h3 id="${titleId}">${escapeHtml(event.title)}</h3>
-              <p class="events-panel-description">${escapeHtml(event.description)}</p>
+              ${event.description
+                ? `<p class="events-panel-description">${escapeHtml(event.description)}</p>`
+                : event.placeholder
+                  ? '<div class="events-panel-placeholder" role="note"><span>Event details reserved</span><p>Description, date and media will be added here.</p></div>'
+                  : ''}
               <dl class="events-panel-details">
                 ${dateMarkup}
                 ${locationMarkup}
@@ -645,7 +649,6 @@
         <section class="team-tier team-tier--${tier.key} reveal-tier" aria-labelledby="team-tier-${tier.key}">
           <div class="team-tier-heading">
             <div class="team-tier-title-wrap"><span class="team-tier-kicker">${escapeHtml(tier.shortLabel)}</span><h3 id="team-tier-${tier.key}">${escapeHtml(tier.label)}</h3></div>
-            <span class="team-tier-count" aria-label="${members.length} members">${String(members.length).padStart(2, '0')} <span>MEMBERS</span></span>
           </div>
           <div class="team-grid ${tier.gridClass}">
             ${cardsHtml}

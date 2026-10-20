@@ -49,7 +49,8 @@ const blocks = {
       const date = /^\d{4}-\d{2}-\d{2}$/.test(String(e.date || '')) ? `${esc(fmt(e.date))}, ` : '';
       const location = e.location ? `${esc(e.location)}. ` : '';
       const category = e.category ? ` ${esc(e.category)}.` : '';
-      return `<li><strong>${esc(e.title)}</strong> &mdash; ${date}${location}${esc(e.description)}${category}</li>`;
+      const description = e.description || (e.placeholder ? 'Event details reserved for future updates.' : '');
+      return `<li><strong>${esc(e.title)}</strong> &mdash; ${date}${location}${esc(description)}${category}</li>`;
     }).join('\n            ');
     return `<noscript>\n          <div class="ns-block">\n            <ul class="ns-list">\n            ${items}\n            </ul>\n          </div>\n        </noscript>`;
   },

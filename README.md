@@ -30,6 +30,8 @@ BLITZ/
 ├── event.html            # Launchpad-style event browser and selected-event view
 ├── styles.css            # Design system, responsive rules (section 17 = mobile)
 ├── data.js               # ALL content (announcements, events, team, contact, ...)
+├── BLITZ_EVENT_TEMPLATE.json # Canonical event import template downloaded by admins
+├── BLITZ_EVENT_TEMPLATE_GUIDE.md # Template preparation and import guide
 ├── script.js             # Vanilla JS: ticker, modal, nav sheet, rails, hero logo
 ├── event-renderer.js      # Shared, escaped event-detail markup for both pages
 ├── event-page.js          # Data-driven event selector and route-aware page shell
@@ -84,6 +86,30 @@ the public site and admin panel:
 
 `.env` is ignored by Git. Only the public anon/publishable key belongs in this
 configuration; never use a Supabase `service_role` or secret key.
+
+Download the official administrator template here:
+[BLITZ_EVENT_TEMPLATE.json](BLITZ_EVENT_TEMPLATE.json). See the
+[template usage guide](BLITZ_EVENT_TEMPLATE_GUIDE.md) for supported fields,
+validation, AI completion, media upload, preview, draft, and publication steps.
+
+### Creating events in the Prezi Panel
+
+Open **Events → New Event** and choose either:
+
+- **Manual entry**: complete the existing collapsible sections, upload images
+  through the panel, preview the event, then save it as a draft or explicitly
+  confirm publication.
+- **Import template**: use **Download Event Template**, fill the JSON file
+  manually or with an AI assistant without changing `template` or `version`,
+  and upload it in the drop area. The panel validates the structure and shows
+  warnings before **Import into form** populates the same editor. Existing
+  events offer an explicit merge/replace choice. Importing never saves,
+  publishes, changes permissions, or uploads media.
+
+Media names in `BLITZ_EVENT_TEMPLATE.json` are descriptive references only. Upload
+the corresponding poster, cover, gallery images, brochure, or documents using
+the panel's media controls after import. Review the preview, save as a draft,
+and use the publish confirmation only when the event is ready.
 
 ---
 
@@ -174,6 +200,12 @@ All dynamic content lives in `window.BLITZ_DATA` in `data.js`, and it is intenti
   layout: 'competition', format: 'Hackathon',
   additionalInfo: 'Flagship Hackathon' } // shown in the event detail view
 ```
+Events may also include `brochure: 'https://…'`. When present, the shared event
+renderer shows an embedded brochure preview with an open/download link on both
+the homepage detail view and `event.html`; empty, unsafe, or missing brochure
+paths are omitted. Placeholder events set `placeholder: true` and leave their
+date, description, image, and other editorial fields empty until details are
+confirmed.
 Event cards link to `event.html?event=<id>`. Both the homepage detail view and the Launchpad
 load `event-renderer.js` before their page-specific scripts, so common metadata and
 layout-specific sections are rendered from one escaped implementation. The selected event

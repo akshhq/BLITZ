@@ -35,9 +35,12 @@ function validDate(value) {
   if (!event.id || typeof event.id !== 'string') errors.push(`${label}: missing stable id`);
   if (seenIds.has(event.id)) errors.push(`${label}: duplicate id`);
   seenIds.add(event.id);
-  ['title', 'description', 'category'].forEach((field) => {
+  ['title', 'category'].forEach((field) => {
     if (!event[field] || typeof event[field] !== 'string') errors.push(`${label}: missing ${field}`);
   });
+  if ((!event.description || typeof event.description !== 'string') && !event.placeholder) {
+    errors.push(`${label}: missing description`);
+  }
   if (event.date && !validDate(event.date)) errors.push(`${label}: invalid date ${event.date}`);
   if (!event.date) warnings.push(`${label}: date requires society verification`);
   if (event.time && /conflict|pending|to be confirmed|to be announced/i.test(event.time)) {
