@@ -106,6 +106,14 @@ alter table public.events add column if not exists logo text;
 alter table public.events add column if not exists event_details jsonb not null default '{}'::jsonb;
 alter table public.events add column if not exists placeholder boolean not null default false;
 
+create or replace view public.events_public as
+  select id, title, date, time, location, description, category, layout,
+         format, platform, participants, speakers, key_points, winners, sessions, competition_sections,
+         links, image, image_alt, logo, brochure, event_details, placeholder, additional_info
+  from public.events
+  where published = true;
+grant select on public.events_public to anon, authenticated;
+
 create table if not exists public.team_members (
   id         uuid primary key default gen_random_uuid(),
   name       text not null check (char_length(name) between 1 and 120),
@@ -273,3 +281,7 @@ create policy media_update on storage.objects for update to authenticated
   using (bucket_id = 'media' and public.can_edit()) with check (bucket_id = 'media' and public.can_edit());
 create policy media_delete on storage.objects for delete to authenticated
   using (bucket_id = 'media' and public.can_edit());
+
+-- Force PostgREST to reload schema cache
+notify pgrst, 'reload schema';
+

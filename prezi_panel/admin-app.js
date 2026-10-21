@@ -631,8 +631,12 @@
               var match = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(res.error.message || '');
               if (match && match[1]) {
                 var missingCol = match[1];
-                // If the missing column has no user value (null/empty), strip it and retry so save succeeds
-                if (data[missingCol] === null || data[missingCol] === undefined || data[missingCol] === '') {
+                // If the missing column has no user value (null/empty/empty object), strip it and retry so save succeeds
+                var val = data[missingCol];
+                var isEmpty = val === null || val === undefined || val === '' ||
+                  (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0) ||
+                  (Array.isArray(val) && val.length === 0);
+                if (isEmpty) {
                   delete data[missingCol];
                   return executeSave(data);
                 }
