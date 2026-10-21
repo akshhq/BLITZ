@@ -45,7 +45,7 @@ BLITZ/
 │   ├── .htaccess.example          # recommended security headers (give to the server admin)
 │   └── vendor/supabase.js         # pinned supabase-js 2.117.2 (MIT)
 ├── supabase/
-│   ├── schema.sql  seed.sql  admins.sql   # run in the Supabase SQL editor (see SETUP-ADMIN.md)
+│   ├── schema.sql  seed.sql  user.sql  admins.sql   # run in the Supabase SQL editor (see SETUP-ADMIN.md)
 │   └── tests/                             # database + end-to-end tests (optional)
 ├── .github/workflows/keepalive.yml        # stops the free database being paused
 ├── SETUP-ADMIN.md

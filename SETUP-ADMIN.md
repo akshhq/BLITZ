@@ -84,13 +84,18 @@ authenticated owners and editors by both database privileges and RLS policies.
 
 ## 3. Create the admin accounts
 
-1. **Authentication → Users → Add user → Create new user.** Enter the person's email and a temporary password, and tick **Auto Confirm User**. Do this for each person (owners, editors, viewers).
-2. Open `supabase/admins.sql`, replace the example emails with the same addresses and choose each person's role:
-   - `owner`: full access
-   - `editor`: create / edit / delete content and pictures
-   - `viewer`: can look at everything (including drafts and history), cannot change anything
-3. Paste it into the SQL Editor and **Run**. The script stops with a clear error if the Auth user was not created first. Check with: `select email, role from public.admins;`
-4. Tell each person their temporary password privately. They should change it at first sign-in (**Account** page).
+You can add users via the Supabase Dashboard UI or using the SQL scripts:
+
+1. **Create the Auth User** (pick either method):
+   - **Method A (SQL Editor)**: Open `supabase/user.sql`, check/set the email (e.g. `aksh2425709@keshav.du.ac.in`) and temporary password, then run it.
+   - **Method B (Dashboard UI)**: In **Authentication → Users → Add user → Create new user**. Enter the person's email and a temporary password, and tick **Auto Confirm User**.
+2. **Assign the Admin Role**:
+   - Open `supabase/admins.sql`, configure each person's email and role:
+     - `owner`: full access
+     - `editor`: create / edit / delete content and pictures
+     - `viewer`: can look at everything (including drafts and history), cannot change anything
+   - Paste `supabase/admins.sql` into the SQL Editor and **Run**. It syncs roles directly with `public.admins`. Check results with: `select email, role from public.admins;`
+3. Tell each person their temporary password privately. They should change it at first sign-in (**Account** page).
 
 Only people listed in `public.admins` can use the panel. A person with a login who is *not* listed gets a “No access” screen and the database refuses everything they try.
 
@@ -100,12 +105,8 @@ Use this process whenever a new officer or maintainer needs access:
 
 1. Confirm that the person is currently responsible for BLITZ and that their
    email address is correct.
-2. In **Authentication → Users**, choose **Add user → Create new user**.
-   Use the person's real email, a temporary password and **Auto Confirm User**.
-   Do not share an existing officer's login.
-3. Add the same email to `supabase/admins.sql` with the smallest role they
-   need, then run the SQL in the Supabase SQL Editor. Use `owner` only for
-   people who must manage administrators or all site settings.
+2. Create their auth user via `supabase/user.sql` (or in **Authentication → Users → Add user** with **Auto Confirm User**).
+3. Add the email and role to `supabase/admins.sql` and run it in the Supabase SQL Editor.
 4. Give the temporary password privately. The new administrator must sign in,
    change it from **Account**, and confirm that they can perform only the
    actions allowed by their role.
