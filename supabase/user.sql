@@ -10,9 +10,9 @@ create extension if not exists pgcrypto with schema extensions;
 
 do $$
 declare
-  target_email text := 'aksh2425709@keshav.du.ac.in';
+  target_email text := 'vjindal@keshav.du.ac.in';
   target_password text := 'u^R6#3U'; -- Temporary password. Update/change after first login!
-  target_role text := 'owner'; -- Role: 'owner', 'editor', or 'viewer'
+  target_role text := 'editor'; -- Role: 'owner', 'editor', or 'viewer'
   user_id_val uuid;
   encrypted_pw text;
 begin
@@ -97,7 +97,7 @@ begin
   raise notice 'Assigned role "%" to % in public.admins.', target_role, target_email;
 end $$;
 
--- Verify admin account and role
-select a.user_id, a.email, a.role, a.created_at
+-- Verify all admin accounts and roles
+select a.email, a.role
 from public.admins a
-where lower(a.email) = lower('aksh2425709@keshav.du.ac.in');
+order by a.role, a.email;
