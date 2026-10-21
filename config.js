@@ -1,5 +1,4 @@
-
 window.BLITZ_CONFIG = {
-  supabaseUrl: 'https://rwhebgpuighsbypvjrih.supabase.co',
-  supabaseKey: 'sb_publishable_MyfVpsGp1u9sqVfASgv31g_gIDHJyBD'
+  supabaseUrl: 'https://wpubjknrjwtfhnvzrrfs.supabase.co',
+  supabaseKey: 'sb_publishable_e47ZviILl9bVwdIT8L8iAw_WqirqRqm'
 };

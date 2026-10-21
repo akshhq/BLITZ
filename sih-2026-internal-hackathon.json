@@ -1,0 +1,167 @@
+{
+  "template": "BLITZ_EVENT",
+  "version": 1,
+  "event": {
+    "id": "sih-2026-internal-hackathon",
+    "title": "Internal Hackathon (Smart India Hackathon 2026)",
+    "tagline": "Ideate, Prototype, and Pitch – The Road to SIH 2026",
+    "category": "Hackathon",
+    "event_type": "competition",
+    "academic_year": "2026-27",
+    "organizing_department": "Keshav Mahavidyalaya, University of Delhi",
+    "date": "2026-09-10",
+    "start_date": "2026-09-03",
+    "end_date": "2026-09-10",
+    "time": "",
+    "start_time": "",
+    "end_time": "",
+    "location": "Online (Google Meet) & Reading Room, Keshav Mahavidyalaya",
+    "format": "Hybrid (Online Prelims + Offline Finals)",
+    "status": "completed",
+    "platform": "Google Meet (Round 1)",
+    "participants": "Students of Keshav Mahavidyalaya",
+    "participant_count": 126,
+    "team_count": 21,
+    "summary": "Keshav Mahavidyalaya conducted the Internal Hackathon under SIH 2026 in two rounds — online prelims on 3–4 September and an offline hackathon on 10 September 2026 — giving students a platform to ideate, prototype, and pitch solutions aligned with the national-level SIH format.",
+    "description": "Keshav Mahavidyalaya successfully conducted the Internal Hackathon under Smart India Hackathon (SIH) 2026 in two structured parts. The first part, held online on 3–4 September 2026, served as a mock-presentation and prelims screening round. The second part, the offline internal hackathon, was conducted on 10 September 2026 in the Reading Room, where nominated teams presented refined solutions for final evaluation.",
+    "theme": "Smart India Hackathon 2026",
+    "objectives": [],
+    "highlights": [
+      "21 teams (126 participants) in online prelims; 19 teams (114 participants) in offline finals",
+      "Evaluated by faculty panel on a 100-mark rubric",
+      "HEXCODE and Team Tiramisu jointly topped with 87 marks each"
+    ],
+    "activities": [],
+    "rules": [],
+    "eligibility": [],
+    "target_audience": [],
+    "registration": {
+      "url": "",
+      "instructions": "",
+      "deadline": "",
+      "entry_fee": "",
+      "feedback_url": ""
+    },
+    "organizers": [
+      "Keshav Mahavidyalaya, University of Delhi"
+    ],
+    "faculty_coordinators": [],
+    "student_organizers": [],
+    "faculty": [],
+    "guests": [],
+    "speakers": [],
+    "judges": [],
+    "mentors": [],
+    "partners": [],
+    "sponsors": [],
+    "collaborators": [],
+    "agenda": [],
+    "sessions": [
+      {
+        "title": "Round-1: Online Mock Presentation / Prelims Screening",
+        "date": "2026-09-03",
+        "start_time": "",
+        "end_time": "",
+        "venue": "Online (Google Meet)",
+        "description": "21 teams presented proposed solutions over Google Meet; 19 were nominated to proceed.",
+        "speakers": []
+      },
+      {
+        "title": "Round-2: Offline Internal Hackathon",
+        "date": "2026-09-10",
+        "start_time": "",
+        "end_time": "",
+        "venue": "Reading Room, Keshav Mahavidyalaya",
+        "description": "19 nominated teams presented refined solutions before a faculty panel for final evaluation.",
+        "speakers": []
+      }
+    ],
+    "teams": [],
+    "participating_institutions": [],
+    "winners": [
+      {
+        "position": "Rank 1 (Joint)",
+        "title": "HEXCODE — AI-Powered Email Threat Detection (SIH26106)",
+        "names": [],
+        "team_members": []
+      },
+      {
+        "position": "Rank 1 (Joint)",
+        "title": "Team Tiramisu — Quality Assessment and Grading of Onions (SIH26031)",
+        "names": [],
+        "team_members": []
+      },
+      {
+        "position": "Rank 2",
+        "title": "Trinetra — Packaged Commodities Compliance Scanner (SIH26034)",
+        "names": [],
+        "team_members": []
+      },
+      {
+        "position": "Rank 3 (Joint)",
+        "title": "Embiot — AI-enabled Mine Subsidence Monitoring System (SIH26025)",
+        "names": [],
+        "team_members": []
+      },
+      {
+        "position": "Rank 3 (Joint)",
+        "title": "64 Bits — Skill Development & Industry Alignment (SIH26134)",
+        "names": [],
+        "team_members": []
+      }
+    ],
+    "runner_ups": [],
+    "results": [],
+    "special_mentions": [],
+    "prizes": [],
+    "outcomes": [
+      "Top-performing teams to represent Keshav Mahavidyalaya in SIH 2026"
+    ],
+    "acknowledgements": [],
+    "key_points": [],
+    "competition_sections": [],
+    "modules": {
+      "workshop": {},
+      "competition": {},
+      "speaker": {},
+      "festival": {},
+      "orientation": {},
+      "celebration": {},
+      "seminar": {},
+      "exhibition": {},
+      "awareness": {},
+      "other": []
+    },
+    "media": {
+      "poster": "",
+      "cover": "",
+      "logo": "",
+      "thumbnail": "",
+      "gallery": [],
+      "promotional_posters": [],
+      "brochure": "",
+      "booklets": [],
+      "certificates": [],
+      "result_sheets": [],
+      "documents": []
+    },
+    "links": [],
+    "official_website": "",
+    "social_links": [],
+    "resource_links": [],
+    "result_links": [
+      "https://drive.google.com/file/d/1T6O1p8VMs4UZNCT3o1bfY7rn_g5OriPZ/view"
+    ],
+    "registration_links": [],
+    "homepage_featured": true,
+    "published": false,
+    "display_order": null,
+    "seo": {
+      "title": "Internal Hackathon – Smart India Hackathon 2026 | Keshav Mahavidyalaya",
+      "description": "SIH 2026 Internal Hackathon at Keshav Mahavidyalaya — 21 teams, 126 participants, online prelims and offline finals.",
+      "social_image": ""
+    },
+    "additional_info": "",
+    "placeholder": false
+  }
+}
