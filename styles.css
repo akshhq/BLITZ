@@ -1482,6 +1482,79 @@ html:not(.js) .transition-logo {
   object-fit: cover;
   border: 1px solid rgba(212, 164, 92, 0.22);
 }
+.event-carousel {
+  position: relative;
+  overflow: hidden;
+}
+.ec-track {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.ec-track::-webkit-scrollbar { display: none; }
+.ec-track:focus-visible { outline: 2px solid #D4A45C; outline-offset: -2px; }
+.ec-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: center; scroll-snap-stop: always; }
+/* Arrows sit INSIDE the image, flush with its left/right edges, centred vertically. 44px hit area, subtle 30px disc. */
+.ec-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+}
+.ec-prev { left: 0; }
+.ec-next { right: 0; }
+.ec-arrow span {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(38, 21, 26, 0.58);
+  border: 1px solid rgba(255, 249, 242, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.88;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.ec-arrow span::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: solid #FFF9F2;
+  border-width: 0 2px 2px 0;
+}
+.ec-prev span::before { transform: translateX(2px) rotate(135deg); }
+.ec-next span::before { transform: translateX(-2px) rotate(-45deg); }
+.ec-arrow:hover span, .ec-arrow:focus-visible span { opacity: 1; background: rgba(38, 21, 26, 0.82); }
+.ec-arrow:focus-visible { outline: 2px solid #D4A45C; outline-offset: -4px; }
+.event-carousel[data-index="0"] .ec-prev,
+.event-carousel[data-at-end] .ec-next { display: none; }
+.ec-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+.ec-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 249, 242, 0.5); box-shadow: 0 0 2px rgba(0, 0, 0, 0.5); }
+.ec-dots i.is-active { background: #FFF9F2; }
+@media (prefers-reduced-motion: reduce) { .ec-arrow span { transition: none; } }
 
 .event-detail-links {
   margin-top: 28px;

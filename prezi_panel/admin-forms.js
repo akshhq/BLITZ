@@ -86,8 +86,8 @@
             { key: 'type', label: 'Kind', max: 80, placeholder: 'e.g. Quiz' }
           ] },
 
-        { group: 'Image & links', key: 'image', type: 'image', label: 'Event image (optional)', folder: 'events', outW: 1200, outH: 675, mode: 'cover', shape: 'wide', maxBytes: 220 * 1024 },
-        { group: 'Image & links', key: 'image_alt', label: 'Image description', max: 300, help: 'Describe the picture for people using screen readers.' },
+        { group: 'Image & links', key: 'images', type: 'eventimages', label: 'Event images (optional)', folder: 'events', outW: 1200, outH: 675, mode: 'cover', shape: 'wide', maxBytes: 220 * 1024, max: 30,
+          help: 'Add as many as you like. They show as a swipeable carousel on the event page. Which images appear in the public Gallery is chosen in the Gallery section.' },
         { group: 'Image & links', key: 'logo', type: 'image', label: 'Event logo (optional)', folder: 'event-logos', outW: 800, outH: 800, mode: 'contain', shape: 'logo', maxBytes: 180 * 1024, help: 'Shown in event.html launchpad tiles, window header and event details. Transparent PNG or WebP recommended.' },
         { group: 'Image & links', key: 'brochure', kind: 'url', label: 'Brochure link (optional)', max: 1000, placeholder: 'https://…', help: 'Add a PDF or brochure URL. Leave empty when unavailable.' },
         { group: 'Template details', key: 'event_details', type: 'json', label: 'Objectives, people, agenda, results, registration & SEO', help: 'Review imported details as JSON. Media names are references only; upload actual files separately.' },
@@ -115,22 +115,11 @@
       ]
     },
 
+    // The Gallery is not a collection of its own any more: it lists every image uploaded to an event and lets editors
+    // star the ones that should appear in the public Gallery. See viewGallery in admin-app.js. (public.gallery_items is legacy.)
     gallery: {
-      label: 'Gallery', singular: 'gallery item', table: 'gallery_items', pk: 'id', ordered: true,
-      order: { column: 'sort_order', ascending: true },
-      item: { title: function (r) { return r.title; }, meta: function (r) { return [r.media_type === 'illustration' ? 'Illustration' : 'Photo', r.date_label].filter(Boolean).join(' · '); }, thumb: 'image' },
-      fields: [
-        { key: 'title', label: 'Title', required: true, max: 200 },
-        { key: 'image', type: 'image', label: 'Image', required: true, folder: 'gallery', outW: 800, outH: 600, mode: 'cover', shape: 'wide', maxBytes: 220 * 1024 },
-        { key: 'alt', label: 'Image description', max: 300, help: 'Describe what the picture shows, for people using screen readers.' },
-        { key: 'description', label: 'Caption (optional)', type: 'textarea', max: 500 },
-        { key: 'media_type', label: 'Kind', type: 'select', required: true, options: [['photo', 'Photo'], ['illustration', 'Illustration']] },
-        { key: 'date_label', label: 'When', max: 60, placeholder: 'e.g. Aug 2026' },
-        { key: 'location', label: 'Where', max: 200 },
-        PUBLISHED
-      ]
+      label: 'Gallery', singular: 'gallery image', table: 'event_images', pk: 'id', view: 'event-images', noNew: true, fields: []
     },
-
     collaborations: {
       label: 'Collaborations', singular: 'collaboration', table: 'collaborations', pk: 'id', ordered: true,
       order: { column: 'sort_order', ascending: true },
@@ -397,6 +386,94 @@
     };
   }
 
+  /*
+   * Event images: any number (up to def.max) in a chosen order. Each image has a stable id (made here, so a retry of a
+   * save never creates a second copy), its own description, and sits in the list until Save. Nothing is uploaded or
+   * removed from the database until then. The Gallery star is NOT here on purpose: it lives in the Gallery section.
+   */
+  function newImageId() {
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    var b = new Uint8Array(16); window.crypto.getRandomValues(b); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    var h = [].map.call(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+  function eventImagesWidget(def, value, ctx) {
+    var max = def.max || 30;
+    var items = (Array.isArray(value) ? value : []).map(function (v) {
+      return { id: v.id || newImageId(), path: v.path || v.image || null, alt: v.alt || '', blob: v.blob || null, blobUrl: v.blobUrl || null };
+    });
+    var id = PP.uid('f');
+    var listHost = el('ol', { class: 'evimg-list', 'aria-label': 'Images in display order' });
+    var addBtn = el('button', { type: 'button', id: id, class: 'btn', text: 'Add images…' });
+    var summary = el('div', { class: 'hint', 'aria-live': 'polite' });
+    var announce = el('div', { class: 'sr-only', role: 'status', 'aria-live': 'polite' });
+
+    function srcOf(it) { return it.blobUrl || PP.imgSrc(it.path); }
+    function changed() { if (ctx.onChange) ctx.onChange(); }
+    function move(i, d) {
+      var j = i + d; if (j < 0 || j >= items.length) return;
+      var t = items[i]; items[i] = items[j]; items[j] = t;
+      render(); announce.textContent = 'Image moved to position ' + (j + 1) + ' of ' + items.length + '.'; changed();
+      var btn = listHost.querySelectorAll('li')[j].querySelector(d < 0 ? '.evimg-earlier' : '.evimg-later'); if (btn && !btn.disabled) btn.focus();
+    }
+    function remove(i) {
+      var it = items[i];
+      if (it.blobUrl) URL.revokeObjectURL(it.blobUrl);
+      items.splice(i, 1); render(); changed();
+      announce.textContent = 'Image removed. It will be deleted from the event when you save.';
+      (listHost.querySelectorAll('li .evimg-remove')[Math.min(i, items.length - 1)] || addBtn).focus();
+    }
+    function render() {
+      PP.clear(listHost);
+      items.forEach(function (it, i) {
+        var alt = el('input', { type: 'text', class: 'evimg-alt', maxlength: '300', value: it.alt, 'aria-label': 'Description of image ' + (i + 1) + ' (for screen readers)', placeholder: 'Describe this image (optional)' });
+        alt.addEventListener('input', function () { it.alt = alt.value; changed(); });
+        if (ctx.readOnly) alt.disabled = true;
+        var earlier = el('button', { type: 'button', class: 'btn btn--small evimg-earlier', text: 'Earlier', 'aria-label': 'Move image ' + (i + 1) + ' earlier', onclick: function () { move(i, -1); } });
+        var later = el('button', { type: 'button', class: 'btn btn--small evimg-later', text: 'Later', 'aria-label': 'Move image ' + (i + 1) + ' later', onclick: function () { move(i, 1); } });
+        var rm = el('button', { type: 'button', class: 'btn btn--small btn--danger evimg-remove', text: 'Remove', 'aria-label': 'Remove image ' + (i + 1), onclick: function () { remove(i); } });
+        earlier.disabled = ctx.readOnly || i === 0; later.disabled = ctx.readOnly || i === items.length - 1; rm.disabled = !!ctx.readOnly;
+        listHost.appendChild(el('li', { class: 'evimg', 'data-image-id': it.id }, [
+          el('div', { class: 'evimg-thumb' }, [
+            el('img', { src: srcOf(it), alt: 'Image ' + (i + 1) + (it.alt ? ': ' + it.alt : '') }),
+            el('span', { class: 'evimg-pos', text: i === 0 ? '1 · Cover' : String(i + 1) })
+          ]),
+          el('div', { class: 'evimg-body' }, [alt, it.blob ? el('div', { class: 'hint', text: 'New. Uploaded when you save.' }) : null,
+            el('div', { class: 'repeat-row-actions' }, [earlier, later, rm])])
+        ]));
+      });
+      summary.textContent = items.length
+        ? items.length + ' of ' + max + ' images. The first is the cover. Changes (adding, removing, order) apply when you save.'
+        : 'No images yet. The first image you add becomes the cover.';
+      addBtn.disabled = !!ctx.readOnly || items.length >= max;
+      addBtn.textContent = items.length ? 'Add more images…' : 'Add images…';
+    }
+    addBtn.addEventListener('click', function () {
+      PP.chooseImages({ title: 'Position the event image', outW: def.outW, outH: def.outH, mode: def.mode, maxBytes: def.maxBytes, hint: def.help, limit: max - items.length, max: max }).then(function (blobs) {
+        if (!blobs.length) return;
+        blobs.forEach(function (blob) { items.push({ id: newImageId(), path: null, alt: '', blob: blob, blobUrl: URL.createObjectURL(blob) }); });
+        render(); changed();
+        announce.textContent = blobs.length + ' image' + (blobs.length === 1 ? '' : 's') + ' added.';
+      });
+    });
+    // control omitted on purpose: shell() would move the button out of its row; the label still targets it by id
+    var s = shell(def, null, id, el('div', { class: 'evimg-field' }, [summary, listHost, el('div', { class: 'repeat-row-actions' }, [addBtn]), announce]));
+    render();
+    return {
+      node: s.node, control: addBtn, setError: s.setError, focus: function () { addBtn.focus(); },
+      // [{ id, path, alt, blob?, blobUrl? }] in display order. `path` is null until a new image has been uploaded.
+      get: function () { return items.map(function (it) { return { id: it.id, path: it.path, alt: it.alt, blob: it.blob, blobUrl: it.blobUrl }; }); },
+      pendingItems: function () { return items.filter(function (it) { return it.blob; }); },
+      previewSrcs: function () { return items.map(srcOf); },
+      previewSrc: function () { return items.length ? srcOf(items[0]) : ''; },
+      check: function () { var m = items.length > max ? 'At most ' + max + ' images.' : ''; s.setError(m); return m; },
+      commitItem: function (itemId, path) {
+        items.forEach(function (it) { if (it.id === itemId) { it.path = path; it.blob = null; if (it.blobUrl) { URL.revokeObjectURL(it.blobUrl); it.blobUrl = null; } } });
+        render();
+      }
+    };
+  }
+
   function makeWidget(def, value, ctx) {
     switch (def.type) {
       case 'select': return selectWidget(def, value, ctx);
@@ -404,6 +481,7 @@
       case 'stringlist': return stringListWidget(def, value, ctx);
       case 'repeater': return repeaterWidget(def, value, ctx);
       case 'image': return imageWidget(def, value, ctx);
+      case 'eventimages': return eventImagesWidget(def, value, ctx);
       case 'json': return jsonWidget(def, value, ctx);
       default: return textWidget(def, value, ctx);
     }
@@ -496,6 +574,7 @@
         var pending = [];
         order.forEach(function (def) {
           if (def.type === 'image') { var b = widgets[def.key].pending(); if (b) pending.push({ key: def.key, def: def, blob: b }); }
+          if (def.type === 'eventimages') widgets[def.key].pendingItems().forEach(function (it) { pending.push({ key: def.key, def: def, blob: it.blob, itemId: it.id }); });
         });
         if (r.firstBad) { r.firstBad.focus(); }
         return { ok: r.errors.length === 0, errors: r.errors, row: r.row, pending: pending };
@@ -508,7 +587,11 @@
         });
         return r;
       },
-      previewImageSrc: function (key) { return widgets[key] && widgets[key].previewSrc ? widgets[key].previewSrc() : ''; }
+      previewImageSrc: function (key) {
+        if (key === 'image' && !widgets.image && widgets.images) return widgets.images.previewSrc();
+        return widgets[key] && widgets[key].previewSrc ? widgets[key].previewSrc() : '';
+      },
+      previewImageSrcs: function () { return widgets.images && widgets.images.previewSrcs ? widgets.images.previewSrcs() : []; }
     };
   };
 }());

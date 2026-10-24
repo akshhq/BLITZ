@@ -285,6 +285,10 @@
     if (key === 'activity') return viewActivity();
     if (key === 'account') return viewAccount();
     if (key === 'export') return viewExport();
+    if (key === 'gallery') {                                   // not a collection of its own: nothing to create or edit here
+      if (parts[1]) { window.location.replace('#/gallery'); return; }
+      return viewGallery();
+    }
     if (COLLS[key]) {
       if (parts[1] === 'new') return viewEdit(key, null);
       if (parts[1] === 'edit' && parts[2]) return viewEdit(key, parts[2]);
@@ -310,15 +314,18 @@
         el('div', { class: 'item-main' }, [el('div', { class: 'item-title', text: c.label }), count]),
         el('div', { class: 'item-actions' }, [
           el('a', { class: 'btn btn--small', href: '#/' + k, text: 'Manage' }),
-          canEdit() ? el('a', { class: 'btn btn--small btn--primary', href: '#/' + k + '/new', text: 'New ' + c.singular }) : null
+          canEdit() && !c.noNew ? el('a', { class: 'btn btn--small btn--primary', href: '#/' + k + '/new', text: 'New ' + c.singular }) : null
         ])
       ]));
       PP.read(function () {
         return Promise.all([
           sb.from(c.table).select('*', { count: 'exact', head: true }),
-          sb.from(c.table).select('*', { count: 'exact', head: true }).eq('published', false)
+          k === 'gallery'
+            ? sb.from(c.table).select('*', { count: 'exact', head: true }).eq('gallery_enabled', true)
+            : sb.from(c.table).select('*', { count: 'exact', head: true }).eq('published', false)
         ]);
       }, 'count-' + c.table).then(function (r) {
+        if (k === 'gallery' && !r[0].error) { count.textContent = r[0].count + ' event image' + (r[0].count === 1 ? '' : 's') + ' · ' + r[1].count + ' starred for the public Gallery'; return; }
         if (r[0].error) { E.report(r[0].error, { operation: 'count-' + c.table, service: 'supabase', silent: true }); count.textContent = 'Could not load (' + E.normalize(r[0].error, { service: 'supabase' }).code + ').'; return; }
         count.textContent = r[0].count + ' in total' + (r[1].count ? ' · ' + r[1].count + ' draft' + (r[1].count === 1 ? '' : 's') : '');
       }).catch(function (err) {
@@ -327,6 +334,105 @@
     });
     if (!canEdit()) document.getElementById('dash-notice').appendChild(el('p', { class: 'notice', text: 'Your role is “viewer”: you can look at everything but not change it.' }));
   }
+  /*
+   * Gallery = every image uploaded to every event, with one star each. The star only decides whether that image is
+   * shown in the PUBLIC Gallery (it must also belong to a published event). Images are added, ordered and removed in
+   * the event itself; there is no upload here and no second copy of anything.
+   */
+  function starIcon() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', '26'); svg.setAttribute('height', '26'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false');
+    var path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', 'M12 2.6l2.9 6.1 6.7.9-4.9 4.6 1.2 6.6L12 17.6 6.1 20.8l1.2-6.6L2.4 9.6l6.7-.9z');
+    svg.appendChild(path);
+    return svg;
+  }
+  function viewGallery() {
+    var legacyHost = el('div');
+    var host = el('div', null, [el('p', { class: 'loading', text: 'Loading…' })]);
+    show('Gallery', [
+      el('p', { class: 'muted', text: 'Every image uploaded to an event appears here. Use the star to choose which ones show in the public Gallery. To add, reorder or remove images, open the event.' }),
+      el('p', { class: 'hint gal-legend' }, [el('span', { class: 'gal-key gal-key--on', 'aria-hidden': 'true', text: '★' }), ' shown in the public Gallery  ', el('span', { class: 'gal-key', 'aria-hidden': 'true', text: '☆' }), ' not shown. An image also needs its event to be published.']),
+      legacyHost, host
+    ]);
+
+    function load() {
+      PP.clear(host).appendChild(el('p', { class: 'loading', text: 'Loading…' }));
+      PP.read(function () {
+        return Promise.all([
+          sb.from('event_images').select('id,event_id,image,alt,gallery_enabled,sort_order,created_at,events(title,published,date)').order('sort_order', { ascending: true }),
+          sb.from('gallery_items').select('id,title,image')
+        ]);
+      }, 'load-gallery').then(function (res) {
+        if (res[0].error) { PP.loadFailure(host, res[0].error, 'load-gallery', load); return; }
+        draw(res[0].data || [], res[1] && !res[1].error ? res[1].data || [] : []);
+      }).catch(function (err) { PP.loadFailure(host, err, 'load-gallery', load); });
+    }
+
+    function draw(images, legacy) {
+      PP.clear(host);
+      // Older, standalone gallery photos are kept in the database but are no longer shown: say so, never silently.
+      PP.clear(legacyHost);
+      var attached = {}; images.forEach(function (i) { attached[i.image] = true; });
+      var orphans = legacy.filter(function (g) { return !attached[g.image]; });
+      if (orphans.length) {
+        legacyHost.appendChild(el('div', { class: 'notice', role: 'status' }, [
+          el('p', { text: orphans.length + ' older gallery item' + (orphans.length === 1 ? '' : 's') + ' (added before the Gallery was built from event images) ' + (orphans.length === 1 ? 'is' : 'are') + ' kept safely but no longer shown on the website, because ' + (orphans.length === 1 ? 'it is' : 'they are') + ' not attached to an event. To show one again, add that image to an event and star it.' }),
+          el('details', null, [el('summary', { text: 'Which ones?' }), el('ul', null, orphans.map(function (g) { return el('li', { text: g.title || g.id }); }))])
+        ]));
+      }
+      if (!images.length) {
+        host.appendChild(el('div', { class: 'notice' }, [el('p', { text: 'No event images yet. Add images to an event and they will appear here.' }), el('p', null, [el('a', { class: 'btn', href: '#/events', text: 'Go to events' })])]));
+        return;
+      }
+      var byEvent = {}, order = [];
+      images.forEach(function (i) { if (!byEvent[i.event_id]) { byEvent[i.event_id] = []; order.push(i.event_id); } byEvent[i.event_id].push(i); });
+      order.sort(function (a, b) {                       // newest events first, like the public Gallery
+        var da = (byEvent[a][0].events && byEvent[a][0].events.date) || '', db = (byEvent[b][0].events && byEvent[b][0].events.date) || '';
+        return db < da ? -1 : db > da ? 1 : (a < b ? -1 : 1);
+      });
+      order.forEach(function (eventId) {
+        var rows = byEvent[eventId].sort(function (a, b) { return a.sort_order - b.sort_order || (a.created_at < b.created_at ? -1 : 1); });
+        var ev = rows[0].events || {};
+        var published = ev.published !== false;
+        var grid = el('ul', { class: 'gal-grid' });
+        rows.forEach(function (row, n) { grid.appendChild(card(row, ev, n, rows.length, published)); });
+        host.appendChild(el('section', { class: 'gal-event', 'aria-label': ev.title || eventId }, [
+          el('h2', { class: 'gal-event-title' }, [ev.title || eventId, ' ', el('span', { class: 'badge ' + (published ? 'badge--live' : 'badge--draft'), text: published ? 'Published' : 'Draft' }),
+            el('span', { class: 'hint', text: '  ' + rows.length + ' image' + (rows.length === 1 ? '' : 's') })]),
+          published ? null : el('p', { class: 'hint', text: 'This event is a draft, so none of its images appear on the website even when starred.' }),
+          grid
+        ]));
+      });
+    }
+
+    function card(row, ev, n, total, published) {
+      var title = ev.title || row.event_id;
+      var star = el('button', { type: 'button', class: 'gal-star', 'aria-pressed': row.gallery_enabled ? 'true' : 'false',
+        'aria-label': 'Show in the public Gallery: ' + title + ', image ' + (n + 1) + ' of ' + total,
+        title: canEdit() ? (row.gallery_enabled ? 'Shown in the public Gallery. Click to hide it.' : 'Not shown. Click to show it in the public Gallery.') : 'Your role cannot change this.' }, [starIcon()]);
+      if (!canEdit()) star.setAttribute('aria-disabled', 'true');
+      star.addEventListener('click', function () {
+        if (!canEdit()) { PP.toast(E.catalog.get('BLITZ-PERM-002').message + ' ' + E.catalog.get('BLITZ-PERM-002').hint, ''); return; }
+        var want = row.gallery_enabled !== true;
+        PP.run({
+          key: 'star:' + row.id, buttons: star, operation: 'toggle-gallery-image', requireRows: true,
+          task: function () { return sb.from('event_images').update({ gallery_enabled: want }).eq('id', row.id).select('id'); },
+          success: want ? 'Added to the public Gallery.' + (published ? '' : ' It will appear once its event is published.') : 'Removed from the public Gallery. The image stays on its event.',
+          onSuccess: function () { row.gallery_enabled = want; star.setAttribute('aria-pressed', want ? 'true' : 'false'); star.title = want ? 'Shown in the public Gallery. Click to hide it.' : 'Not shown. Click to show it in the public Gallery.'; },
+          onError: function () { load(); }
+        });
+      });
+      return el('li', { class: 'gal-card' + (row.gallery_enabled ? ' is-on' : '') }, [
+        el('img', { class: 'gal-img', src: PP.imgSrc(row.image), alt: row.alt || ('Image ' + (n + 1) + ' of ' + title), loading: 'lazy' }),
+        star,
+        el('div', { class: 'gal-meta' }, [el('div', { class: 'gal-event-name', text: title }), el('div', { class: 'hint', text: 'Image ' + (n + 1) + ' of ' + total + (row.alt ? ' · ' + row.alt : '') })])
+      ]);
+    }
+    load();
+  }
+
   // Read-only: probes the connection, session, role, tables, columns, function and storage. It changes nothing.
   function systemCheckButton() {
     var btn = el('button', { type: 'button', class: 'btn', text: 'Run system check' });
@@ -483,14 +589,20 @@
 
     function togglePublished(row, button) {
       var want = !row.published;
-      PP.run({
+      // Hiding an event also hides all of its images from the public Gallery, so it gets the same care as publishing.
+      if (!want && coll.preview) {
+        PP.confirm({ title: 'Unpublish “' + coll.item.title(row) + '”?', message: 'It disappears from the website straight away, and so do its images in the public Gallery. Nothing is deleted; you can publish it again.', confirmLabel: 'Unpublish' }).then(function (ok) { if (ok) runToggle(); });
+        return;
+      }
+      runToggle();
+      function runToggle() { PP.run({
         key: 'publish:' + coll.table + ':' + row[coll.pk], buttons: button, busyText: want ? 'Publishing…' : 'Unpublishing…', operation: (want ? 'publish-' : 'unpublish-') + key,
         requireRows: true,
         task: function () { return sb.from(coll.table).update({ published: want }).eq(coll.pk, row[coll.pk]).select(coll.pk); },
         success: want ? 'Published. It is now live on the website.' : 'Unpublished. It is hidden from the website.',
         onSuccess: function () { load({ act: 'pub', id: row.id }); },
         onError: function () { load({ act: 'pub', id: row.id }); }
-      });
+      }); }
     }
 
     function remove(row, button) {
@@ -513,12 +625,17 @@
   }
   function previewEvent(form) {
     var row = form.peek();
-    var mapped = PP.map.event(Object.assign({}, row, { image: null, logo: null }));
-    var src = form.previewImageSrc('image');
-    if (src) mapped.image = 'preview-image'; // passes the renderer's check; the real picture is swapped in by preview.js
+    var mapped = PP.map.event(Object.assign({}, row, { image: null, logo: null, images: [] }));
+    var srcs = form.previewImageSrcs();
+    var src = srcs[0] || form.previewImageSrc('image');
+    if (srcs.length) {
+      var raw = form.peek().images || [];
+      mapped.images = srcs.map(function (u, i) { return { id: '', src: 'preview-image-' + i, alt: (raw[i] && raw[i].alt) || '' }; });   // pass the renderer's check; preview.js swaps in the real pictures
+      mapped.image = mapped.images[0].src;
+    } else if (src) mapped.image = 'preview-image';
     var logoSrc = form.previewImageSrc('logo');
     if (logoSrc) mapped.logo = 'preview-logo';
-    return { event: mapped, imageSrc: src || '', logoSrc: logoSrc || '' };
+    return { event: mapped, imageSrc: src || '', imageSrcs: srcs, logoSrc: logoSrc || '' };
   }
 
   function templateImportPanel(coll, key, isNew, record, existingIds, form) {
@@ -625,10 +742,20 @@
       var loadRecord = isNew ? Promise.resolve({ data: {} }) : sb.from(coll.table).select('*').eq(coll.pk, id).maybeSingle();
       var loadIds = isNew && coll.pk === 'id' && coll.fields.some(function (f) { return f.type === 'slug'; })
         ? sb.from(coll.table).select('id') : Promise.resolve({ data: [] });
-      return Promise.all([loadRecord, loadIds]);
+      var loadImages = key === 'events' && !isNew
+        ? sb.from('event_images').select('id,image,alt,sort_order').eq('event_id', id).order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+        : Promise.resolve({ data: null });
+      return Promise.all([loadRecord, loadIds, loadImages]);
     }, 'load-' + key + '-record').then(function (res) {
       if (res[0].error) { failed(res[0].error); return; }
       if (res[1] && res[1].error) { failed(res[1].error); return; }
+      if (res[2] && res[2].error) { failed(res[2].error); return; }
+      if (key === 'events' && res[0].data) {
+        // The event's images in order. An event saved before multi-image support only has `image`; show it as image 1.
+        var loaded = (res[2] && res[2].data || []).map(function (r) { return { id: r.id, path: r.image, alt: r.alt || '' }; });
+        if (!loaded.length && res[0].data.image) loaded = [{ path: res[0].data.image, alt: res[0].data.image_alt || '' }];
+        res[0].data.images = loaded;
+      }
       if (!res[0].data) { show('Not found', [el('p', { class: 'notice', text: 'That ' + coll.singular + ' does not exist (it may have been deleted).' }), el('a', { class: 'btn', href: '#/' + key, text: 'Back to ' + coll.label.toLowerCase() })]); return; }
       buildEditor(coll, key, isNew, res[0].data, (res[1].data || []).map(function (r) { return r.id; }));
     }).catch(failed);
@@ -689,7 +816,7 @@
     var stop = function () { clearTimeout(previewTimer); window.removeEventListener('message', onPreviewMessage); window.removeEventListener('hashchange', stop); };
     window.addEventListener('hashchange', stop);
 
-    var attempt = { uncertainCreate: false, reconciled: false };
+    var attempt = { uncertainCreate: false, reconciled: false, eventSaved: false, imagesPending: false };
     var confirming = false;
     form.node.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -726,10 +853,14 @@
           key: saveKey, buttons: [saveBtn], busyText: 'Saving…', operation: (isNew ? 'create-' : 'update-') + key,
           requireRows: true,
           task: function () {
+            var imagesWidget, imageList, creating, pkValue;
             // 1. images first. A committed upload is remembered by the form, so a retry never uploads it twice.
             return result.pending.reduce(function (chain, p) {
               return chain.then(function () {
-                return PP.uploadImage(p.def.folder, p.blob).then(function (path) { row[p.key] = path; form.widgets[p.key].commit(path); });
+                return PP.uploadImage(p.def.folder, p.blob).then(function (path) {
+                  if (p.itemId) form.widgets[p.key].commitItem(p.itemId, path);      // one of several event images: remembered, so a retry never uploads it twice
+                  else { row[p.key] = path; form.widgets[p.key].commit(path); }
+                });
               });
             }, Promise.resolve()).then(function () {
               if (isNew && coll.ordered) {
@@ -740,10 +871,21 @@
               }
             }).then(function () {
               // 2. the write. `.select()` makes the database send the row back, which is how we know it really happened.
+              // Event images: the first image is the event's cover (kept in events.image so older readers still work);
+              // the full ordered list is written separately, in one transaction, after the event row.
+              imagesWidget = form.widgets.images && form.widgets.images.get ? form.widgets.images : null;
+              imageList = imagesWidget ? imagesWidget.get() : null;
+              if (imageList) {
+                row.image = imageList.length ? imageList[0].path : null;
+                row.image_alt = imageList.length ? (imageList[0].alt || '') : '';
+              }
+              delete row.images;
+              creating = isNew && !attempt.eventSaved;            // after the event row exists, a retry must UPDATE it, not insert again
+              pkValue = isNew ? row[coll.pk] : record[coll.pk];
               function executeSave(data) {
-                var op = isNew ? sb.from(coll.table).insert(data).select(coll.pk) : (function () {
+                var op = creating ? sb.from(coll.table).insert(data).select(coll.pk) : (function () {
                   var change = Object.assign({}, data); delete change[coll.pk];
-                  return sb.from(coll.table).update(change).eq(coll.pk, record[coll.pk]).select(coll.pk);
+                  return sb.from(coll.table).update(change).eq(coll.pk, pkValue).select(coll.pk);
                 }());
                 return op.then(function (res) {
                   if (res && res.error) {
@@ -771,6 +913,16 @@
                 });
               }
               return executeSave(row);
+            }).then(function (saved) {
+              if (!imageList) return saved;
+              if (isNew) attempt.eventSaved = true;
+              attempt.imagesPending = true;
+              var payload = imageList.map(function (it) { return { id: it.id, image: it.path, alt: it.alt || '' }; });
+              return sb.rpc('set_event_images', { p_event_id: pkValue, p_images: payload }).then(function (r) {
+                if (r.error) throw r.error;
+                attempt.imagesPending = false;
+                return saved;
+              });
             });
           },
           success: function () {
@@ -789,6 +941,7 @@
           onError: function (n) {
             // The form is untouched, so everything typed is still there. Remember if a create may have landed.
             if (isNew && /^BLITZ-NET-/.test(n.code)) attempt.uncertainCreate = true;
+            if (attempt.imagesPending) PP.toast('The event details were saved, but its images were not. Press Save again to retry the images; nothing will be duplicated.', '');
           }
         });
       }
@@ -809,9 +962,9 @@
     });
     h1.focus({ preventScroll: true });
   }
-  var TABLE_LABEL = { announcements: 'Announcement', events: 'Event', team_members: 'Team member', gallery_items: 'Gallery item', collaborations: 'Collaboration' };
+  var TABLE_LABEL = { announcements: 'Announcement', events: 'Event', team_members: 'Team member', gallery_items: 'Older gallery item', event_images: 'Event image', collaborations: 'Collaboration' };
 
-  function rowTitle(r) { return r ? (r.title || r.name || r.id) : ''; }
+  function rowTitle(r) { return r ? (r.title || r.name || (r.image && r.event_id ? r.event_id + ' · ' + r.image.replace(/^.*\//, '') : '') || r.id) : ''; }
 
   function viewActivity() {
     var host = el('div', null, [el('p', { class: 'loading', text: 'Loading…' })]);

@@ -136,6 +136,40 @@
   }
 
   
+  /*
+   * Choose SEVERAL images at once. Each file goes through the same validation and crop step as a single image,
+   * one after another ("Image 2 of 5"). Resolves with the blobs that were accepted, in the order chosen;
+   * cancelling a crop skips only that image.
+   */
+  PP.chooseImages = function (opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var input = PP.el('input', { type: 'file', accept: ACCEPT, multiple: 'multiple', class: 'sr-only', tabindex: '-1', 'aria-hidden': 'true' });
+      document.body.appendChild(input);
+      var settled = false;
+      function finish(v) { if (settled) return; settled = true; if (input.parentNode) input.parentNode.removeChild(input); resolve(v); }
+      input.addEventListener('cancel', function () { finish([]); });
+      input.addEventListener('change', function () {
+        var files = [].slice.call(input.files || []);
+        if (!files.length) return finish([]);
+        var room = typeof opts.limit === 'number' ? Math.max(0, opts.limit) : files.length;
+        if (files.length > room) { PP.toast('Only ' + room + ' more image' + (room === 1 ? '' : 's') + ' can be added (the limit is ' + (opts.max || room) + '). The first ' + room + ' were kept.', 'error'); files = files.slice(0, room); }
+        var accepted = [];
+        files.reduce(function (chain, file, i) {
+          return chain.then(function () {
+            if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { PP.toast(file.name + ': please choose a PNG, JPEG or WebP image.', 'error'); return; }
+            if (file.size > MAX_SOURCE_BYTES) { PP.toast(file.name + ' is larger than 20 MB, so it was skipped.', 'error'); return; }
+            return loadImage(file).then(function (loaded) {
+              var one = Object.assign({}, opts, { title: (opts.title || 'Position the image') + (files.length > 1 ? ' (' + (i + 1) + ' of ' + files.length + ')' : '') });
+              return openCropper(loaded, one).then(function (blob) { URL.revokeObjectURL(loaded.url); if (blob) accepted.push(blob); });
+            }).catch(function (err) { PP.toast((file.name || 'That image') + ': ' + (err.message || 'could not be opened.'), 'error'); });
+          });
+        }, Promise.resolve()).then(function () { finish(accepted); });
+      });
+      input.click();
+    });
+  };
+
   PP.chooseImage = function (opts) {
     return new Promise(function (resolve) {
       var input = PP.el('input', { type: 'file', accept: ACCEPT, class: 'sr-only', tabindex: '-1', 'aria-hidden': 'true' });

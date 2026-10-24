@@ -32,6 +32,10 @@ out.push('', '-- events');
     `) on conflict (id) do nothing;`);
 });
 
+out.push('', '-- event images (the one source of images: an event\'s own image is its first image; the Gallery star starts off)');
+(D.events || []).filter((e) => e.image && /^(assets\/|storage:)[A-Za-z0-9\/_.-]{1,200}$/.test(e.image) && !/\.\./.test(e.image)).forEach((e) => out.push(
+  `insert into public.event_images (id, event_id, image, alt, sort_order) values ('${uuid('event-image:' + e.id + ':0')}', ${q(e.id)}, ${q(e.image)}, ${`'${String(e.imageAlt || '').replace(/'/g, "''")}'`}, 10) on conflict (id) do nothing;`));
+
 out.push('', '-- team (sort_order in steps of 10 so the admin can slot people in between)');
 (D.team || []).forEach((m, i) => out.push(
   `insert into public.team_members (id, name, position, tier, photo, sort_order) values ('${uuid('team:' + m.name)}', ${q(m.name)}, ${q(m.position)}, ${q(m.tier)}, ${q(m.photo)}, ${(i + 1) * 10}) on conflict (id) do nothing;`));

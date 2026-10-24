@@ -11,6 +11,12 @@
       var img = out.querySelector('.event-detail-media img, .event-page-media img');
       if (img) img.src = msg.imageSrc;
     }
+    if (Array.isArray(msg.imageSrcs) && msg.imageSrcs.length > 1) {
+      [].forEach.call(out.querySelectorAll('.event-detail-media img, .event-page-media img'), function (img, i) {
+        var u = msg.imageSrcs[i];
+        if (u && /^(blob:|https:\/\/|\.\.\/assets\/)/.test(u)) img.src = u;
+      });
+    }
     if (msg.logoSrc && /^(blob:|https:\/\/|\.\.\/assets\/)/.test(msg.logoSrc)) {
       var logoImg = out.querySelector('.event-page-logo img, .event-detail-logo img');
       if (logoImg) logoImg.src = msg.logoSrc;

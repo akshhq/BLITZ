@@ -114,7 +114,15 @@
         });
       });
 
-      ['announcements', 'team_members', 'gallery_items', 'collaborations', 'content_history'].forEach(function (table) {
+      // Read-only probe: set_event_images() refuses an unknown event BEFORE it writes anything, so reaching that refusal proves it exists.
+      add('Event images function', function () {
+        return sb.rpc('set_event_images', { p_event_id: '__system-check__', p_images: [] }).then(function (res) {
+          if (res.error && /^(PGRST202|42883)$/.test(String(res.error.code))) throw res.error;
+          return { message: 'public.set_event_images() exists.' };
+        });
+      });
+
+      ['announcements', 'team_members', 'event_images', 'gallery_items', 'collaborations', 'content_history'].forEach(function (table) {
         add('Table ' + table, function () {
           return sb.from(table).select('*', { count: 'exact', head: true }).then(function (res) { failFrom(res); return { message: 'Readable.' }; });
         });

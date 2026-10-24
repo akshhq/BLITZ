@@ -167,3 +167,30 @@ details.group > .group-body { padding: 0 14px 14px; display: grid; gap: 12px; }
 .syscheck { margin-top: 16px; }
 .syscheck .item-meta { white-space: normal; overflow-wrap: anywhere; }
 .toast--error { cursor: pointer; }
+
+/* Event images field (event editor) */
+.evimg-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.evimg { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); overflow: hidden; }
+.evimg-thumb { position: relative; background: #000; aspect-ratio: 16 / 9; }
+.evimg-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.evimg-pos { position: absolute; left: 8px; top: 8px; padding: 2px 10px; border-radius: 999px; background: rgba(11, 5, 6, 0.85); border: 1px solid var(--line); font-size: 13px; font-weight: 700; }
+.evimg-body { padding: 10px; display: grid; gap: 8px; }
+.evimg-alt { width: 100%; min-height: var(--tap); padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; }
+
+/* Gallery management (star per image) */
+.gal-event { margin: 0 0 28px; }
+.gal-event-title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gal-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.gal-card { position: relative; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); overflow: hidden; }
+.gal-card.is-on { border-color: var(--accent); }
+.gal-img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: #000; }
+.gal-meta { padding: 8px 10px 10px; }
+.gal-event-name { font-weight: 700; overflow-wrap: anywhere; }
+.gal-star { position: absolute; top: 6px; right: 6px; width: var(--tap); height: var(--tap); display: grid; place-items: center; padding: 0; border-radius: 50%;
+  border: 1px solid var(--line); background: rgba(11, 5, 6, 0.78); color: var(--accent); cursor: pointer; }
+.gal-star svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.gal-star[aria-pressed="true"] svg { fill: currentColor; }
+.gal-star:hover { background: rgba(11, 5, 6, 0.95); }
+.gal-star[aria-disabled="true"] { cursor: not-allowed; opacity: 0.6; }
+.gal-star:disabled { opacity: 0.6; }
+.gal-key { color: var(--accent); font-size: 18px; vertical-align: -2px; }

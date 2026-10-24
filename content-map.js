@@ -20,14 +20,27 @@
       announcement: function (a) {
         return { id: str(a.id), title: str(a.title), date: str(a.date), summary: str(a.summary), body: str(a.body), link: str(a.link) };
       },
+      // An event's images in display order. Events saved before multi-image support only have `image`; that
+      // single image is used so they keep working unchanged.
+      eventImages: function (e) {
+        var out = [];
+        list(e.images).forEach(function (item) {
+          var src = imageUrl(item && item.image);
+          if (src) out.push({ id: str(item.id), src: src, alt: str(item.alt) });
+        });
+        if (!out.length && e.image) out.push({ id: '', src: imageUrl(e.image), alt: str(e.image_alt) });
+        return out;
+      },
       event: function (e) {
+        var images = m.eventImages(e);
         return {
           id: str(e.id), title: str(e.title), date: str(e.date), time: str(e.time), location: str(e.location),
           description: str(e.description), category: str(e.category), layout: str(e.layout) || 'event',
           format: str(e.format), platform: str(e.platform), participants: str(e.participants),
           speakers: list(e.speakers), keyPoints: list(e.key_points), winners: list(e.winners),
           sessions: list(e.sessions), competitionSections: list(e.competition_sections), links: list(e.links),
-          image: imageUrl(e.image), imageAlt: str(e.image_alt), additionalInfo: str(e.additional_info),
+          image: images.length ? images[0].src : imageUrl(e.image), imageAlt: images.length && images[0].alt ? images[0].alt : str(e.image_alt),
+          images: images, additionalInfo: str(e.additional_info),
           logo: imageUrl(e.logo),
           brochure: str(e.brochure),
           event_details: e.event_details && typeof e.event_details === 'object' ? e.event_details : {},

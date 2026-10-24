@@ -60,13 +60,35 @@
   }
 
   function mediaMarkup(event) {
-    var image = String(event.image || event.imageUrl || '').trim();
-    var imageUrl = image && (/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/)[^\s"'<>]+$/i.test(image) ||
-      (!/^[a-z][a-z0-9+.-]*:/i.test(image) && image.indexOf('//') !== 0))
-      ? escapeHtml(image) : '';
-    var imageMarkup = imageUrl
-      ? '<figure class="event-detail-media"><img src="' + imageUrl + '" alt="' +
-        escapeHtml(event.imageAlt || event.title || 'Event image') + '" loading="lazy"></figure>' : '';
+    // An event can have several images. One image renders exactly as before; two or more become a carousel
+    // inside the same image area. Each carousel only ever contains this event's own images.
+    var rawImages = Array.isArray(event.images) && event.images.length
+      ? event.images
+      : [{ src: event.image || event.imageUrl || '', alt: event.imageAlt }];
+    var safeImages = rawImages.map(function (item) {
+      var image = String(item && (item.src || item.image) || '').trim();
+      var ok = image && (/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/)[^\s"'<>]+$/i.test(image) ||
+        (!/^[a-z][a-z0-9+.-]*:/i.test(image) && image.indexOf('//') !== 0));
+      return ok ? { src: escapeHtml(image), alt: escapeHtml((item && item.alt) || event.imageAlt || event.title || 'Event image') } : null;
+    }).filter(Boolean);
+    var imageMarkup = '';
+    if (safeImages.length === 1) {
+      imageMarkup = '<figure class="event-detail-media"><img src="' + safeImages[0].src + '" alt="' + safeImages[0].alt + '" loading="lazy"></figure>';
+    } else if (safeImages.length > 1) {
+      var total = safeImages.length;
+      imageMarkup = '<figure class="event-detail-media event-carousel" data-carousel data-index="0" data-count="' + total + '"' +
+        ' role="group" aria-roledescription="carousel" aria-label="' + escapeHtml('Images from ' + (event.title || 'this event')) + '">' +
+        '<div class="ec-track" tabindex="0" aria-live="polite">' +
+        safeImages.map(function (img, i) {
+          return '<div class="ec-slide" role="group" aria-roledescription="slide" aria-label="Image ' + (i + 1) + ' of ' + total + '">' +
+            '<img src="' + img.src + '" alt="' + img.alt + '" loading="' + (i === 0 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"></div>';
+        }).join('') +
+        '</div>' +
+        '<button type="button" class="ec-arrow ec-prev" aria-label="Previous image"><span aria-hidden="true"></span></button>' +
+        '<button type="button" class="ec-arrow ec-next" aria-label="Next image"><span aria-hidden="true"></span></button>' +
+        '<div class="ec-dots" aria-hidden="true">' + safeImages.map(function (img, i) { return '<i' + (i === 0 ? ' class="is-active"' : '') + '></i>'; }).join('') + '</div>' +
+        '</figure>';
+    }
     var links = Array.isArray(event.links) ? event.links.map(function (link) {
       var href = safeUrl(link && (link.url || link.href));
       var label = link && (link.label || link.title);
@@ -225,8 +247,57 @@
       '</article>';
   }
 
+  /* ---- carousel behaviour: one set of listeners; each carousel is scoped to its own element ---- */
+  function carouselIndex(track) {
+    return track.clientWidth ? Math.max(0, Math.min(Math.round(track.scrollLeft / track.clientWidth), track.children.length - 1)) : 0;
+  }
+  function syncCarousel(carousel) {
+    var track = carousel.querySelector('.ec-track');
+    if (!track) return;
+    var index = carouselIndex(track);
+    var last = track.children.length - 1;
+    carousel.setAttribute('data-index', String(index));
+    if (index >= last) carousel.setAttribute('data-at-end', ''); else carousel.removeAttribute('data-at-end');
+    [].forEach.call(carousel.querySelectorAll('.ec-dots i'), function (dot, i) { dot.classList.toggle('is-active', i === index); });
+  }
+  function goCarousel(carousel, delta) {
+    var track = carousel.querySelector('.ec-track');
+    if (!track) return;
+    var target = Math.max(0, Math.min(carouselIndex(track) + delta, track.children.length - 1));
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    track.scrollTo({ left: target * track.clientWidth, behavior: calm ? 'auto' : 'smooth' });
+    if (calm) syncCarousel(carousel);
+  }
+  if (typeof document !== 'undefined' && !window.__blitzCarouselReady) {
+    window.__blitzCarouselReady = true;
+    document.addEventListener('click', function (event) {
+      var button = event.target.closest && event.target.closest('.ec-arrow');
+      var carousel = button && button.closest('.event-carousel');
+      if (!carousel) return;
+      event.preventDefault();
+      event.stopPropagation();                                           // never opens or closes the card
+      goCarousel(carousel, button.classList.contains('ec-next') ? 1 : -1);
+    });
+    document.addEventListener('keydown', function (event) {
+      var track = event.target.closest && event.target.closest('.ec-track');
+      if (!track || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return;
+      event.preventDefault();
+      goCarousel(track.closest('.event-carousel'), event.key === 'ArrowRight' ? 1 : -1);
+    });
+    var pending = null;
+    document.addEventListener('scroll', function (event) {            // scroll does not bubble, so listen in the capture phase
+      var track = event.target;
+      if (!track || !track.classList || !track.classList.contains('ec-track')) return;
+      var carousel = track.closest('.event-carousel');
+      if (pending) cancelAnimationFrame(pending);
+      pending = requestAnimationFrame(function () { pending = null; syncCarousel(carousel); });
+    }, true);
+    window.addEventListener('resize', function () { [].forEach.call(document.querySelectorAll('.event-carousel'), syncCarousel); });
+  }
+
   window.BLITZ_EVENT_RENDERER = {
     render: renderEvent,
+    goCarousel: goCarousel,
     escapeHtml: escapeHtml,
     formatDate: formatDate
   };

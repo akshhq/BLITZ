@@ -245,8 +245,8 @@ with sync_playwright() as p:
     ok('public API order matches', order == after, (order, after))
 
     print('\n== Editor: gallery validation + collaborations')
-    page.goto(f'{SITE}/prezi_panel/#/gallery/new'); page.wait_for_selector('input[name=title]'); page.fill('input[name=title]', 'No picture yet'); page.click('button[type=submit]')
-    page.wait_for_selector('.err:not([hidden])'); ok('gallery item without an image is rejected', 'choose an image' in page.inner_text('main').lower() and not q("select 1 from public.gallery_items where title='No picture yet'"))
+    page.goto(f'{SITE}/prezi_panel/#/gallery/new'); page.wait_for_selector('h1:has-text("Gallery")')   # the Gallery has no upload/create form any more: it lists event images
+    ok('gallery has no separate upload: #/gallery/new opens the event-image Gallery instead', page.url.endswith('#/gallery') and page.locator('input[name=title]').count() == 0 and page.locator('a:has-text("New gallery")').count() == 0)
     page.goto(f'{SITE}/prezi_panel/#/collaborations/new'); page.wait_for_selector('input[name=name]')
     page.fill('input[name=name]', 'E2E Partner'); page.fill('input[name=type]', 'Community partner'); page.fill('input[name=url]', 'https://partner.example.org'); page.click('button[type=submit]'); page.wait_for_url(re.compile(r'#/collaborations$')); flash(page, 'Created')
     pub = ctx.new_page(); pub.goto(f'{SITE}/index.html'); pub.wait_for_timeout(1200)
@@ -311,7 +311,7 @@ with sync_playwright() as p:
 
     print('\n== Mobile admin (390px)')
     b, ctx = new_context(p, (390, 844), mobile=True); page = ctx.new_page(); login(page, 'editor'); page.wait_for_selector('h1:has-text("Dashboard")')
-    for hashp in ('#/', '#/team', '#/events', '#/events/new', '#/gallery/new'):
+    for hashp in ('#/', '#/team', '#/events', '#/events/new', '#/gallery'):
         page.goto(f'{SITE}/prezi_panel/{hashp}'); page.wait_for_selector('h1'); page.wait_for_timeout(500)
         wide = page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         small = page.evaluate("[...document.querySelectorAll('a.btn,button,.mainnav a,input:not([type=hidden]):not([type=file]),select')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&r.height<43.5&&getComputedStyle(e).visibility!=='hidden'&&!e.closest('[hidden]')&&e.type!=='checkbox'}).map(e=>(e.getAttribute('aria-label')||e.textContent||e.name).slice(0,25)+':'+Math.round(e.getBoundingClientRect().height))")
