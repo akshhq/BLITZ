@@ -119,7 +119,8 @@ s, b = http('POST', '/rpc/site_content', body={})
 pub = json.loads(b) if s == 200 else {}
 ok('anon can call site_content()', s == 200, s)
 ok('site_content hides the draft event', 'agentic-ai-speaker-session-2026' not in [e['id'] for e in pub.get('events', [])])
-ok('site_content has real seeded content', len(pub.get('team', [])) == 20 and len(pub.get('events', [])) == 5, (len(pub.get('team', [])), len(pub.get('events', []))))
+exp_team, exp_events = q("select count(*) from public.team_members where published")[0][0], q("select count(*) from public.events where published")[0][0]  # derived from the seeded DB, not hard-coded
+ok('site_content has real seeded content', len(pub.get('team', [])) == exp_team and len(pub.get('events', [])) == exp_events and exp_team > 0 and exp_events > 0, (len(pub.get('team', [])), exp_team, len(pub.get('events', [])), exp_events))
 s, _ = http('POST', '/announcements', token=jwt_for('stranger'), body={'id': 'hax', 'title': 'x', 'date': '2026-01-01'}); ok('non-admin account cannot insert', s in (401, 403), s)
 s, b = http('GET', '/events?select=id', token=jwt_for('stranger')); ok('non-admin account sees no rows', s == 200 and json.loads(b) == [], (s, b[:80]))
 s, _ = http('PATCH', f"/admins?user_id=eq.{UID['editor']}", token=jwt_for('editor'), body={'role': 'owner'}, extra={'Prefer': 'return=representation'}); 
@@ -214,17 +215,17 @@ with sync_playwright() as p:
     with page.expect_file_chooser() as fc: page.click('button:has-text("Choose image")')
     fc.value.set_files(PNG); page.wait_for_selector('canvas.crop-canvas'); page.click('button:has-text("Use this crop")')
     page.wait_for_selector('.imgfield-preview'); ok('crop dialog produced an image preview', True)
-    page.click('button[type=submit]'); page.wait_for_url(re.compile(r'#/events$')); ok('event saved', flash(page, 'Created'))
+    page.click('button[type=submit]'); page.click('dialog button:has-text("Publish")'); page.wait_for_url(re.compile(r'#/events$')); ok('event saved', flash(page, 'Created'))  # new events are published, so the panel asks for confirmation first
     img = q("select image from public.events where id='e2e-hack-night'")[0][0]
     ok('image stored as a storage: path', img and img.startswith('storage:events/') and img.endswith('.webp'), img)
     fpath = img[len('storage:'):]; ok('file reached storage and is a real WebP', fpath in F.State.files and F.State.files[fpath][1][:4] == b'RIFF' and F.State.files[fpath][0] == 'image/webp')
     im = Image.open(io.BytesIO(F.State.files[fpath][1])); ok('image is 1200x675 and under 220 KB', im.size == (1200, 675) and len(F.State.files[fpath][1]) <= 220 * 1024, (im.size, len(F.State.files[fpath][1])))
-    ev = ctx.new_page(); watch(ev, errs2); ev.goto(f'{SITE}/event.html?event=e2e-hack-night'); ev.wait_for_selector('#event-page-detail h2')
+    ev = ctx.new_page(); watch(ev, errs2); ev.goto(f'{SITE}/event.html?event=e2e-hack-night'); ev.wait_for_selector('.lp-window h2')
     ev.evaluate("document.querySelectorAll('img[loading=lazy]').forEach(i=>{i.loading='eager'})")
     try:
-        ev.wait_for_function("(()=>{const i=document.querySelector('#event-page-detail img');return !!i&&i.complete&&i.naturalWidth>0})()", timeout=8000)
+        ev.wait_for_function("(()=>{const i=document.querySelector('.lp-window-body img');return !!i&&i.complete&&i.naturalWidth>0})()", timeout=8000)
     except Exception: pass
-    ok('event page shows the uploaded image', ev.evaluate("(()=>{const i=document.querySelector('#event-page-detail img');return !!i&&i.naturalWidth>0&&i.src.startsWith('http://localhost:54321/storage')})()"), ev.evaluate("(()=>{const i=document.querySelector('#event-page-detail img');return i?[i.src,i.complete,i.naturalWidth]:'no img'})()"))
+    ok('event page shows the uploaded image', ev.evaluate("(()=>{const i=document.querySelector('.lp-window-body img');return !!i&&i.naturalWidth>0&&i.src.startsWith('http://localhost:54321/storage')})()"), ev.evaluate("(()=>{const i=document.querySelector('.lp-window-body img');return i?[i.src,i.complete,i.naturalWidth]:'no img'})()"))
     ev.close()
 
     print('\n== Editor: team (photo, reorder)')
@@ -290,12 +291,14 @@ with sync_playwright() as p:
     b, ctx = new_context(p); page = ctx.new_page(); errs = []; watch(page, errs)
     page.goto(f'{SITE}/index.html'); page.wait_for_timeout(1200)
     live_team = page.evaluate("document.querySelectorAll('.team-card').length")
-    ok('first visit shows live data', live_team == 21, live_team)
+    live_expected = q("select count(*) from public.team_members where published")[0][0]  # every published member renders as a card
+    ok('first visit shows live data', live_team == live_expected and live_team > 0, (live_team, live_expected))
     ctx.route(f'{API}/rest/v1/rpc/site_content', lambda r: r.abort())
     page.reload(); page.wait_for_timeout(1200)
-    ok('database unreachable: cached content still shown', page.evaluate("document.querySelectorAll('.team-card').length") == 21)
+    ok('database unreachable: cached content still shown', page.evaluate("document.querySelectorAll('.team-card').length") == live_expected)
     ctx.clear_cookies(); page.evaluate("localStorage.clear()"); page.reload(); page.wait_for_timeout(1200)
-    ok('no cache AND database unreachable: bundled snapshot shown (never blank)', page.evaluate("document.querySelectorAll('.team-card').length") == 20 and page.evaluate("document.querySelectorAll('.events-panel').length") >= 5)
+    snap_team = page.evaluate("window.BLITZ_DATA.team.length"); snap_events = page.evaluate("Math.min(3, window.BLITZ_DATA.events.length)")  # the homepage shows at most 3 event panels
+    ok('no cache AND database unreachable: bundled snapshot shown (never blank)', snap_team > 0 and page.evaluate("document.querySelectorAll('.team-card').length") == snap_team and page.evaluate("document.querySelectorAll('.events-panel').length") == snap_events, (snap_team, snap_events))
     ok('no JS errors when the database is down', not [e for e in errs if 'pageerror' in e], errs[:3])
     ctx.unroute(f'{API}/rest/v1/rpc/site_content')
     b.close()
@@ -303,7 +306,7 @@ with sync_playwright() as p:
     b, ctx = new_context(p); page = ctx.new_page()
     ctx.route(f'{API}/rest/v1/rpc/site_content', lambda r: r.fulfill(status=200, content_type='application/json', body=json.dumps({'announcements': [], 'events': [], 'team': [], 'gallery': [], 'collaborations': []})))
     page.goto(f'{SITE}/index.html'); page.wait_for_timeout(1200)
-    ok('an EMPTY database response never blanks the site', page.evaluate("document.querySelectorAll('.team-card').length") == 20)
+    ok('an EMPTY database response never blanks the site', page.evaluate("document.querySelectorAll('.team-card').length") == page.evaluate("window.BLITZ_DATA.team.length") and page.evaluate("window.BLITZ_DATA.team.length") > 0)
     cur.execute('rollback'); b.close()
 
     print('\n== Mobile admin (390px)')

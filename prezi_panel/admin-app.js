@@ -3,6 +3,8 @@
   'use strict';
 
   var PP = window.PP;
+  var E = window.BLITZ_ERRORS;
+  var signingOut = false;      // true while a deliberate sign-out is in progress, so it is not mistaken for an expiry
   var el = PP.el;
   var sb = PP.sb;
   var COLLS = PP.COLLECTIONS;
@@ -103,6 +105,9 @@
           return;
         }
         failures = 0; enter();
+      }).catch(function (err) {
+        submit.disabled = false; submit.textContent = 'Sign in';
+        msg.textContent = PP.explain(err); msg.hidden = false;
       });
     });
     showAuth('Sign in', 'BLITZ website administration. Accounts are created by an owner; there is no sign-up.', form, [linkButton('Forgot your password?', function () { showForgot(email.value.trim()); })], notice);
@@ -118,8 +123,13 @@
       var value = email.value.trim();
       if (!/^\S+@\S+\.\S+$/.test(value)) { msg.textContent = 'Enter the email address of your account.'; msg.hidden = false; return; }
       submit.disabled = true; submit.textContent = 'Sending…';
-      sb.auth.resetPasswordForEmail(value, { redirectTo: window.location.origin + window.location.pathname }).then(function () {
+      sb.auth.resetPasswordForEmail(value, { redirectTo: window.location.origin + window.location.pathname }).then(function (res) {
+        // An unknown address must look identical to a known one, but a connection failure is not an answer.
+        if (res && res.error && /^BLITZ-(NET|DB)-/.test(E.normalize(res.error, { area: 'auth' }).code)) throw res.error;
         showResetCode(value);
+      }).catch(function (err) {
+        submit.disabled = false; submit.textContent = 'Send reset email';
+        msg.textContent = PP.explain(err); msg.hidden = false;
       });
     });
     showAuth('Reset your password', 'We will email a link and a 6-digit code to the address on your account.', form, [linkButton('Back to sign in', function () { showLogin(); })]);
@@ -184,7 +194,8 @@
     ]));
   }
   function signOut(notice) {
-    return sb.auth.signOut().then(function () { showLogin(notice && notice.text ? notice : null); });
+    signingOut = true;
+    return sb.auth.signOut().catch(function () { /* the local session is cleared either way */ }).then(function () { signingOut = false; showLogin(notice && notice.text ? notice : null); });
   }
   document.getElementById('signout').addEventListener('click', function () { guardNav(function () { signOut(); }); });
 
@@ -199,9 +210,20 @@
   }
   function stopIdle() { clearTimeout(idleTimer); }
 
+  function showAccessProblem(err) {
+    var n = E.report(err, { operation: 'check-access', service: 'supabase', silent: true });
+    showAuth('Could not check your access', 'You are signed in, but we could not confirm your admin access just now.', el('div', null, [
+      el('div', { class: 'notice notice--error', role: 'alert', text: PP.explain(n) }),
+      el('p', null, [
+        el('button', { type: 'button', class: 'btn btn--primary', text: 'Try again', onclick: function () { enter(); } }), ' ',
+        el('button', { type: 'button', class: 'btn', text: 'Sign out', onclick: signOut })
+      ])
+    ]));
+  }
+
   function enter() {
     sb.auth.getUser().then(function (res) {
-      if (res.error || !res.data || !res.data.user) throw new Error('no user');
+      if (res.error || !res.data || !res.data.user) throw { code: 'PGRST302', message: 'Auth session missing' };
       var user = res.data.user;
       if (recovery) return null; // a reset link was followed: the new-password screen must come first
       return sb.from('admins').select('role').eq('user_id', user.id).maybeSingle().then(function (r) {
@@ -215,7 +237,11 @@
         startIdle();
         route();
       });
-    }).catch(function () { showLogin({ error: true, text: 'Please sign in again.' }); });
+    }).catch(function (err) {
+      var n = E.normalize(err, { service: 'supabase', area: 'auth' });
+      if (/^BLITZ-AUTH-/.test(n.code)) showLogin({ error: true, text: n.code === 'BLITZ-AUTH-002' ? 'Your session expired. Please sign in again.' : 'Please sign in again.' });
+      else showAccessProblem(err);
+    });
   }
   function buildNav() {
     PP.clear(mainnav);
@@ -273,7 +299,8 @@
       el('p', { class: 'muted', text: 'Everything you save here appears on the website straight away. Visitors who already have the page open see it within a couple of minutes.' }),
       el('div', { id: 'dash-notice' }),
       list,
-      el('p', null, [el('a', { class: 'btn', href: '#/export', text: 'Backup / export a snapshot' })])
+      el('p', null, [el('a', { class: 'btn', href: '#/export', text: 'Backup / export a snapshot' }), ' ', systemCheckButton()]),
+      el('div', { id: 'system-check', class: 'syscheck', 'aria-live': 'polite' })
     ]);
     COLL_KEYS.forEach(function (k) {
       var c = COLLS[k];
@@ -286,16 +313,47 @@
           canEdit() ? el('a', { class: 'btn btn--small btn--primary', href: '#/' + k + '/new', text: 'New ' + c.singular }) : null
         ])
       ]));
-      Promise.all([
-        sb.from(c.table).select('*', { count: 'exact', head: true }),
-        sb.from(c.table).select('*', { count: 'exact', head: true }).eq('published', false)
-      ]).then(function (r) {
-        if (r[0].error) { count.textContent = 'Could not load.'; return; }
+      PP.read(function () {
+        return Promise.all([
+          sb.from(c.table).select('*', { count: 'exact', head: true }),
+          sb.from(c.table).select('*', { count: 'exact', head: true }).eq('published', false)
+        ]);
+      }, 'count-' + c.table).then(function (r) {
+        if (r[0].error) { E.report(r[0].error, { operation: 'count-' + c.table, service: 'supabase', silent: true }); count.textContent = 'Could not load (' + E.normalize(r[0].error, { service: 'supabase' }).code + ').'; return; }
         count.textContent = r[0].count + ' in total' + (r[1].count ? ' · ' + r[1].count + ' draft' + (r[1].count === 1 ? '' : 's') : '');
+      }).catch(function (err) {
+        count.textContent = 'Could not load (' + E.report(err, { operation: 'count-' + c.table, service: 'supabase', silent: true }).code + ').';
       });
     });
     if (!canEdit()) document.getElementById('dash-notice').appendChild(el('p', { class: 'notice', text: 'Your role is “viewer”: you can look at everything but not change it.' }));
   }
+  // Read-only: probes the connection, session, role, tables, columns, function and storage. It changes nothing.
+  function systemCheckButton() {
+    var btn = el('button', { type: 'button', class: 'btn', text: 'Run system check' });
+    btn.addEventListener('click', function () {
+      var host = document.getElementById('system-check');
+      if (!host) return;
+      btn.disabled = true; btn.textContent = 'Checking…';
+      PP.clear(host).appendChild(el('p', { class: 'loading', text: 'Checking the connection, your session and the database…' }));
+      PP.diagnose().then(function (results) {
+        PP.clear(host);
+        var bad = results.filter(function (r) { return r.status === 'problem'; }).length;
+        host.appendChild(el('p', { class: 'notice ' + (bad ? 'notice--error' : 'notice--ok'), role: 'status', text: bad ? bad + ' problem' + (bad === 1 ? '' : 's') + ' found. Nothing was changed.' : 'Everything checked looks healthy. Nothing was changed.' }));
+        var ul = el('ul', { class: 'list' });
+        results.forEach(function (r) {
+          ul.appendChild(el('li', { class: 'item' }, [el('div', { class: 'item-main' }, [
+            el('div', { class: 'item-title', text: (r.status === 'ok' ? 'OK · ' : r.status === 'skipped' ? 'Skipped · ' : 'Problem · ') + r.name }),
+            el('div', { class: 'item-meta', text: r.message })
+          ])]));
+        });
+        host.appendChild(ul);
+      }).catch(function (err) {
+        PP.clear(host).appendChild(el('p', { class: 'notice notice--error', role: 'alert', text: PP.explain(err) }));
+      }).then(function () { btn.disabled = false; btn.textContent = 'Run system check'; });
+    });
+    return btn;
+  }
+
   function thumbFor(coll, row) {
     var key = coll.item.thumb;
     var path = key && row[key] ? row[key] : (key === 'image' && row.logo ? row.logo : '');
@@ -326,9 +384,11 @@
     function load(focusSpec) {
       var q = sb.from(coll.table).select('*').order(coll.order.column, { ascending: coll.order.ascending, nullsFirst: !!coll.order.nullsFirst });
       if (coll.ordered) q = q.order(coll.groupBy ? 'name' : 'created_at', { ascending: true });
-      q.then(function (res) {
-        if (res.error) { PP.clear(listHost).appendChild(el('p', { class: 'notice notice--error', role: 'alert', text: PP.explain(res.error) })); return; }
+      PP.read(function () { return q; }, 'load-' + key).then(function (res) {
+        if (res.error) { PP.loadFailure(listHost, res.error, 'load-' + key, function () { listHost.appendChild(el('p', { class: 'loading', text: 'Loading…' })); load(focusSpec); }); return; }
         rows = res.data; draw(focusSpec);
+      }).catch(function (err) {
+        PP.loadFailure(listHost, err, 'load-' + key, function () { load(focusSpec); });
       });
     }
 
@@ -360,8 +420,8 @@
             actions.appendChild(el('button', { type: 'button', class: 'btn btn--small', text: '↑', 'aria-label': 'Move ' + titleText + ' up', dataset: { act: 'up', id: r.id }, disabled: indexInGroup === 0, onclick: function () { move(r, -1); } }));
             actions.appendChild(el('button', { type: 'button', class: 'btn btn--small', text: '↓', 'aria-label': 'Move ' + titleText + ' down', dataset: { act: 'down', id: r.id }, disabled: indexInGroup === groupSize - 1, onclick: function () { move(r, 1); } }));
           }
-          actions.appendChild(el('button', { type: 'button', class: 'btn btn--small', text: isLive ? 'Unpublish' : 'Publish', 'aria-label': (isLive ? 'Unpublish ' : 'Publish ') + titleText, onclick: function () { togglePublished(r); } }));
-          actions.appendChild(el('button', { type: 'button', class: 'btn btn--small btn--danger', text: 'Delete', 'aria-label': 'Delete ' + titleText, onclick: function () { remove(r); } }));
+          actions.appendChild(el('button', { type: 'button', class: 'btn btn--small', text: isLive ? 'Unpublish' : 'Publish', 'aria-label': (isLive ? 'Unpublish ' : 'Publish ') + titleText, onclick: function (ev) { togglePublished(r, ev.currentTarget); } }));
+          actions.appendChild(el('button', { type: 'button', class: 'btn btn--small btn--danger', text: 'Delete', 'aria-label': 'Delete ' + titleText, onclick: function (ev) { remove(r, ev.currentTarget); } }));
         }
         return el('li', { class: 'item' }, [
           thumbFor(coll, r),
@@ -405,27 +465,44 @@
         var want = (idx + 1) * 10;
         if (r.sort_order !== want) updates.push({ r: r, want: want });
       });
-      Promise.all(updates.map(function (u) { return sb.from(coll.table).update({ sort_order: u.want }).eq('id', u.r.id).then(function (res) { if (res.error) throw res.error; }); }))
-        .then(function () { PP.toast('Order updated.', 'ok'); load({ act: delta < 0 ? 'up' : 'down', id: row.id }); })
-        .catch(function (err) { PP.toast(PP.explain(err), 'error'); load(); });
-    }
-
-    function togglePublished(row) {
-      var want = !row.published;
-      sb.from(coll.table).update({ published: want }).eq(coll.pk, row[coll.pk]).then(function (res) {
-        if (res.error) { PP.toast(PP.explain(res.error), 'error'); return; }
-        PP.toast(want ? 'Published. It is now live on the website.' : 'Unpublished. It is hidden from the website.', 'ok');
-        load({ act: 'pub', id: row.id });
+      PP.run({
+        key: 'move:' + coll.table, operation: 'reorder-' + key,
+        task: function () {
+          return Promise.all(updates.map(function (u) {
+            return sb.from(coll.table).update({ sort_order: u.want }).eq('id', u.r.id).select('id').then(function (res) {
+              if (res.error) throw res.error;
+              if (!res.data || !res.data.length) throw { code: 'BLITZ_NOROWS', message: 'no row updated' };
+            });
+          }));
+        },
+        success: 'Order updated.',
+        onSuccess: function () { load({ act: delta < 0 ? 'up' : 'down', id: row.id }); },
+        onError: function () { load(); }       // show what the database really has
       });
     }
 
-    function remove(row) {
+    function togglePublished(row, button) {
+      var want = !row.published;
+      PP.run({
+        key: 'publish:' + coll.table + ':' + row[coll.pk], buttons: button, busyText: want ? 'Publishing…' : 'Unpublishing…', operation: (want ? 'publish-' : 'unpublish-') + key,
+        requireRows: true,
+        task: function () { return sb.from(coll.table).update({ published: want }).eq(coll.pk, row[coll.pk]).select(coll.pk); },
+        success: want ? 'Published. It is now live on the website.' : 'Unpublished. It is hidden from the website.',
+        onSuccess: function () { load({ act: 'pub', id: row.id }); },
+        onError: function () { load({ act: 'pub', id: row.id }); }
+      });
+    }
+
+    function remove(row, button) {
       PP.confirm({ title: 'Delete “' + coll.item.title(row) + '”?', message: 'It disappears from the website immediately. You can bring it back from the Activity page.', confirmLabel: 'Delete', danger: true }).then(function (ok) {
         if (!ok) return;
-        sb.from(coll.table).delete().eq(coll.pk, row[coll.pk]).then(function (res) {
-          if (res.error) { PP.toast(PP.explain(res.error), 'error'); return; }
-          PP.toast('Deleted. You can restore it from Activity.', 'ok');
-          load();
+        PP.run({
+          key: 'delete:' + coll.table + ':' + row[coll.pk], buttons: button, busyText: 'Deleting…', operation: 'delete-' + key,
+          requireRows: true,
+          task: function () { return sb.from(coll.table).delete().eq(coll.pk, row[coll.pk]).select(coll.pk); },
+          success: 'Deleted. You can restore it from Activity.',
+          onSuccess: function () { load(); },
+          onError: function () { load(); }
         });
       });
     }
@@ -465,12 +542,15 @@
     ]);
 
     function showResult(parsed) {
+      if (isNew && parsed.event && parsed.event.id && Array.isArray(existingIds) && existingIds.indexOf(parsed.event.id) >= 0) {
+        parsed.errors = (parsed.errors || []).concat(['id: Another event already uses "' + parsed.event.id + '". Change the id in the file and import again.']);
+      }
       state.parsed = parsed.errors && parsed.errors.length ? null : parsed;
       PP.clear(result);
       result.hidden = false;
       if (parsed.errors && parsed.errors.length) {
         result.className = 'template-result notice notice--error';
-        result.appendChild(el('strong', { text: 'Template needs attention' }));
+        result.appendChild(el('strong', { text: 'Template needs attention. Nothing was imported or saved.' }));
         parsed.errors.forEach(function (message) { result.appendChild(el('div', { text: message })); });
       } else {
         result.className = 'template-result notice notice--ok';
@@ -481,7 +561,10 @@
       importBtn.disabled = !state.parsed;
     }
     function handle(file) {
-      window.BLITZ_TEMPLATE.read(file).then(showResult);
+      window.BLITZ_TEMPLATE.read(file).then(showResult).catch(function (err) {
+        E.report(err, { operation: 'import-template', silent: true });
+        showResult({ errors: ['The file could not be processed (' + E.normalize(err).code + '). Download a fresh template and try again.'], warnings: [] });
+      });
     }
     input.addEventListener('change', function () { handle(input.files && input.files[0]); });
     ['dragenter', 'dragover'].forEach(function (type) {
@@ -533,15 +616,22 @@
     var isNew = id === null;
     show(isNew ? 'New ' + coll.singular : 'Edit ' + coll.singular, [el('p', { class: 'loading', text: 'Loading…' })]);
 
-    var loadRecord = isNew ? Promise.resolve({ data: {} }) : sb.from(coll.table).select('*').eq(coll.pk, id).maybeSingle();
-    var loadIds = isNew && coll.pk === 'id' && coll.fields.some(function (f) { return f.type === 'slug'; })
-      ? sb.from(coll.table).select('id') : Promise.resolve({ data: [] });
-
-    Promise.all([loadRecord, loadIds]).then(function (res) {
-      if (res[0].error) { show('Could not load', [el('p', { class: 'notice notice--error', role: 'alert', text: PP.explain(res[0].error) })]); return; }
+    function failed(err) {
+      var host = el('div');
+      show('Could not load', [host, el('p', null, [el('a', { class: 'btn', href: '#/' + key, text: 'Back to ' + coll.label.toLowerCase() })])]);
+      PP.loadFailure(host, err, 'load-' + key + '-record', function () { viewEdit(key, id); });
+    }
+    PP.read(function () {
+      var loadRecord = isNew ? Promise.resolve({ data: {} }) : sb.from(coll.table).select('*').eq(coll.pk, id).maybeSingle();
+      var loadIds = isNew && coll.pk === 'id' && coll.fields.some(function (f) { return f.type === 'slug'; })
+        ? sb.from(coll.table).select('id') : Promise.resolve({ data: [] });
+      return Promise.all([loadRecord, loadIds]);
+    }, 'load-' + key + '-record').then(function (res) {
+      if (res[0].error) { failed(res[0].error); return; }
+      if (res[1] && res[1].error) { failed(res[1].error); return; }
       if (!res[0].data) { show('Not found', [el('p', { class: 'notice', text: 'That ' + coll.singular + ' does not exist (it may have been deleted).' }), el('a', { class: 'btn', href: '#/' + key, text: 'Back to ' + coll.label.toLowerCase() })]); return; }
       buildEditor(coll, key, isNew, res[0].data, (res[1].data || []).map(function (r) { return r.id; }));
-    });
+    }).catch(failed);
   }
 
   function buildEditor(coll, key, isNew, record, existingIds) {
@@ -599,69 +689,118 @@
     var stop = function () { clearTimeout(previewTimer); window.removeEventListener('message', onPreviewMessage); window.removeEventListener('hashchange', stop); };
     window.addEventListener('hashchange', stop);
 
+    var attempt = { uncertainCreate: false, reconciled: false };
+    var confirming = false;
     form.node.addEventListener('submit', function (e) {
       e.preventDefault();
       if (readOnly) return;
       var result = form.collect();
+      if (result.ok && coll.preview && window.BLITZ_EVENT_VALIDATOR) {
+        // Same limits as the database, checked first so the message names the field instead of "check constraint".
+        var checked = window.BLITZ_EVENT_VALIDATOR.validateRecord(result.row, { isNew: isNew, existingIds: existingIds });
+        if (!checked.ok) {
+          var byWidget = {};
+          checked.errors.forEach(function (problem) {
+            var wkey = String(problem.field || '').split(/[.\[]/)[0];
+            var rest = String(problem.field || '').slice(wkey.length).replace(/^\./, '');
+            (byWidget[wkey] = byWidget[wkey] || []).push((rest ? rest + ': ' : '') + problem.message);
+          });
+          var first = null;
+          Object.keys(byWidget).forEach(function (wkey) {
+            var w = form.widgets[wkey];
+            if (w && w.setError) { w.setError(byWidget[wkey].join(' ')); if (!first) first = w; }
+          });
+          if (first && first.focus) first.focus();
+          result = { ok: false, errors: checked.errors, row: result.row, pending: result.pending };
+        }
+      }
       if (!result.ok) {
         PP.toast('Please fix ' + result.errors.length + ' problem' + (result.errors.length === 1 ? '' : 's') + ' and save again.', 'error');
         return;
       }
       function persist() {
-        saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
         var row = Object.assign({}, result.row);
-        return result.pending.reduce(function (chain, p) {
-        return chain.then(function () {
-          return PP.uploadImage(p.def.folder, p.blob).then(function (path) { row[p.key] = path; form.widgets[p.key].commit(path); });
-        });
-      }, Promise.resolve()).then(function () {
-        if (isNew && coll.ordered) {
-          return sb.from(coll.table).select('sort_order').order('sort_order', { ascending: false }).limit(1).then(function (r) {
-            row.sort_order = ((r.data && r.data[0] && r.data[0].sort_order) || 0) + 10;
-          });
-        }
-      }).then(function () {
-        function executeSave(data) {
-          var op = isNew ? sb.from(coll.table).insert(data) : (function () {
-            var change = Object.assign({}, data); delete change[coll.pk];
-            return sb.from(coll.table).update(change).eq(coll.pk, record[coll.pk]);
-          }());
-          return op.then(function (res) {
-            if (res && res.error) {
-              var match = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(res.error.message || '');
-              if (match && match[1]) {
-                var missingCol = match[1];
-                // If the missing column has no user value (null/empty/empty object), strip it and retry so save succeeds
-                var val = data[missingCol];
-                var isEmpty = val === null || val === undefined || val === '' ||
-                  (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0) ||
-                  (Array.isArray(val) && val.length === 0);
-                if (isEmpty) {
-                  delete data[missingCol];
-                  return executeSave(data);
-                }
+        var skipped = [];
+        var saveKey = 'save:' + coll.table + ':' + (isNew ? 'new' : record[coll.pk]);
+        return PP.run({
+          key: saveKey, buttons: [saveBtn], busyText: 'Saving…', operation: (isNew ? 'create-' : 'update-') + key,
+          requireRows: true,
+          task: function () {
+            // 1. images first. A committed upload is remembered by the form, so a retry never uploads it twice.
+            return result.pending.reduce(function (chain, p) {
+              return chain.then(function () {
+                return PP.uploadImage(p.def.folder, p.blob).then(function (path) { row[p.key] = path; form.widgets[p.key].commit(path); });
+              });
+            }, Promise.resolve()).then(function () {
+              if (isNew && coll.ordered) {
+                return sb.from(coll.table).select('sort_order').order('sort_order', { ascending: false }).limit(1).then(function (r) {
+                  if (r.error) throw r.error;
+                  row.sort_order = ((r.data && r.data[0] && r.data[0].sort_order) || 0) + 10;
+                });
               }
-              throw res.error;
+            }).then(function () {
+              // 2. the write. `.select()` makes the database send the row back, which is how we know it really happened.
+              function executeSave(data) {
+                var op = isNew ? sb.from(coll.table).insert(data).select(coll.pk) : (function () {
+                  var change = Object.assign({}, data); delete change[coll.pk];
+                  return sb.from(coll.table).update(change).eq(coll.pk, record[coll.pk]).select(coll.pk);
+                }());
+                return op.then(function (res) {
+                  if (res && res.error) {
+                    var match = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(res.error.message || '');
+                    if (match && match[1]) {
+                      var missingCol = match[1];
+                      var val = data[missingCol];
+                      var isEmpty = val === null || val === undefined || val === '' ||
+                        (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0) ||
+                        (Array.isArray(val) && val.length === 0);
+                      if (isEmpty) { skipped.push(missingCol); delete data[missingCol]; return executeSave(data); }   // nothing to lose, but we say so below
+                    }
+                    // A lost connection can hide a write that actually landed. If this is a retry of a create and the row now
+                    // exists with the same title, the earlier attempt succeeded: do not report a false "already exists".
+                    if (isNew && attempt.uncertainCreate && res.error.code === '23505') {
+                      return sb.from(coll.table).select('*').eq(coll.pk, data[coll.pk]).maybeSingle().then(function (found) {
+                        var same = found && !found.error && found.data && found.data.title === data.title && found.data.updated_by === me.id;
+                        if (same) { attempt.reconciled = true; return { data: [found.data] }; }
+                        throw res.error;
+                      });
+                    }
+                    throw res.error;
+                  }
+                  return res;
+                });
+              }
+              return executeSave(row);
+            });
+          },
+          success: function () {
+            var live = !!row.published;
+            if (attempt.reconciled) return 'Saved. It had already been saved by your earlier attempt, so nothing was duplicated.';
+            return isNew
+              ? (live ? 'Created. It is now on the website.' : 'Created as a draft. It is not visible on the website yet.')
+              : (live ? 'Saved. The website is updated.' : 'Saved. This is a draft, so the website is unchanged.');
+          },
+          onSuccess: function () {
+            if (skipped.length) {
+              PP.toast('Note: the database does not recognise the field "' + skipped.join('", "') + '" yet, so that empty value was left out. Ask the BLITZ owner to run the System check on the dashboard.', '');
             }
-            return res;
-          });
-        }
-        return executeSave(row);
-      }).then(function (res) {
-        if (res && res.error) throw res.error;
-        PP.toast(isNew ? 'Created. It is now on the website.' : 'Saved. The website is updated.', 'ok');
-        dirty = false; go('#/' + key);
-      }).catch(function (err) {
-        saveBtn.disabled = false; saveBtn.textContent = isNew ? 'Create ' + coll.singular : 'Save changes';
-        PP.toast(PP.explain(err), 'error');
-      });
+            dirty = false; attempt.uncertainCreate = false; go('#/' + key);
+          },
+          onError: function (n) {
+            // The form is untouched, so everything typed is still there. Remember if a create may have landed.
+            if (isNew && /^BLITZ-NET-/.test(n.code)) attempt.uncertainCreate = true;
+          }
+        });
       }
       if (coll.preview && result.row.published) {
+        if (confirming) return;
+        confirming = true;
         PP.confirm({
           title: isNew ? 'Publish this event?' : 'Publish changes to this event?',
           message: 'Published content becomes visible on the public website immediately.',
           confirmLabel: 'Publish'
         }).then(function (ok) {
+          confirming = false;
           if (ok) persist();
         });
       } else {
@@ -677,11 +816,13 @@
   function viewActivity() {
     var host = el('div', null, [el('p', { class: 'loading', text: 'Loading…' })]);
     show('Activity', [el('p', { class: 'muted', text: 'The last 100 changes. Use “Restore” to bring back a deleted item or an earlier version.' }), host]);
-    Promise.all([
-      sb.from('content_history').select('*').order('changed_at', { ascending: false }).limit(100),
-      sb.from('admins').select('user_id,email')
-    ]).then(function (res) {
-      if (res[0].error) { PP.clear(host).appendChild(el('p', { class: 'notice notice--error', role: 'alert', text: PP.explain(res[0].error) })); return; }
+    PP.read(function () {
+      return Promise.all([
+        sb.from('content_history').select('*').order('changed_at', { ascending: false }).limit(100),
+        sb.from('admins').select('user_id,email')
+      ]);
+    }, 'load-activity').then(function (res) {
+      if (res[0].error) { PP.loadFailure(host, res[0].error, 'load-activity', viewActivity); return; }
       var names = {};
       (res[1].data || []).forEach(function (a) { names[a.user_id] = a.email; });
       PP.clear(host);
@@ -702,16 +843,18 @@
         ul.appendChild(li);
       });
       host.appendChild(ul);
-    });
+    }).catch(function (err) { PP.loadFailure(host, err, 'load-activity', viewActivity); });
 
     function restore(h) {
       PP.confirm({ title: 'Restore this version?', message: 'The ' + (TABLE_LABEL[h.table_name] || 'item').toLowerCase() + ' “' + rowTitle(h.old_row) + '” goes back to how it was ' + PP.formatDateTime(h.changed_at) + ' (before that change). The website updates immediately.', confirmLabel: 'Restore' }).then(function (ok) {
         if (!ok) return;
         var row = Object.assign({}, h.old_row);
         delete row.created_at; delete row.updated_at; delete row.updated_by;
-        sb.from(h.table_name).upsert(row, { onConflict: 'id' }).then(function (res) {
-          if (res.error) { PP.toast(PP.explain(res.error), 'error'); return; }
-          PP.toast('Restored.', 'ok'); viewActivity();
+        PP.run({
+          key: 'restore:' + h.id, operation: 'restore-' + h.table_name, requireRows: true,
+          task: function () { return sb.from(h.table_name).upsert(row, { onConflict: 'id' }).select('id'); },
+          success: 'Restored.',
+          onSuccess: function () { viewActivity(); }
         });
       });
     }
@@ -728,10 +871,11 @@
       if (p) { msg.textContent = p; msg.hidden = false; return; }
       submit.disabled = true;
       sb.auth.updateUser({ password: pw.value }).then(function (res) {
-        submit.disabled = false;
-        if (res.error) { msg.textContent = res.error.message; msg.hidden = false; return; }
+        if (res.error) throw res.error;
         pw.value = ''; pw2.value = ''; PP.toast('Password changed.', 'ok');
-      });
+      }).catch(function (err) {
+        msg.textContent = PP.explain(err); msg.hidden = false;
+      }).then(function () { submit.disabled = false; });
     });
     show('Account', [
       el('p', null, ['Signed in as ', el('strong', { text: me.email }), ' with the role ', el('strong', { text: me.role }), '.']),
@@ -743,10 +887,10 @@
     var btn = el('button', { type: 'button', class: 'btn btn--primary', text: 'Download data.js' });
     btn.addEventListener('click', function () {
       btn.disabled = true;
-      sb.rpc('site_content').then(function (res) {
+      PP.read(function () { return sb.rpc('site_content'); }, 'export-snapshot').then(function (res) {
         btn.disabled = false;
         var mapped = res.error ? null : PP.map.all(res.data, { allowEmpty: true });
-        if (!mapped) { PP.toast(PP.explain(res.error) || 'Could not read the content.', 'error'); return; }
+        if (!mapped) { PP.toast(res.error ? PP.explain(res.error) : 'The server answered, but the content was not in the expected format. Nothing was downloaded.', 'error'); return; }
         var base = window.BLITZ_DATA || {};
         var out = Object.assign({}, base, mapped); // keeps contact details and any other fixed keys
         var text = '\n' +
@@ -756,7 +900,7 @@
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
         PP.toast('data.js downloaded.', 'ok');
-      });
+      }).catch(function (err) { btn.disabled = false; PP.toast(PP.explain(err), 'error'); });
     });
     show('Backup / export', [
       el('p', { text: 'The website reads live data, so you never have to do this for edits to show up. Export a snapshot only before handing over a new zip of the site: it refreshes the fallback copy used when the database is unreachable and the text shown to visitors without JavaScript.' }),
@@ -774,7 +918,26 @@
 
   sb.auth.onAuthStateChange(function (event) {
     if (event === 'PASSWORD_RECOVERY') { if (codeFlow) return; recovery = true; setTimeout(showSetPassword, 0); }
-    else if (event === 'SIGNED_OUT' && me) { setTimeout(function () { showLogin(); }, 0); }
+    else if (event === 'SIGNED_OUT' && me) {
+      if (signingOut) return;                    // a deliberate sign-out shows the login screen itself
+      // The session ended on its own (expired, or signed out in another tab). Never throw away a half-written form.
+      setTimeout(function () {
+        if (dirty) PP.onSessionExpired();
+        else showLogin({ error: true, text: 'Your session ended. Please sign in again.' });
+      }, 0);
+    }
+  });
+
+  PP.onSessionExpired = function () {
+    if (!me) return;
+    PP.reauth(me.email).then(function (ok) { if (ok && !dirty) route(); });
+  };
+
+  window.addEventListener('offline', function () { PP.toast('You are offline. Changes cannot be saved until you reconnect; what you typed stays on this page.', 'error'); });
+  window.addEventListener('online', function () { PP.toast('Back online.', 'ok'); });
+  // Anything unexpected that no operation caught still reaches the person, once, instead of failing silently.
+  E.onError(function (n, ctx) {
+    if (ctx && (ctx.kind === 'script' || ctx.kind === 'promise' || ctx.kind === 'resource')) PP.toast(n.message + ' ' + n.hint + ' (Code ' + n.code + ' · ' + n.correlationId + ')', 'error');
   });
 
   sb.auth.getSession().then(function (res) {

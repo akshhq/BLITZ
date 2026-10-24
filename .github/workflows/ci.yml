@@ -1,0 +1,103 @@
+name: CI
+
+# Static checks on every push and pull request. Nothing here touches a real Supabase project or any secret.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Syntax, data and site validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: |
+          set -e
+          for f in *.js prezi_panel/*.js tools/*.js tests/unit/*.js; do node --check "$f"; done
+      - name: Unit tests (error handler, catalog, validator)
+        run: node --test "tests/unit/*.test.js"
+      - name: Validate data
+        run: node tools/validate-data.js
+      - name: Validate site (error pages, script order, secrets, docs, hosting config)
+        run: node tools/validate-site.js
+      - name: Seed file is current
+        run: |
+          node tools/generate-seed.js
+          git diff --exit-code supabase/seed.sql
+
+  database:
+    name: Schema, migrations and RLS (scratch Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install psycopg2-binary
+      - name: Create scratch databases
+        run: |
+          psql -d postgres -c "create database blitz_rls"
+          psql -d postgres -c "create database blitz_schema_test"
+      - name: RLS tests
+        run: python supabase/tests/run_rls_tests.py blitz_rls
+      - name: Schema contract and migration tests
+        run: python supabase/tests/run_schema_contract_tests.py blitz_schema_test
+
+  browser:
+    name: Browser tests (real Postgres + PostgREST, simulated Supabase login)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install psycopg2-binary pillow playwright
+          python -m playwright install --with-deps chromium
+      - name: Download PostgREST (pinned)
+        run: |
+          curl -sSL -o pgrest.tar.xz https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz
+          tar xf pgrest.tar.xz
+          ./postgrest --version
+      - name: Panel and site end-to-end
+        run: python supabase/tests/e2e/run_e2e.py ./postgrest
+      - name: Error handling end-to-end
+        run: python supabase/tests/e2e/run_error_tests.py ./postgrest

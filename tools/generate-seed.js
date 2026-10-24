@@ -26,9 +26,9 @@ out.push('', '-- events');
 (D.events || []).forEach((e) => {
   const speakers = Array.isArray(e.speakers) ? e.speakers : (e.speaker ? [e.speaker] : []);
   out.push(
-    `insert into public.events (id, title, date, time, location, description, category, layout, format, platform, participants, speakers, key_points, winners, sessions, competition_sections, links, image, image_alt, logo, brochure, additional_info) values (` +
-    [q(e.id), q(e.title), q(e.date), q(e.time), q(e.location), q(e.description), q(e.category), q(e.layout || 'event'), q(e.format), q(e.platform), q(e.participants),
-      arr(speakers), arr(e.keyPoints), js(e.winners), js(e.sessions), js(e.competitionSections), js(e.links), q(e.image), q(e.imageAlt), q(e.logo), q(e.brochure), q(e.additionalInfo)].join(', ') +
+    `insert into public.events (id, title, date, time, location, description, category, layout, format, platform, participants, speakers, key_points, winners, sessions, competition_sections, links, image, image_alt, logo, brochure, additional_info, placeholder) values (` +
+    [q(e.id), q(e.title), q(e.date), q(e.time), q(e.location), `'${String(e.description || '').replace(/'/g, "''")}'`, q(e.category), q(e.layout || 'event'), q(e.format), q(e.platform), q(e.participants),
+      arr(speakers), arr(e.keyPoints), js(e.winners), js(e.sessions), js(e.competitionSections), js(e.links), q(e.image), q(e.imageAlt), q(e.logo), q(e.brochure), q(e.additionalInfo), e.placeholder === true ? 'true' : 'false'].join(', ') +
     `) on conflict (id) do nothing;`);
 });
 

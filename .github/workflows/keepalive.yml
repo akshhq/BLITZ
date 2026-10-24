@@ -1,6 +1,9 @@
 
 name: Supabase Keep Alive
 
+# Runs daily at 03:17 UTC (08:47 IST) and can be started by hand from the Actions tab.
+# A successful run means the public content function answered. It does NOT guarantee the free
+# database will never be paused: if a run fails, open the run log, then see ERRORS.md.
 on:
   schedule:
     - cron: "17 3 * * *"
@@ -22,19 +25,53 @@ jobs:
         run: |
           set -eu
 
+          # Say which secret is missing (by name only) instead of failing with an unreadable curl error.
+          missing=""
+          [ -n "${SUPABASE_URL:-}" ] || missing="$missing SUPABASE_URL"
+          [ -n "${SUPABASE_KEY:-}" ] || missing="$missing SUPABASE_PUBLISHABLE_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing GitHub secret(s):$missing. Add them under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          BASE="${SUPABASE_URL%/}"
+          case "$BASE" in
+            https://*) ;;
+            *) echo "::error::SUPABASE_URL must start with https://"; exit 1 ;;
+          esac
+
+          # The public key goes in the apikey header. Only a legacy JWT key is also sent as a bearer token.
+          AUTH=()
+          case "$SUPABASE_KEY" in
+            eyJ*) AUTH=(--header "Authorization: Bearer ${SUPABASE_KEY}") ;;
+          esac
+
           STATUS=$(curl --silent --show-error \
             --output /tmp/response.json \
             --write-out "%{http_code}" \
             --max-time 30 \
             --request POST \
-            "${SUPABASE_URL}/rest/v1/rpc/site_content" \
+            "${BASE}/rest/v1/rpc/site_content" \
             --header "apikey: ${SUPABASE_KEY}" \
-            --header "Authorization: Bearer ${SUPABASE_KEY}" \
+            "${AUTH[@]}" \
             --header "Content-Type: application/json" \
-            --data '{}')
+            --data '{}') || { echo "::error::Could not reach the Supabase project (network or wrong SUPABASE_URL)."; exit 1; }
 
           if [ "$STATUS" != "200" ]; then
-            echo "Supabase request failed: HTTP $STATUS"
+            echo "::error::Supabase request failed: HTTP $STATUS"
+            # The body is a PostgREST error (code/message), never a secret. Show the start of it to help diagnose.
+            head -c 400 /tmp/response.json || true; echo
+            case "$STATUS" in
+              401|403) echo "Hint: the key was rejected. Check SUPABASE_PUBLISHABLE_KEY belongs to this project." ;;
+              404)     echo "Hint: wrong project URL, or public.site_content() is missing. See ERRORS.md (BLITZ-SCH-003)." ;;
+              5*)      echo "Hint: the project may be paused or restarting. Open the Supabase dashboard and resume it." ;;
+            esac
+            exit 1
+          fi
+
+          # A 200 with the wrong shape would still mean something is broken.
+          if ! grep -q '"events"' /tmp/response.json; then
+            echo "::error::HTTP 200 but the response has no events list; the function may have changed."
             exit 1
           fi
 

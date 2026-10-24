@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- Error pages are served at the URL that failed (e.g. /blitz/no/such/page), so relative links need a base.
+         Keep this equal to the folder the site lives in; tools/set-site-url.py updates it. -->
+    <base href="/blitz/" />
+    <title>Server error | BLITZ Computer Science Society</title>
+    <meta name="description" content="The server ran into a problem." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#26151A" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="stylesheet" href="error.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500;600&family=Geist:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body class="err-body" data-error-page="500">
+    <a class="err-skip" href="#main">Skip to content</a>
+    <header class="err-header">
+      <a class="err-brand" href="index.html" aria-label="BLITZ home"><img src="assets/logo/blitz-logo.png" alt="" width="56" height="32" /></a>
+    </header>
+
+    <main id="main" class="err-main">
+      <section class="err-card" aria-labelledby="err-title">
+        <p class="err-code">Error 500</p>
+        <h1 id="err-title" class="err-title">Something went wrong on our side</h1>
+        <p class="err-text">The server hit a problem and couldn't finish your request. This isn't your fault, and it is usually temporary.</p>
+        <div class="err-actions">
+          <button type="button" class="err-btn" data-action="reload" hidden>Try again</button>
+          <a class="err-btn err-btn--ghost" href="index.html">Back to homepage</a>
+        </div>
+        <p id="err-status" class="err-status" role="status" aria-live="polite"></p>
+        <p class="err-text">If this keeps happening, email <a href="mailto:team.blitzkmv@gmail.com" style="color:inherit">team.blitzkmv@gmail.com</a>.</p>
+        <ul class="err-links" aria-label="Useful pages">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="event.html">Events</a></li>
+          <li><a href="index.html#team">Team</a></li>
+          <li><a href="index.html#about">About</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="err-footer">BLITZ &middot; Computer Science Society, Keshav Mahavidyalaya, University of Delhi</footer>
+    <script src="error-page.js" defer></script>
+  </body>
+</html>

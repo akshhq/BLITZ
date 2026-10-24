@@ -38,16 +38,23 @@ BLITZ/
 ├── .env.example          # Local Supabase configuration template
 ├── config.js             # PUBLIC runtime config generated from .env
 ├── content-map.js        # database rows -> site objects (shared by site and admin)
-├── content-loader.js     # loads live content (cached), falls back to data.js
+├── content-loader.js     # loads live content (cached), falls back to data.js, says which one is on screen
+├── error-catalog.js  error-handler.js  error.css  error-page.js   # ONE error system (see ERRORS.md)
+├── 404.html  403.html  500.html  503.html  offline.html          # static error pages (need server config)
+├── .htaccess.example     # Apache config that makes the server use those pages (nginx notes inside)
+├── ERRORS.md             # error codes, diagnostics, recovery steps, hosting, known limitations
+├── tests/unit/           # node:test unit tests (error handler, catalog, event validator)
 ├── prezi_panel/          # THE ADMIN PANEL (own folder, own strict CSP, noindex)
 │   ├── index.html  admin.css  admin-core.js  admin-forms.js  admin-app.js
+│   ├── event-validator.js  database-diagnostics.js  operation-status.js   # validation, system check, safe writes
 │   ├── preview.html  preview.js   # live event preview (sandboxed frame)
 │   ├── .htaccess.example          # recommended security headers (give to the server admin)
 │   └── vendor/supabase.js         # pinned supabase-js 2.117.2 (MIT)
 ├── supabase/
 │   ├── schema.sql  seed.sql  user.sql  admins.sql   # run in the Supabase SQL editor (see SETUP-ADMIN.md)
-│   └── tests/                             # database + end-to-end tests (optional)
-├── .github/workflows/keepalive.yml        # stops the free database being paused
+│   └── tests/                             # schema/RLS tests + end-to-end tests (see Testing below)
+├── .github/workflows/ci.yml               # syntax, validators, unit, schema and browser tests
+├── .github/workflows/keepalive.yml        # daily read so the free database is less likely to be paused
 ├── SETUP-ADMIN.md
 ├── favicon.ico           # 16/32/48 (generated)
 ├── favicon-16.png  favicon-32.png  apple-touch-icon.png  icon-192.png  icon-512.png
@@ -85,7 +92,17 @@ the public site and admin panel:
 4. Deploy the generated `config.js` with the rest of the site.
 
 `.env` is ignored by Git. Only the public anon/publishable key belongs in this
-configuration; never use a Supabase `service_role` or secret key.
+configuration; never use a Supabase `service_role` or secret key. The site and the
+panel refuse to run if `config.js` contains one, and `node tools/validate-site.js`
+fails if one is found anywhere in the repository.
+
+If `config.js` is left blank, the site simply shows the content bundled in `data.js`
+and never contacts Supabase (no warning is shown, because that is intended).
+
+**GitHub secrets** used by `keepalive.yml` (names only, set under *Settings > Secrets
+and variables > Actions*): `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (the same
+public key as in `config.js`). `.env` calls that key `SUPABASE_ANON_KEY`; that name
+exists only in the local file. `ci.yml` needs no secrets.
 
 Download the official administrator template here:
 [BLITZ_EVENT_TEMPLATE.json](BLITZ_EVENT_TEMPLATE.json). See the
@@ -274,6 +291,19 @@ The script applies EXIF orientation, strips metadata, crops a square biased towa
 ### Netlify / any static host
 No build command; publish directory `.`.
 
+### Custom error pages (404, 403, 500, 503)
+The pages exist in the repository, but **a web server only uses them if it is told to**.
+For the Apache server this site is documented to run on, rename `.htaccess.example` to
+`.htaccess` in the site folder (nginx lines and a maintenance-mode switch are inside the
+file). Then check the real status codes:
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://keshav.du.ac.in/blitz/no-such-page   # must print 404
+```
+GitHub Pages and Netlify serve `404.html` by themselves but do not support custom 403,
+500 or 503 pages. Event links such as `event.html?event=unknown` cannot return a real 404
+on a static site; they show an in-page "Event not found" state instead. Full details,
+including `offline.html` and what is not verified, are in [ERRORS.md](ERRORS.md#8-hosting-and-custom-error-pages).
+
 ### Production URL
 The default is `https://keshav.du.ac.in/blitz/` (canonical, `og:url`, `og:image`, `twitter:image`, JSON-LD, sitemap, robots). Social scrapers and crawlers need absolute URLs, so it is written out in those files. If the society gets its own domain:
 ```bash
@@ -286,7 +316,25 @@ Run the local deployment/metadata check before publishing:
 node tools/validate-site.js
 ```
 It checks the two public HTML entry points, their local references, the intended
-canonical URLs, and the sitemap/robots pairing. It does not verify the live host.
+canonical URLs, and the sitemap/robots pairing. It also checks the error pages, script
+load order, that the error stylesheet's colours still match `styles.css`, that every
+error code in `error-catalog.js` is documented in `ERRORS.md`, that no secret key is
+committed, that `.htaccess.example` points at pages that exist, and that every
+workflow secret is documented. It does not verify the live host.
+
+### Testing
+```bash
+node --test "tests/unit/*.test.js"      # error handler, catalog, event validator
+node tools/validate-data.js             # content, templates, JSON syntax, event rules
+node tools/validate-site.js
+# need PostgreSQL (and PostgREST + Playwright for the browser tests); see ERRORS.md section 9:
+python supabase/tests/run_rls_tests.py <scratch-db>
+python supabase/tests/run_schema_contract_tests.py <scratch-db>
+python supabase/tests/e2e/run_e2e.py <path-to-postgrest>
+python supabase/tests/e2e/run_error_tests.py <path-to-postgrest>
+```
+These use a scratch PostgreSQL, never a hosted Supabase project; Supabase Auth/Storage are
+a local stand-in, and ERRORS.md explains which failures are real and which are simulated.
 
 ---
 

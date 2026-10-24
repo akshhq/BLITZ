@@ -18,6 +18,88 @@
   var seq = 0;
   var query = '';
 
+  /* ---------- visible states: loading, not found, empty, failed (never a blank page or endless spinner) ---------- */
+  var stateEl = document.querySelector('#lp-state');
+  var E = window.BLITZ_ERRORS || null;
+  var ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,100}$/;
+  var deepId = '';          // event id requested in the address, until it has been opened or proven missing
+  var deepResult = 'none';  // 'none' | 'pending' | 'unverified' | 'notfound' | 'invalid'
+  var removedNotice = '';   // set when an open event disappears after a live refresh
+
+  function setNoindex(on) {
+    var meta = document.querySelector('meta[name="robots"]');
+    if (on && !meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'robots');
+      meta.setAttribute('content', 'noindex');
+      document.head.appendChild(meta);
+    } else if (!on && meta && meta.getAttribute('content') === 'noindex') {
+      meta.parentNode.removeChild(meta);
+    }
+  }
+  function liveFailed() { var L = window.BLITZ_LIVE; return !!(L && L.enabled && L.status === 'fallback'); }
+  function stateBlock(title, message, code, actions) {
+    if (!stateEl) return;
+    stateEl.textContent = '';
+    var h = document.createElement('p');
+    h.className = 'blitz-state-title';
+    h.textContent = title;
+    stateEl.appendChild(h);
+    if (message) { var p = document.createElement('p'); p.textContent = message; stateEl.appendChild(p); }
+    if (actions && actions.length) {
+      var row = document.createElement('div');
+      row.className = 'blitz-state-actions';
+      actions.forEach(function (a) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'blitz-notice-btn';
+        b.textContent = a.label;
+        b.addEventListener('click', a.onClick);
+        row.appendChild(b);
+      });
+      stateEl.appendChild(row);
+    }
+    if (code) { var c = document.createElement('small'); c.className = 'blitz-state-code'; c.textContent = 'Code ' + code; stateEl.appendChild(c); }
+    stateEl.hidden = false;
+  }
+  function clearDeepLink() { deepId = ''; deepResult = 'none'; setNoindex(false); }
+  function retryAction() { return { label: 'Try again', onClick: function () { if (window.BLITZ_LIVE) window.BLITZ_LIVE.retry(); } }; }
+  function browseAction() { return { label: 'Browse all events', onClick: function () { clearDeepLink(); setRoute(''); updatePageMetadata(null); updateState(); searchEl.focus({ preventScroll: true }); } }; }
+
+  function updateState() {
+    if (!stateEl) return;
+    var q = query.trim();
+    if (deepResult === 'pending') return stateBlock('Loading event…', 'Checking for the latest events.', '', []);
+    if (deepResult === 'unverified') return stateBlock("Couldn't load this event", "We couldn't reach live updates, so we can't tell whether this event exists yet.", 'BLITZ-NET-002', [retryAction(), browseAction()]);
+    if (deepResult === 'notfound') return stateBlock('Event not found', 'That event may have been unpublished, or the link may be wrong. Pick another from the list below.', 'BLITZ-DATA-001', [browseAction()]);
+    if (deepResult === 'invalid') return stateBlock("That event link isn't valid", 'Pick an event from the list below.', 'BLITZ-DATA-002', [browseAction()]);
+    if (removedNotice) return stateBlock(removedNotice, 'It may have been unpublished. The other events are unaffected.', '', [{ label: 'Dismiss', onClick: function () { removedNotice = ''; updateState(); } }]);
+    if (!events.length) return stateBlock('No events are available right now', liveFailed() ? "We couldn't reach live updates. Please try again." : 'Please check back soon.', '', liveFailed() ? [retryAction()] : []);
+    if (q && !visibleEvents().length) {
+      return stateBlock('No events match "' + q.slice(0, 60) + '"', 'Try a different word, or clear the search to see every event.', '', [{ label: 'Clear search', onClick: function () { clearEl.click(); } }]);
+    }
+    stateEl.hidden = true;
+    stateEl.textContent = '';
+  }
+
+  /* Open the event named in the address. If it is not in the data we have yet, wait for live data before giving up. */
+  function resolveDeepLink() {
+    if (!deepId) return;
+    loadEvents();
+    if (eventById(deepId)) {
+      var id = deepId;
+      clearDeepLink();
+      updateState();
+      if (!wins[id]) openEvent(id, true);
+      return;
+    }
+    var L = window.BLITZ_LIVE;
+    if (L && L.enabled && L.status === 'pending') deepResult = 'pending';
+    else if (liveFailed()) deepResult = 'unverified';
+    else { deepResult = 'notfound'; setNoindex(true); document.title = 'Event not found | BLITZ Events'; }
+    updateState();
+  }
+
   var GLYPHS = {
     event: 'M8 11h32v28H8zM8 19h32M16 7v8M32 7v8M15 26h6M27 26h6M15 33h6M27 33h6',
     workshop: 'M18 17l-9 7 9 7M30 17l9 7-9 7M26 12l-4 24',
@@ -125,6 +207,7 @@
     pagesEl.innerHTML = pages.map(function (page) {
       return '<div class="lp-page" role="list">' + page.map(tileHtml).join('') + '</div>';
     }).join('');
+    updateState();
     dotsEl.hidden = pages.length < 2;
     dotsEl.innerHTML = pages.length < 2 ? '' : pages.map(function (_, n) {
       return '<button type="button" class="lp-dot" data-page="' + n + '" aria-label="Page ' + (n + 1) + '" aria-current="' + (n === 0) + '"></button>';
@@ -257,6 +340,8 @@
   function openEvent(id, focus) {
     var event = eventById(id);
     if (!event) return;
+    if (deepId && id !== deepId) clearDeepLink();
+    if (removedNotice) removedNotice = '';
     var existing = wins[id];
     if (existing) { if (existing.minimized) restore(id); else raise(id, focus !== false); return; }
     var titleId = 'lp-window-title-' + (++seq);
@@ -338,7 +423,7 @@
     loadEvents();
     Object.keys(wins).forEach(function (id) {
       var event = eventById(id);
-      if (!event) { closeWin(id); return; }
+      if (!event) { var gone = wins[id].title; closeWin(id); removedNotice = '"' + gone + '" is no longer available.'; return; }
       var w = wins[id];
       w.title = event.title;
       w.icon = iconHtml(event);
@@ -347,12 +432,19 @@
     });
     renderGrid();
     renderDock();
+    resolveDeepLink();
   }
 
   loadEvents();
   renderGrid();
   renderDock();
   var initial = new URLSearchParams(window.location.search).get('event');
-  if (initial) openEvent(initial, true);
-  if (window.BLITZ_LIVE) window.BLITZ_LIVE.onChange(refresh);
+  if (initial) {
+    if (ID_RE.test(initial)) { deepId = initial; resolveDeepLink(); }
+    else { deepResult = 'invalid'; setNoindex(true); updateState(); }
+  }
+  if (window.BLITZ_LIVE) {
+    window.BLITZ_LIVE.onChange(refresh);
+    window.BLITZ_LIVE.onStatus(function () { resolveDeepLink(); updateState(); });
+  }
 }());

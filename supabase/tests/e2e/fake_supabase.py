@@ -180,6 +180,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(413, {'error': 'file too large or wrong type'})
             State.files[route[len('/object/media/'):]] = blob
             return self.reply(200, {'Id': 'x', 'Key': 'media/' + route[len('/object/media/'):]})
+        if route.startswith('/object/list/media') and self.command == 'POST':
+            self.body()                       # always consume the request body, or the next request on this connection is corrupted
+            c = self.claims()
+            if not c or c.get('sub') not in State.editors: return self.reply(200, [])   # like Supabase: RLS hides objects, it does not error
+            return self.reply(200, [])
         self.reply(404, {'error': 'unknown storage route'})
 
 class QuietServer(ThreadingHTTPServer):

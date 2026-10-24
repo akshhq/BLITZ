@@ -7,6 +7,11 @@
   PP.url = String(cfg.supabaseUrl || '').replace(/\/+$/, '');
   PP.key = String(cfg.supabaseKey || '');
   PP.configured = /^(https:\/\/[^\/\s]+|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/i.test(PP.url) && PP.key.length >= 20;
+  (function () {
+    var privileged = /^sb_secret_/.test(PP.key);
+    try { var parts = PP.key.split('.'); if (parts.length === 3) privileged = privileged || JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))).role === 'service_role'; } catch (e) { /* not a JWT */ }
+    if (privileged) { PP.configured = false; PP.privilegedKey = true; }   // never talk to Supabase from a browser with a secret key
+  }());
   PP.map = window.BLITZ_MAP ? window.BLITZ_MAP.create(PP.url) : null;
   PP.sb = null;
   PP.recoveryInUrl = /(^|[#&?])type=recovery(&|$)/.test(window.location.hash + '&' + window.location.search.replace(/^\?/, ''));
@@ -78,8 +83,9 @@
   PP.toast = function (message, kind) {
     var host = document.getElementById('toasts');
     var node = PP.el('div', { class: 'toast' + (kind ? ' toast--' + kind : ''), text: message });
+    if (kind === 'error') { node.setAttribute('role', 'alert'); node.title = 'Click to dismiss'; node.addEventListener('click', function () { if (node.parentNode) node.parentNode.removeChild(node); }); }
     host.appendChild(node);
-    setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); }, kind === 'error' ? 9000 : 4500);
+    setTimeout(function () { if (node.parentNode) node.parentNode.removeChild(node); }, kind === 'error' ? 20000 : 4500);
   };
   PP.dialog = function (build) {
     return new Promise(function (resolve) {
@@ -245,27 +251,53 @@
   PP.uploadImage = function (folder, blob) {
     var ext = blob.type === 'image/webp' ? 'webp' : blob.type === 'image/png' ? 'png' : 'jpg';
     var path = folder + '/' + PP.uuid() + '.' + ext;
-    return PP.sb.storage.from('media').upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false })
+    return window.BLITZ_ERRORS.withTimeout(PP.sb.storage.from('media').upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false }), 60000, 'Image upload')
       .then(function (res) {
-        if (res.error) throw new Error('Image upload failed: ' + res.error.message);
+        if (res.error) throw window.BLITZ_ERRORS.normalize(res.error, { operation: 'upload-image', service: 'supabase' });
         return 'storage:' + path;
       });
   };
   PP.explain = function (error) {
-    if (!error) return 'Something went wrong.';
-    var code = error.code || '';
-    var msg = error.message || String(error);
-    var schemaMatch = /Could not find the '([^']+)' column of '([^']+)' in the schema cache/i.exec(msg);
-    if (schemaMatch) {
-      return "Database schema out of date: column '" + schemaMatch[1] + "' is missing in table '" + schemaMatch[2] +
-        "'. In Supabase SQL Editor run: ALTER TABLE public." + schemaMatch[2] + " ADD COLUMN IF NOT EXISTS " + schemaMatch[1] +
-        " text; NOTIFY pgrst, 'reload schema'; (or reload schema cache in Project Settings > API).";
-    }
-    if (code === '23505') return 'An item with this web address (ID) already exists. Choose a different ID.';
-    if (code === '23514') return 'The database rejected a value (too long, wrong format, or a link that is not https://). ' + (error.details ? '' : '');
-    if (code === '42501' || /row-level security|permission denied/i.test(msg)) return 'You do not have permission to do that. Ask an owner to check your role.';
-    if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) return 'Could not reach the server. Check your internet connection and try again.';
-    if (/JWT expired/i.test(msg)) return 'Your session expired. Please sign in again.';
-    return msg;
+    return window.BLITZ_ERRORS.explain(error, { audience: 'admin', showCorrelation: false });
+  };
+
+  /*
+   * Session expired while working: ask for the password in a dialog on top of the page, so nothing typed is lost.
+   * Resolves true when signed in again, null when the person chooses "Not now".
+   */
+  var reauthOpen = false;
+  PP.reauth = function (email) {
+    if (reauthOpen || !PP.sb) return Promise.resolve(null);
+    reauthOpen = true;
+    return PP.dialog(function (dlg, close) {
+      var pw = PP.el('input', { type: 'password', name: 'reauth-password', autocomplete: 'current-password', 'aria-label': 'Password' });
+      var msg = PP.el('div', { class: 'err', role: 'alert', hidden: true });
+      var go = PP.el('button', { type: 'button', class: 'btn btn--primary', text: 'Sign in again' });
+      var later = PP.el('button', { type: 'button', class: 'btn', text: 'Not now', onclick: function () { close(null); } });
+      function submit() {
+        if (!pw.value) { msg.textContent = 'Enter your password.'; msg.hidden = false; return; }
+        go.disabled = true; go.textContent = 'Signing in…'; msg.hidden = true;
+        PP.sb.auth.signInWithPassword({ email: email, password: pw.value }).then(function (res) {
+          if (res.error) throw res.error;
+          close(true);
+        }).catch(function (err) {
+          go.disabled = false; go.textContent = 'Sign in again';
+          msg.textContent = window.BLITZ_ERRORS.explain(err, { audience: 'admin', area: 'auth', showCorrelation: false }); msg.hidden = false; pw.value = ''; pw.focus();
+        });
+      }
+      go.addEventListener('click', submit);
+      pw.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+      dlg.appendChild(PP.el('h2', { text: 'Your session expired' }));
+      dlg.appendChild(PP.el('p', { text: 'Sign in again to keep working. Everything you typed is still on this page and nothing has been lost.' }));
+      dlg.appendChild(PP.el('p', { class: 'hint', text: email }));
+      dlg.appendChild(PP.el('div', { class: 'field' }, [PP.el('label', { text: 'Password' }), pw]));
+      dlg.appendChild(msg);
+      dlg.appendChild(PP.el('div', { class: 'dialog-actions' }, [later, go]));
+      pw.focus();
+    }).then(function (r) {
+      reauthOpen = false;
+      if (r) PP.toast('Signed in again. You can continue.', 'ok');
+      return r;
+    });
   };
 }());

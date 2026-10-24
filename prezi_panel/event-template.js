@@ -38,6 +38,21 @@
     try { return JSON.stringify(value == null ? {} : value, null, 2); } catch (e) { return '{}'; }
   }
 
+  // Say where the JSON is broken (line and column) instead of just "invalid".
+  function describeJsonError(err, textValue) {
+    var msg = String(err && err.message || '');
+    var where = '';
+    var lc = /line (\d+) column (\d+)/i.exec(msg);
+    var pos = /position (\d+)/i.exec(msg);
+    if (lc) where = ' near line ' + lc[1] + ', column ' + lc[2];
+    else if (pos) {
+      var upTo = textValue.slice(0, Number(pos[1]));
+      var line = upTo.split('\n').length;
+      where = ' near line ' + line + ', column ' + (upTo.length - upTo.lastIndexOf('\n'));
+    }
+    return 'Invalid JSON' + where + '. Check for a missing comma, quote or bracket, or download a fresh template and keep its structure intact. Nothing was imported.';
+  }
+
   function normalize(raw) {
     var errors = [], warnings = [];
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -116,6 +131,16 @@
     }
     if (!/^[a-z0-9][a-z0-9-]{1,78}$/.test(event.id)) errors.push('ID must contain lowercase letters, numbers, and dashes only.');
     event.event_details = details;
+    // Field-specific checks that mirror the database limits (shared with the editor and the CI validators).
+    var V = window.BLITZ_EVENT_VALIDATOR;
+    if (V) {
+      var checked = V.validateRecord(Object.assign({}, event, { published: false }), { isNew: false });
+      checked.errors.forEach(function (problem) {
+        var line = (problem.field ? problem.field + ': ' : '') + problem.message;
+        if (errors.indexOf(line) < 0 && !errors.some(function (existing) { return existing.indexOf(problem.field + ':') === 0 || (problem.field === 'id' && /^ID /.test(existing)); })) errors.push(line);
+      });
+      checked.warnings.forEach(function (w) { warnings.push(w); });
+    }
     return { event: event, details: details, errors: errors, warnings: warnings };
   }
 
@@ -131,7 +156,7 @@
       reader.onload = function () {
         var raw;
         try { raw = JSON.parse(String(reader.result || '')); }
-        catch (e) { return resolve({ errors: ['Invalid JSON. Download a fresh template and keep the JSON structure intact.'], warnings: [] }); }
+        catch (e) { return resolve({ errors: [describeJsonError(e, String(reader.result || ''))], warnings: [] }); }
         resolve(normalize(raw));
       };
       reader.readAsText(file);

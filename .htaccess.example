@@ -1,0 +1,48 @@
+# BLITZ: custom error pages (Apache).
+#
+# Give this file to whoever runs the web server for https://keshav.du.ac.in/blitz/ .
+# Rename it to .htaccess inside the site folder. It needs the server to allow overrides for this folder
+# (AllowOverride FileInfo, or All). If the host does not allow that, ask the server administrator to put
+# the same ErrorDocument lines in the site's virtual-host configuration instead.
+#
+# Creating 404.html etc. is NOT enough on its own: the web server has to be told to use them. A static
+# host never serves them by itself. These lines also keep the real HTTP status (404 stays 404, which is
+# what search engines need). Do not use a redirect to the homepage for unknown URLs.
+#
+# The paths are URL paths from the root of the domain. If the site is not served from /blitz/, change
+# them, and run:  python tools/set-site-url.py https://your.domain/your-path/   (it updates the <base> in the
+# error pages too). Use local paths like these, never a full http(s):// URL: that would turn the error
+# into a redirect and lose the status code.
+ErrorDocument 403 /blitz/403.html
+ErrorDocument 404 /blitz/404.html
+ErrorDocument 500 /blitz/500.html
+ErrorDocument 503 /blitz/503.html
+
+# Do not list folder contents (a folder without an index page then shows the custom 403 page).
+# Needs AllowOverride Options; remove this line if the server rejects it.
+Options -Indexes
+
+# --- Maintenance mode (optional) --------------------------------------------------------------------
+# Remove the leading # from the lines below to answer EVERY page with the friendly 503 page and a real
+# "503 Service Unavailable" status. Browsers and search engines then know the outage is temporary.
+# Put the # back to end maintenance.
+#
+# <IfModule mod_rewrite.c>
+#   RewriteEngine On
+#   RewriteCond %{REQUEST_URI} !^/blitz/(503\.html|error\.css|error-page\.js|favicon\.ico|assets/logo/)
+#   RewriteRule ^ - [R=503,L]
+# </IfModule>
+# <IfModule mod_headers.c>
+#   Header always set Retry-After "3600"
+# </IfModule>
+
+# --- nginx equivalent (put inside the server { } block of the site) ------------------------------------
+#   error_page 403 /blitz/403.html;
+#   error_page 404 /blitz/404.html;
+#   error_page 500 502 504 /blitz/500.html;
+#   error_page 503 /blitz/503.html;
+#   location ~ ^/blitz/(403|404|500|503)\.html$ { internal; }
+#   autoindex off;
+#
+# GitHub Pages and Netlify-style hosts serve a file named 404.html automatically; they do not support
+# custom 403, 500 or 503 pages. See ERRORS.md ("Hosting").

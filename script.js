@@ -473,6 +473,28 @@
     if (!event) {
       updateHomepageMetadata(null);
       section.classList.add('is-visible');
+      const live = window.BLITZ_LIVE;
+      const waiting = !!(live && live.enabled && live.status === 'pending');
+      const unverified = !!(live && live.enabled && live.status === 'fallback');
+      if (waiting || unverified) {
+        panel.innerHTML = `
+          <div class="event-detail-card event-detail-card--empty">
+            <div class="event-detail-header">
+              <p class="section-badge section-badge--dark">BLITZ / EVENT DETAILS</p>
+              <button type="button" class="event-detail-close" aria-label="Close event details">Close</button>
+            </div>
+            <div class="event-detail-body">
+              <h3>${waiting ? 'Loading event…' : "Couldn't load this event"}</h3>
+              <p>${waiting ? 'Checking for the latest events.' : "We couldn't reach live updates, so we can't tell whether this event exists yet. Use \"Try again\" in the message below."}</p>
+            </div>
+          </div>
+        `;
+        panel.querySelector('.event-detail-close').addEventListener('click', function () {
+          section.classList.remove('is-visible');
+          updateEventDetailRoute('');
+        });
+        return;
+      }
       panel.innerHTML = `
         <div class="event-detail-card event-detail-card--empty">
           <div class="event-detail-header">
@@ -1076,34 +1098,46 @@
     });
   }
   
+  // Each step runs on its own: if one section's data is bad, the rest of the page still renders.
+  function safely(name, fn) {
+    try { fn(); } catch (err) {
+      if (window.BLITZ_ERRORS) window.BLITZ_ERRORS.report(err, { operation: 'render-' + name, kind: 'script', silent: true });
+      else if (window.console && console.error) console.error('[BLITZ] ' + name + ' failed to render', err);
+    }
+  }
+
   function refreshContent() {
-    renderAnnouncements();
-    renderEvents();
-    syncEventDetailFromUrl();
-    renderTeam();
-    renderGallery();
-    renderCollaborations();
-    setUpReveals();
+    safely('announcements', renderAnnouncements);
+    safely('events', renderEvents);
+    safely('event-detail', syncEventDetailFromUrl);
+    safely('team', renderTeam);
+    safely('gallery', renderGallery);
+    safely('collaborations', renderCollaborations);
+    safely('reveals', setUpReveals);
   }
 
   function init() {
-    setUpMarquee();
-    renderAnnouncements();
-    renderEvents();
-    syncEventDetailFromUrl();
-    renderTeam();
-    renderGallery();
-    renderCollaborations();
-    renderContact();
+    safely('marquee', setUpMarquee);
+    safely('announcements', renderAnnouncements);
+    safely('events', renderEvents);
+    safely('event-detail', syncEventDetailFromUrl);
+    safely('team', renderTeam);
+    safely('gallery', renderGallery);
+    safely('collaborations', renderCollaborations);
+    safely('contact', renderContact);
 
-    setUpMenu();
-    setUpActiveNavObserver();
-    setUpHeroLogo();
+    safely('menu', setUpMenu);
+    safely('nav', setUpActiveNavObserver);
+    safely('hero-logo', setUpHeroLogo);
 
-    setUpHorizontalRail('#gallery-scroller', '#gallery-rail-prev', '#gallery-rail-next');
-    setUpReveals();
+    safely('gallery-rail', function () { setUpHorizontalRail('#gallery-scroller', '#gallery-rail-prev', '#gallery-rail-next'); });
+    safely('reveals', setUpReveals);
     window.BLITZ_APP = { refresh: refreshContent };
-    if (window.BLITZ_LIVE) window.BLITZ_LIVE.onChange(refreshContent);
+    if (window.BLITZ_LIVE) {
+      window.BLITZ_LIVE.onChange(refreshContent);
+      // When live data settles, re-check a requested event: it may exist only in the live data.
+      window.BLITZ_LIVE.onStatus(function () { safely('event-detail', syncEventDetailFromUrl); });
+    }
   }
 
   if (document.readyState === 'loading') {

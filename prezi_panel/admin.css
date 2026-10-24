@@ -162,3 +162,8 @@ details.group > .group-body { padding: 0 14px 14px; display: grid; gap: 12px; }
   .mainnav a { flex: 0 0 auto; }
   .whoami { display: none; }
 }
+
+/* System check (dashboard) and clickable error toasts */
+.syscheck { margin-top: 16px; }
+.syscheck .item-meta { white-space: normal; overflow-wrap: anywhere; }
+.toast--error { cursor: pointer; }

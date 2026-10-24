@@ -8,12 +8,16 @@ need absolute URLs, so it cannot be a runtime variable).
 
 The current URL is read from <link rel="canonical"> in index.html, then replaced in
 index.html (canonical, og:url, og:image, twitter:image, JSON-LD), sitemap.xml,
-robots.txt and README.md.
+robots.txt and README.md. The <base href> in the static error pages (404.html, 403.html, 500.html,
+503.html, offline.html) is set to the path of the new URL, because those pages are served at whatever
+address failed. If you change the folder, also update the ErrorDocument paths in .htaccess.
 """
 import os
 import re
 import sys
+from urllib.parse import urlparse
 
+ERROR_PAGES = ["404.html", "403.html", "500.html", "503.html", "offline.html"]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILES = ["index.html", "event.html", "sitemap.xml", "robots.txt", "README.md"]
 
@@ -38,6 +42,16 @@ def main():
         if count:
             open(path, "w", encoding="utf-8").write(text.replace(old, new))
         print(f"{name:14s} {count} replacement(s)")
+    new_path = urlparse(new).path or "/"
+    for name in ERROR_PAGES:
+        path = os.path.join(ROOT, name)
+        if not os.path.exists(path):
+            continue
+        text = open(path, encoding="utf-8").read()
+        updated, count = re.subn(r'<base href="[^"]*"', f'<base href="{new_path}"', text)
+        if count:
+            open(path, "w", encoding="utf-8").write(updated)
+        print(f"{name:14s} <base href> -> {new_path}")
     print(f"{old}  ->  {new}")
 
 
