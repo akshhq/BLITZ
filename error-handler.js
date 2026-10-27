@@ -199,7 +199,7 @@
   function adminSchemaText(n) {
     if (!n.column) return n.admin;
     var base = "The database does not recognise column '" + n.column + "' on '" + n.table + "'. ";
-    var known = n.table === 'events' ? catalog.KNOWN_EVENT_COLUMNS[n.column] : null;
+    var known = n.table === 'events' ? catalog.KNOWN_EVENT_COLUMNS[n.column] : (n.table === 'event_images' ? catalog.KNOWN_IMAGE_COLUMNS[n.column] : null);
     if (known) {
       return base + 'It belongs to the current schema (type ' + known.type + '). Check whether it exists with the diagnostic query in ERRORS.md. ' +
         'If it is missing, run ' + known.migration + ' in the Supabase SQL Editor; if it exists, the schema cache is stale: run NOTIFY pgrst, \'reload schema\';';

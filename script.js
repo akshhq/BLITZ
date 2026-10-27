@@ -691,6 +691,9 @@
 
     track.innerHTML = galleryList.map(function (item, index) {
       const imageUrl = safeAssetUrl(item.image);
+      // Photos from the panel carry the shape they were cropped to (16:9, 5:4 or 4:5); older bundled items are 4:3.
+      const aspect = ['16:9', '5:4', '4:5'].includes(item.aspect) ? item.aspect : '4:3';
+      const size = { '16:9': [1200, 675], '5:4': [1200, 960], '4:5': [960, 1200], '4:3': [800, 600] }[aspect];
       const isIllustration = item.mediaType === 'illustration' || /\.svg(?:$|[?#])/i.test(String(item.image || ''));
       const imageMarkup = imageUrl
         ? `<img
@@ -698,12 +701,12 @@
               alt="${escapeHtml(item.alt || (isIllustration ? `Illustration representing ${item.title}` : item.title || 'Gallery image'))}"
               loading="lazy"
               decoding="async"
-              width="800"
-              height="600"
+              width="${size[0]}"
+              height="${size[1]}"
             />`
         : '<div class="gallery-image-fallback" role="img" aria-label="Gallery image unavailable">Image unavailable</div>';
       return `
-        <figure class="gallery-item">
+        <figure class="gallery-item gallery-item--${aspect.replace(':', '-')}">
           <figcaption class="gallery-item-copy">
             <span class="gallery-item-number">${padZero(index + 1, 2)}</span>
             <strong class="gallery-item-title">${escapeHtml(item.title)}</strong>

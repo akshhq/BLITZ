@@ -397,14 +397,18 @@
     var h = [].map.call(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
     return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
   }
+  // The shapes an event image can be cropped to. The Gallery and carousel size themselves from the shape that is saved.
+  var SHAPES = { '16:9': { label: 'Wide (16:9)', w: 1200, h: 675 }, '5:4': { label: 'Landscape (5:4)', w: 1200, h: 960 }, '4:5': { label: 'Portrait (4:5)', w: 960, h: 1200 } };
   function eventImagesWidget(def, value, ctx) {
     var max = def.max || 30;
     var items = (Array.isArray(value) ? value : []).map(function (v) {
-      return { id: v.id || newImageId(), path: v.path || v.image || null, alt: v.alt || '', blob: v.blob || null, blobUrl: v.blobUrl || null };
+      return { id: v.id || newImageId(), path: v.path || v.image || null, alt: v.alt || '', aspect: SHAPES[v.aspect] ? v.aspect : '16:9', blob: v.blob || null, blobUrl: v.blobUrl || null };
     });
     var id = PP.uid('f');
     var listHost = el('ol', { class: 'evimg-list', 'aria-label': 'Images in display order' });
     var addBtn = el('button', { type: 'button', id: id, class: 'btn', text: 'Add images…' });
+    var shapeSel = el('select', { class: 'evimg-shape', 'aria-label': 'Shape for the images you add next' }, Object.keys(SHAPES).map(function (k) { return el('option', { value: k, text: SHAPES[k].label }); }));
+    if (ctx.readOnly) shapeSel.disabled = true;
     var summary = el('div', { class: 'hint', 'aria-live': 'polite' });
     var announce = el('div', { class: 'sr-only', role: 'status', 'aria-live': 'polite' });
 
@@ -436,7 +440,7 @@
         listHost.appendChild(el('li', { class: 'evimg', 'data-image-id': it.id }, [
           el('div', { class: 'evimg-thumb' }, [
             el('img', { src: srcOf(it), alt: 'Image ' + (i + 1) + (it.alt ? ': ' + it.alt : '') }),
-            el('span', { class: 'evimg-pos', text: i === 0 ? '1 · Cover' : String(i + 1) })
+            el('span', { class: 'evimg-pos', text: (i === 0 ? '1 · Cover' : String(i + 1)) + ' · ' + it.aspect })
           ]),
           el('div', { class: 'evimg-body' }, [alt, it.blob ? el('div', { class: 'hint', text: 'New. Uploaded when you save.' }) : null,
             el('div', { class: 'repeat-row-actions' }, [earlier, later, rm])])
@@ -446,23 +450,25 @@
         ? items.length + ' of ' + max + ' images. The first is the cover. Changes (adding, removing, order) apply when you save.'
         : 'No images yet. The first image you add becomes the cover.';
       addBtn.disabled = !!ctx.readOnly || items.length >= max;
+      shapeSel.disabled = !!ctx.readOnly || items.length >= max;
       addBtn.textContent = items.length ? 'Add more images…' : 'Add images…';
     }
     addBtn.addEventListener('click', function () {
-      PP.chooseImages({ title: 'Position the event image', outW: def.outW, outH: def.outH, mode: def.mode, maxBytes: def.maxBytes, hint: def.help, limit: max - items.length, max: max }).then(function (blobs) {
+      var shape = shapeSel.value, size = SHAPES[shape];
+      PP.chooseImages({ title: 'Position the ' + shape + ' image', outW: size.w, outH: size.h, mode: def.mode, maxBytes: Math.round(def.maxBytes * (size.w * size.h) / (1200 * 675) * 1.05), hint: def.help, limit: max - items.length, max: max }).then(function (blobs) {
         if (!blobs.length) return;
-        blobs.forEach(function (blob) { items.push({ id: newImageId(), path: null, alt: '', blob: blob, blobUrl: URL.createObjectURL(blob) }); });
+        blobs.forEach(function (blob) { items.push({ id: newImageId(), path: null, alt: '', aspect: shape, blob: blob, blobUrl: URL.createObjectURL(blob) }); });
         render(); changed();
         announce.textContent = blobs.length + ' image' + (blobs.length === 1 ? '' : 's') + ' added.';
       });
     });
     // control omitted on purpose: shell() would move the button out of its row; the label still targets it by id
-    var s = shell(def, null, id, el('div', { class: 'evimg-field' }, [summary, listHost, el('div', { class: 'repeat-row-actions' }, [addBtn]), announce]));
+    var s = shell(def, null, id, el('div', { class: 'evimg-field' }, [summary, listHost, el('div', { class: 'repeat-row-actions' }, [shapeSel, addBtn]), announce]));
     render();
     return {
       node: s.node, control: addBtn, setError: s.setError, focus: function () { addBtn.focus(); },
       // [{ id, path, alt, blob?, blobUrl? }] in display order. `path` is null until a new image has been uploaded.
-      get: function () { return items.map(function (it) { return { id: it.id, path: it.path, alt: it.alt, blob: it.blob, blobUrl: it.blobUrl }; }); },
+      get: function () { return items.map(function (it) { return { id: it.id, path: it.path, alt: it.alt, aspect: it.aspect, blob: it.blob, blobUrl: it.blobUrl }; }); },
       pendingItems: function () { return items.filter(function (it) { return it.blob; }); },
       previewSrcs: function () { return items.map(srcOf); },
       previewSrc: function () { return items.length ? srcOf(items[0]) : ''; },

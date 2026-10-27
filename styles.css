@@ -2176,10 +2176,17 @@ html:not(.js) .transition-logo {
   gap: clamp(20px, 2.5vw, 36px);
   width: max-content;
   padding-right: var(--container-pad);
+  align-items: flex-start;
 }
 
+/* Every card's picture is the same height; its width follows the picture's shape, so wide (16:9), landscape (5:4),
+   portrait (4:5) and older 4:3 images all sit in one tidy row, uncropped and without jumping as they load. */
 .gallery-item {
-  flex: 0 0 clamp(280px, 38vw, 540px);
+  --ar: 1.3333;
+  --gallery-h: clamp(260px, 40vh, 400px);
+  flex: 0 0 auto;
+  width: min(82vw, calc(var(--gallery-h) * var(--ar)));
+  min-width: 240px;
   margin: 0;
   border-radius: 8px;
   overflow: hidden;
@@ -2226,8 +2233,13 @@ html:not(.js) .transition-logo {
   text-transform: uppercase;
 }
 
+.gallery-item--16-9 { --ar: 1.7778; }
+.gallery-item--5-4 { --ar: 1.25; }
+.gallery-item--4-5 { --ar: 0.8; }
+.gallery-item--4-3 { --ar: 1.3333; }
+
 .gallery-img-shell {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: var(--ar);
   width: 100%;
   overflow: hidden;
   background: #26151A;
@@ -2835,9 +2847,6 @@ html.js .reveal-tier.is-revealed {
     width: auto;
   }
 
-  .gallery-item {
-    flex-basis: min(82vw, 420px);
-  }
 
   
   .blitz-contact-header {

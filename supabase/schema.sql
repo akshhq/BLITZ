@@ -244,6 +244,7 @@ create table if not exists public.event_images (
   event_id        text not null references public.events(id) on update cascade on delete cascade,
   image           text not null check (public.valid_image(image)),
   alt             text not null default '' check (char_length(alt) <= 300),
+  aspect          text not null default '16:9',
   gallery_enabled boolean not null default false,
   sort_order      integer not null default 0,
   created_at      timestamptz not null default now(),
@@ -251,6 +252,16 @@ create table if not exists public.event_images (
   updated_by      uuid
 );
 create index if not exists event_images_event_idx on public.event_images (event_id, sort_order);
+
+-- The picture's shape, chosen when it is cropped in the panel: wide 16:9 (the default), landscape 5:4 or portrait 4:5.
+-- The Gallery uses it to size each card before the image has loaded, so nothing jumps while it lazy-loads.
+alter table public.event_images add column if not exists aspect text not null default '16:9';
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conrelid = 'public.event_images'::regclass and conname = 'event_images_aspect_check') then
+    alter table public.event_images add constraint event_images_aspect_check check (aspect in ('16:9', '5:4', '4:5'));
+  end if;
+end $$;
 
 do $$
 declare t text := 'event_images';
@@ -279,7 +290,7 @@ end $$;
 create or replace function public.set_event_images(p_event_id text, p_images jsonb) returns jsonb
 language plpgsql security invoker set search_path = public, pg_temp as $$
 declare
-  v_item jsonb; v_pos integer := 0; v_id uuid; v_ids uuid[] := '{}';
+  v_item jsonb; v_pos integer := 0; v_id uuid; v_ids uuid[] := '{}'; v_aspect text;
 begin
   if not public.can_edit() then raise exception 'not allowed' using errcode = '42501'; end if;
   if not exists (select 1 from public.events where id = p_event_id) then
@@ -295,17 +306,19 @@ begin
       raise exception 'image id belongs to another event' using errcode = '42501';
     end if;
     v_ids := v_ids || v_id;
-    insert into public.event_images (id, event_id, image, alt, sort_order)
-    values (v_id, p_event_id, v_item ->> 'image', coalesce(v_item ->> 'alt', ''), v_pos * 10)
+    v_aspect := nullif(v_item ->> 'aspect', '');
+    insert into public.event_images (id, event_id, image, alt, aspect, sort_order)
+    values (v_id, p_event_id, v_item ->> 'image', coalesce(v_item ->> 'alt', ''), coalesce(v_aspect, '16:9'), v_pos * 10)
     on conflict (id) do update
-      set image = excluded.image, alt = excluded.alt, sort_order = excluded.sort_order
-      where (public.event_images.image, public.event_images.alt, public.event_images.sort_order)
-            is distinct from (excluded.image, excluded.alt, excluded.sort_order);
+      set image = excluded.image, alt = excluded.alt, sort_order = excluded.sort_order,
+          aspect = coalesce(v_aspect, public.event_images.aspect)          -- a caller that sends no shape never resets an existing one
+      where (public.event_images.image, public.event_images.alt, public.event_images.sort_order, public.event_images.aspect)
+            is distinct from (excluded.image, excluded.alt, excluded.sort_order, coalesce(v_aspect, public.event_images.aspect));
   end loop;
 
   delete from public.event_images where event_id = p_event_id and id <> all (v_ids);
 
-  return coalesce((select jsonb_agg(jsonb_build_object('id', id, 'image', image, 'alt', alt,
+  return coalesce((select jsonb_agg(jsonb_build_object('id', id, 'image', image, 'alt', alt, 'aspect', aspect,
                       'gallery_enabled', gallery_enabled, 'sort_order', sort_order) order by sort_order, created_at)
                    from public.event_images where event_id = p_event_id), '[]');
 end $$;
@@ -323,7 +336,7 @@ language sql stable security definer set search_path = public, pg_temp as $$
       from (select e.id, e.title, e.date, e.time, e.location, e.description, e.category, e.layout, e.format, e.platform,
                    e.participants, e.speakers, e.key_points, e.winners, e.sessions, e.competition_sections,
                    e.links, e.image, e.image_alt, e.logo, e.brochure, e.event_details, e.placeholder, e.additional_info,
-                   coalesce((select jsonb_agg(jsonb_build_object('id', i.id, 'image', i.image, 'alt', i.alt)
+                   coalesce((select jsonb_agg(jsonb_build_object('id', i.id, 'image', i.image, 'alt', i.alt, 'aspect', i.aspect)
                                               order by i.sort_order, i.created_at)
                              from public.event_images i where i.event_id = e.id), '[]') as images
             from public.events e where e.published) x), '[]'),
@@ -334,7 +347,7 @@ language sql stable security definer set search_path = public, pg_temp as $$
     'gallery', coalesce((
       select jsonb_agg(to_jsonb(g) order by g.sort_order)
       from (select i.id, e.title, i.alt as description, i.image,
-                   coalesce(nullif(i.alt, ''), e.title) as alt, 'photo'::text as media_type,
+                   coalesce(nullif(i.alt, ''), e.title) as alt, i.aspect, 'photo'::text as media_type,
                    coalesce(to_char(e.date, 'FMDD Mon YYYY'), '') as date_label, coalesce(e.location, '') as location,
                    (row_number() over (order by e.date desc nulls last, e.id, i.sort_order, i.created_at))::integer as sort_order
             from public.event_images i join public.events e on e.id = i.event_id

@@ -88,7 +88,7 @@ PNG = '/tmp/e2e-photo.png'; test_png(PNG)
 
 CONFIG_JS = f"window.BLITZ_CONFIG = {{ supabaseUrl: '{API}', supabaseKey: '{F.ANON_KEY}' }};"
 def new_context(p, viewport=(1280, 900), mobile=False):
-    b = p.chromium.launch(args=['--disable-features=LocalNetworkAccessChecks,PrivateNetworkAccessRespectPreflightResults,PrivateNetworkAccessSendPreflights,BlockInsecurePrivateNetworkRequests'])
+    b = p.chromium.launch(args=['--disable-3d-apis', '--disable-features=LocalNetworkAccessChecks,PrivateNetworkAccessRespectPreflightResults,PrivateNetworkAccessSendPreflights,BlockInsecurePrivateNetworkRequests'])
     ctx = b.new_context(viewport={'width': viewport[0], 'height': viewport[1]}, is_mobile=mobile, has_touch=mobile, device_scale_factor=1)
     def route(r):
         url = r.request.url

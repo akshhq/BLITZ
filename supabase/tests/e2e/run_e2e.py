@@ -212,12 +212,14 @@ with sync_playwright() as p:
     pv = page.frame_locator('iframe.preview-frame')
     ok('live preview renders what was typed', 'E2E Hack Night' in pv.locator('#out').inner_text(timeout=4000))
     page.locator('details:has-text("Winners") summary').first.click() if False else None
-    with page.expect_file_chooser() as fc: page.click('button:has-text("Choose image")')
+    page.evaluate("document.querySelectorAll('details.group').forEach(d => { d.open = true; })")
+    with page.expect_file_chooser() as fc: page.locator('.evimg-field > .repeat-row-actions button').first.click()   # events now take several images
     fc.value.set_files(PNG); page.wait_for_selector('canvas.crop-canvas'); page.click('button:has-text("Use this crop")')
-    page.wait_for_selector('.imgfield-preview'); ok('crop dialog produced an image preview', True)
+    page.wait_for_selector('.evimg'); ok('crop dialog produced an image in the event images list', True)
     page.click('button[type=submit]'); page.click('dialog button:has-text("Publish")'); page.wait_for_url(re.compile(r'#/events$')); ok('event saved', flash(page, 'Created'))  # new events are published, so the panel asks for confirmation first
     img = q("select image from public.events where id='e2e-hack-night'")[0][0]
     ok('image stored as a storage: path', img and img.startswith('storage:events/') and img.endswith('.webp'), img)
+    ok('the event\'s image is also its first event_images row (the Gallery star starts off)', q("select image, gallery_enabled from public.event_images where event_id='e2e-hack-night'") == [(img, False)])
     fpath = img[len('storage:'):]; ok('file reached storage and is a real WebP', fpath in F.State.files and F.State.files[fpath][1][:4] == b'RIFF' and F.State.files[fpath][0] == 'image/webp')
     im = Image.open(io.BytesIO(F.State.files[fpath][1])); ok('image is 1200x675 and under 220 KB', im.size == (1200, 675) and len(F.State.files[fpath][1]) <= 220 * 1024, (im.size, len(F.State.files[fpath][1])))
     ev = ctx.new_page(); watch(ev, errs2); ev.goto(f'{SITE}/event.html?event=e2e-hack-night'); ev.wait_for_selector('.lp-window h2')

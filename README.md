@@ -356,3 +356,12 @@ What is actually implemented (and checked with Lighthouse mobile, headless Chrom
 - Layout and behaviour live in `event-launchpad.css` and `event-page.js`; the wine palette comes from `styles.css`.
 - Windows are non-modal (no backdrop or blur), so several events can be open at once. Minimized windows sit in the dock; the trash icon closes them all. `?event=<id>` opens that event on load.
 - The admin preview (`prezi_panel/preview.html`) also loads `event-launchpad.css`.
+
+
+## Event images and the Gallery
+
+- **Events can have many images** (Prezi Panel > Events > *Image & links*): add several at once, reorder, describe, remove. On `event.html` an event with two or more images shows an Instagram-style carousel (arrows inside the image at the left and right edges, swipe on phones); one image looks as before.
+- **The Gallery section lists every event image with a star.** The star decides whether that image appears in the public Gallery; the event must also be published. There is no separate Gallery upload.
+- **Image shapes:** choose Wide 16:9, Landscape 5:4 or Portrait 4:5 when adding images; the Gallery shows each at its own shape in one even row.
+- **Install:** run `supabase/migration_event_images.sql`, then `supabase/migration_event_image_aspect.sql`, in the Supabase SQL Editor first, then deploy the code. Details, checks and troubleshooting: [ERRORS.md section 12](ERRORS.md#12-event-images-gallery-and-the-3d-hero). The older standalone Gallery photos are kept in the database but no longer shown.
+- **Tests added:** `python supabase/tests/e2e/run_image_tests.py <postgrest>` (the acceptance tests), and the schema/migration/role tests in `run_schema_contract_tests.py`.

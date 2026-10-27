@@ -361,7 +361,7 @@
       PP.clear(host).appendChild(el('p', { class: 'loading', text: 'Loading…' }));
       PP.read(function () {
         return Promise.all([
-          sb.from('event_images').select('id,event_id,image,alt,gallery_enabled,sort_order,created_at,events(title,published,date)').order('sort_order', { ascending: true }),
+          sb.from('event_images').select('id,event_id,image,alt,aspect,gallery_enabled,sort_order,created_at,events(title,published,date)').order('sort_order', { ascending: true }),
           sb.from('gallery_items').select('id,title,image')
         ]);
       }, 'load-gallery').then(function (res) {
@@ -427,7 +427,7 @@
       return el('li', { class: 'gal-card' + (row.gallery_enabled ? ' is-on' : '') }, [
         el('img', { class: 'gal-img', src: PP.imgSrc(row.image), alt: row.alt || ('Image ' + (n + 1) + ' of ' + title), loading: 'lazy' }),
         star,
-        el('div', { class: 'gal-meta' }, [el('div', { class: 'gal-event-name', text: title }), el('div', { class: 'hint', text: 'Image ' + (n + 1) + ' of ' + total + (row.alt ? ' · ' + row.alt : '') })])
+        el('div', { class: 'gal-meta' }, [el('div', { class: 'gal-event-name', text: title }), el('div', { class: 'hint', text: 'Image ' + (n + 1) + ' of ' + total + ' · ' + (row.aspect || '16:9') + (row.alt ? ' · ' + row.alt : '') })])
       ]);
     }
     load();
@@ -743,7 +743,7 @@
       var loadIds = isNew && coll.pk === 'id' && coll.fields.some(function (f) { return f.type === 'slug'; })
         ? sb.from(coll.table).select('id') : Promise.resolve({ data: [] });
       var loadImages = key === 'events' && !isNew
-        ? sb.from('event_images').select('id,image,alt,sort_order').eq('event_id', id).order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+        ? sb.from('event_images').select('id,image,alt,aspect,sort_order').eq('event_id', id).order('sort_order', { ascending: true }).order('created_at', { ascending: true })
         : Promise.resolve({ data: null });
       return Promise.all([loadRecord, loadIds, loadImages]);
     }, 'load-' + key + '-record').then(function (res) {
@@ -752,7 +752,7 @@
       if (res[2] && res[2].error) { failed(res[2].error); return; }
       if (key === 'events' && res[0].data) {
         // The event's images in order. An event saved before multi-image support only has `image`; show it as image 1.
-        var loaded = (res[2] && res[2].data || []).map(function (r) { return { id: r.id, path: r.image, alt: r.alt || '' }; });
+        var loaded = (res[2] && res[2].data || []).map(function (r) { return { id: r.id, path: r.image, alt: r.alt || '', aspect: r.aspect || '16:9' }; });
         if (!loaded.length && res[0].data.image) loaded = [{ path: res[0].data.image, alt: res[0].data.image_alt || '' }];
         res[0].data.images = loaded;
       }
@@ -917,7 +917,7 @@
               if (!imageList) return saved;
               if (isNew) attempt.eventSaved = true;
               attempt.imagesPending = true;
-              var payload = imageList.map(function (it) { return { id: it.id, image: it.path, alt: it.alt || '' }; });
+              var payload = imageList.map(function (it) { return { id: it.id, image: it.path, alt: it.alt || '', aspect: it.aspect || '16:9' }; });
               return sb.rpc('set_event_images', { p_event_id: pkValue, p_images: payload }).then(function (r) {
                 if (r.error) throw r.error;
                 attempt.imagesPending = false;

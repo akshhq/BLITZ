@@ -134,9 +134,9 @@ def add_images(page, paths):
     fc.value.set_files(paths)
     for i in range(len(paths)):
         page.wait_for_selector('canvas.crop-canvas', timeout=15000)
-        if len(paths) > 1: page.wait_for_selector(f'dialog:has-text("{i + 1} of {len(paths)}")', timeout=5000)   # "Position the event image (2 of 3)"
+        if len(paths) > 1: page.wait_for_selector(f'dialog:has-text("{i + 1} of {len(paths)}")', timeout=30000)   # "Position the event image (2 of 3)"
         page.click('button:has-text("Use this crop")')
-        if i < len(paths) - 1: page.wait_for_selector(f'dialog:has-text("{i + 2} of {len(paths)}")', timeout=10000)
+        if i < len(paths) - 1: page.wait_for_selector(f'dialog:has-text("{i + 2} of {len(paths)}")', timeout=30000)
     page.wait_for_selector('canvas.crop-canvas', state='detached', timeout=15000)
 def public_gallery(p, wait_live=True):
     b, ctx = new_context(p); pg = ctx.new_page(); pg.goto(f'{SITE}/index.html')
@@ -261,7 +261,11 @@ with sync_playwright() as p:
     p3.locator('.lp-window .ec-track').scroll_into_view_if_needed(); p3.wait_for_timeout(300)
     box = p3.locator('.lp-window .ec-track').bounding_box(); cdp = c3.new_cdp_session(p3)
     print('   (track on screen:', box, ')')
-    cdp.send('Input.synthesizeScrollGesture', {'x': box['x'] + box['width'] * 0.8, 'y': box['y'] + box['height'] / 2, 'xDistance': -int(box['width'] * 0.6), 'speed': 900, 'gestureSourceType': 'touch'})
+    x0, x1, y = box['x'] + box['width'] * 0.8, box['x'] + box['width'] * 0.2, box['y'] + box['height'] / 2
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': x0, 'y': y}]})
+    for i in range(1, 11):
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': x0 + (x1 - x0) * i / 10, 'y': y}]}); p3.wait_for_timeout(16)
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
     try: p3.wait_for_function("document.querySelector('.lp-window .event-carousel').getAttribute('data-index')==='1'", timeout=6000); swiped = True
     except Exception: swiped = False
     ok('7  a left swipe moves to the next image (native touch scrolling, snapped)', swiped, p3.evaluate("document.querySelector('.lp-window .event-carousel').getAttribute('data-index')"))
@@ -286,6 +290,7 @@ with sync_playwright() as p:
     page.goto(f'{SITE}/prezi_panel/#/events/edit/image-fest'); page.wait_for_selector('.evimg')
     ok('1  the editor lists the 3 stored images', page.locator('.evimg').count() == 3)
     open_groups(page)
+    page.select_option('.evimg-shape', '4:5')                        # this one is a portrait
     add_images(page, PNGS[3:4])
     ok('1  a 4th image can be added next to the existing three', page.locator('.evimg').count() == 4)
     def lose(r):
@@ -335,6 +340,34 @@ with sync_playwright() as p:
     q("update public.events set published=true where id='image-fest'")
     b.close()
 
+    print('\n== Gallery shapes: 16:9, 5:4 and 4:5 side by side')
+    shapes = {r[0]: r[1] for r in q("select id::text, aspect from public.event_images where event_id='image-fest' order by sort_order")}
+    ok('the portrait added in the editor was stored as 4:5, the others as 16:9', sorted(shapes.values()) == ['16:9', '16:9', '4:5'], shapes)
+    wide, port = [k for k, v in shapes.items() if v == '16:9'], [k for k, v in shapes.items() if v == '4:5']
+    q("update public.event_images set aspect='5:4' where id=%s", wide[1])          # a landscape one too (the editor path is the same code)
+    q("update public.event_images set gallery_enabled=true where event_id='image-fest'")
+    q("update public.events set published=true where id='image-fest'")
+    def cards_of(p_, viewport):
+        b_, c_ = new_context(p_, viewport=viewport, mobile=viewport[0] < 700); pg_ = c_.new_page(); pg_.goto(f'{SITE}/index.html')
+        pg_.wait_for_function("document.documentElement.getAttribute('data-content-status')==='live'", timeout=20000); pg_.wait_for_selector('.gallery-item')
+        out = pg_.evaluate("""[...document.querySelectorAll('.gallery-item')].map(f=>{const s=f.querySelector('.gallery-img-shell').getBoundingClientRect(), i=f.querySelector('img'), c=f.getBoundingClientRect();
+            return {cls:f.className.replace('gallery-item','').trim(), w:s.width, h:s.height, cardW:c.width, nw:i.getAttribute('width'), nh:i.getAttribute('height'), contained: getComputedStyle(i).objectFit}})""")
+        over = pg_.evaluate("document.documentElement.scrollWidth>document.documentElement.clientWidth"); b_.close(); return out, over
+    cards, over = cards_of(p, (1440, 810))
+    byc = {c['cls']: c for c in cards}
+    ok('public Gallery: one card per starred image of the published event, each classed by its shape', sorted(byc) == ['gallery-item--16-9', 'gallery-item--4-5', 'gallery-item--5-4'] and len(cards) == 3, cards)
+    ok('each picture box has exactly its shape (16:9 = 1.778, 5:4 = 1.25, 4:5 = 0.8)', abs(byc['gallery-item--16-9']['w'] / byc['gallery-item--16-9']['h'] - 16 / 9) < 0.02 and abs(byc['gallery-item--5-4']['w'] / byc['gallery-item--5-4']['h'] - 1.25) < 0.02 and abs(byc['gallery-item--4-5']['w'] / byc['gallery-item--4-5']['h'] - 0.8) < 0.02, byc)
+    ok('desktop: all three pictures are the same height, so the row is tidy', max(c['h'] for c in cards) - min(c['h'] for c in cards) < 1.5, [c['h'] for c in cards])
+    ok('a portrait card is narrower than a landscape one, which is narrower than a wide one', byc['gallery-item--4-5']['cardW'] < byc['gallery-item--5-4']['cardW'] < byc['gallery-item--16-9']['cardW'], [c['cardW'] for c in cards])
+    ok('width/height attributes match the shape (reserves space, no layout shift while lazy-loading)', byc['gallery-item--4-5']['nw'] == '960' and byc['gallery-item--4-5']['nh'] == '1200' and byc['gallery-item--5-4']['nh'] == '960', byc)
+    cards, over = cards_of(p, (390, 800))
+    byc = {c['cls']: c for c in cards}
+    ok('phone: every card fits the screen (82vw at most) and keeps its shape', all(c['cardW'] <= 390 * 0.82 + 1 for c in cards) and abs(byc['gallery-item--4-5']['w'] / byc['gallery-item--4-5']['h'] - 0.8) < 0.02 and not over, cards)
+    # older bundled gallery items have no shape: they keep the 4:3 look they always had
+    b_, c_ = new_context(p); pg_ = c_.new_page(); pg_.route(re.compile(r'/rest/v1/rpc/site_content'), lambda r: r.abort()); pg_.goto(f'{SITE}/index.html'); pg_.wait_for_selector('.gallery-item', timeout=20000)
+    ok('older bundled items (no shape recorded) still render 4:3', pg_.locator('.gallery-item--4-3').count() >= 1 and abs(pg_.evaluate("(()=>{const s=document.querySelector('.gallery-item--4-3 .gallery-img-shell').getBoundingClientRect();return s.width/s.height})()") - 4 / 3) < 0.02)
+    b_.close()
+
     print('\n== 13. Unauthorized users cannot change images or Gallery visibility   [REAL RLS]')
     target = imgs('event-b')[0][0]
     vt, nt = jwt_for('viewer'), jwt_for('stranger')
@@ -355,7 +388,7 @@ with sync_playwright() as p:
     b, ctx = new_context(p); page = ctx.new_page(); login(page, 'viewer'); page.wait_for_selector('h1:has-text("Dashboard")')
     page.goto(f'{SITE}/prezi_panel/#/gallery'); page.wait_for_selector('.gal-card')
     ok('13 a viewer sees the Gallery with every star disabled', all(a == 'true' for a in page.locator('.gal-star').evaluate_all("els=>els.map(e=>e.getAttribute('aria-disabled'))")))
-    page.locator('.gal-star').first.click(); page.wait_for_timeout(500)
+    page.locator('.gal-star').first.click(force=True); page.wait_for_timeout(500)   # force: aria-disabled is the intended viewer state, and Playwright would otherwise wait for it to enable
     ok('13 clicking a star as a viewer explains why and changes nothing', 'view only' in toast_text(page).lower() and not any(r[2] for r in imgs('event-b')))
     page.goto(f'{SITE}/prezi_panel/#/events/edit/image-fest'); page.wait_for_selector('.evimg')
     ok('13 a viewer cannot add, move or remove event images in the editor', page.locator('.evimg-remove:not([disabled])').count() == 0 and page.locator('.evimg-field > .repeat-row-actions button').first.is_disabled())

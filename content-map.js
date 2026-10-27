@@ -15,6 +15,8 @@
       return path;
     }
 
+    // The shape an image was cropped to in the panel. Anything else is treated as unknown (older bundled items).
+    function aspectOf(v) { return v === '16:9' || v === '5:4' || v === '4:5' ? v : ''; }
     var m = {
       imageUrl: imageUrl,
       announcement: function (a) {
@@ -26,7 +28,7 @@
         var out = [];
         list(e.images).forEach(function (item) {
           var src = imageUrl(item && item.image);
-          if (src) out.push({ id: str(item.id), src: src, alt: str(item.alt) });
+          if (src) out.push({ id: str(item.id), src: src, alt: str(item.alt), aspect: aspectOf(item.aspect) });
         });
         if (!out.length && e.image) out.push({ id: '', src: imageUrl(e.image), alt: str(e.image_alt) });
         return out;
@@ -52,7 +54,7 @@
       },
       gallery: function (g) {
         return {
-          id: str(g.id), title: str(g.title), description: str(g.description), image: imageUrl(g.image), alt: str(g.alt),
+          id: str(g.id), title: str(g.title), description: str(g.description), image: imageUrl(g.image), alt: str(g.alt), aspect: aspectOf(g.aspect),
           mediaType: g.media_type === 'illustration' ? 'illustration' : 'photo', date: str(g.date_label), location: str(g.location)
         };
       },

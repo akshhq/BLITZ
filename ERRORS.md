@@ -2,7 +2,7 @@
 
 This file explains what the error messages on the BLITZ website and in the Prezi Panel mean, how to find the real cause, and how to recover. It documents only things that exist in this repository. Where something could not be verified, it is listed under [Known limitations](#11-known-limitations-and-unverified-checks).
 
-Contents: [1 How it works](#1-how-errors-are-handled) · [2 Symptom to code](#2-symptom-to-code) · [3 Code reference](#3-error-code-reference) · [4 Schema diagnostics](#4-supabase-schema-diagnostic-queries) · [5 Schema cache](#5-schema-cache-recovery) · [6 Auth and RLS](#6-authentication-and-rls-troubleshooting) · [7 Failed publishing](#7-recovering-from-a-failed-event-publish) · [8 Hosting](#8-hosting-and-custom-error-pages) · [9 Local testing](#9-local-testing) · [10 GitHub Actions](#10-github-actions-and-secrets) · [11 Limitations](#11-known-limitations-and-unverified-checks)
+Contents: [1 How it works](#1-how-errors-are-handled) · [2 Symptom to code](#2-symptom-to-code) · [3 Code reference](#3-error-code-reference) · [4 Schema diagnostics](#4-supabase-schema-diagnostic-queries) · [5 Schema cache](#5-schema-cache-recovery) · [6 Auth and RLS](#6-authentication-and-rls-troubleshooting) · [7 Failed publishing](#7-recovering-from-a-failed-event-publish) · [8 Hosting](#8-hosting-and-custom-error-pages) · [9 Local testing](#9-local-testing) · [10 GitHub Actions](#10-github-actions-and-secrets) · [11 Limitations](#11-known-limitations-and-unverified-checks) · [12 Event images and Gallery](#12-event-images-and-gallery)
 
 ## 1. How errors are handled
 
@@ -350,3 +350,58 @@ python supabase/tests/e2e/run_error_tests.py /path/to/postgrest     # do not run
 - **Existing images in the database** are not re-checked; only references being saved are validated.
 - **Cached content** can be up to 30 days old if the database is unreachable; it is always labelled with its date, never presented as live.
 - **The public site has no forms**, so there is no form-submission error path to test; the only contact route is a `mailto:` link.
+
+## 12. Event images and the Gallery
+
+**One source of images.** Every image belongs to an event (`public.event_images`: its own id, the event, the image, a description, an order, and `gallery_enabled`, default **false**). The panel's Gallery section is a list of those images with a star each; it has no upload of its own. The public Gallery is *generated* in `site_content()` from images that are **starred AND belong to a PUBLISHED event AND have a valid reference**. Nothing is copied into a separate collection. `events.image` is kept equal to the first image so older readers still work.
+
+**Installing it.** Run `supabase/migration_event_images.sql` in the Supabase SQL Editor **before** deploying the new panel (the panel calls `public.set_event_images`). It is safe to run twice, deletes nothing, copies each existing single event image in as that event's first image (star off), and turns the star **on** only for a legacy Gallery photo whose image is exactly an event's image. The old `public.gallery_items` table is kept untouched but no longer feeds the website.
+
+**Image shapes (16:9, 5:4, 4:5).** When adding images in the event editor you choose a shape first (Wide 16:9, Landscape 5:4, Portrait 4:5); the crop frame follows it and the shape is saved with the image. The public Gallery shows every card at the same picture height, with the width following the shape, so mixed shapes sit in one tidy row without cropping or jumping while images load. Older bundled items without a shape stay 4:3. This needs one extra migration: run `supabase/migration_event_image_aspect.sql` **after** `migration_event_images.sql` (if you already ran the first, just run this one). Existing images become 16:9, which is how they were cropped. If it has not been run, the dashboard **System check** says so ("Event image shapes") and the event editor reports a missing `aspect` column with the right file name.
+
+**What to expect after the migration.** The public Gallery shows only starred event images, so it is empty until editors star some. Older standalone Gallery photos stay in the database but are not shown; the panel's Gallery page lists them in a notice. To show one again, add the image to an event and star it.
+
+Read-only checks (run in the SQL Editor):
+
+```sql
+-- Events whose single image has not been turned into an event_images row (the migration has not run, or ran before they were added)
+select e.id, e.image
+from public.events e
+where e.image is not null and e.image <> ''
+  and not exists (select 1 from public.event_images i where i.event_id = e.id);
+```
+
+```sql
+-- Older Gallery photos that are NOT attached to any event (kept safely, not shown on the website)
+select g.title, g.image, g.published
+from public.gallery_items g
+where not exists (select 1 from public.event_images i where i.image = g.image)
+order by g.title;
+```
+
+```sql
+-- Every event's images, their Gallery stars, and whether the event is published (a star only shows when it is)
+select e.title, e.published, i.sort_order, i.gallery_enabled, i.image
+from public.event_images i join public.events e on e.id = i.event_id
+order by e.title, i.sort_order;
+```
+
+```sql
+-- Which shape is each image? (Expected: only 16:9, 5:4 or 4:5; an error here means migration_event_image_aspect.sql has not been run)
+select aspect, count(*) from public.event_images group by aspect order by aspect;
+```
+
+```sql
+-- Does the function the panel saves images through exist? Expected: one row, returns jsonb
+select p.proname, pg_get_function_arguments(p.oid) as arguments, pg_get_function_result(p.oid) as returns
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' and p.proname = 'set_event_images';
+```
+
+| Symptom | Cause and fix |
+|---|---|
+| Saving an event says a database function was not found (`BLITZ-SCH-003`, mentions `set_event_images`) | The migration has not been run. Run it, then `notify pgrst, 'reload schema';`. The dashboard **System check** now reports this explicitly. |
+| "The event details were saved, but its images were not" | The event row saved but the image list did not (usually a connection drop). Press **Save** again: image ids are made in the browser, so a retry never duplicates. |
+| A starred image is not on the public Gallery | Its event is a draft, or the page is showing a saved copy (the site refreshes on load). The Gallery page marks draft events. |
+| An image shows "Image unavailable" | Its file is missing from storage or the address is wrong. Remove it in the event and add it again. |
+| Star toggle says "view only" | The account's role is `viewer`. Roles are in [section 6](#6-authentication-and-rls-troubleshooting). |

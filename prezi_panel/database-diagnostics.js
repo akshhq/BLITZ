@@ -122,6 +122,14 @@
         });
       });
 
+      add('Event image shapes', function () {
+        return sb.from('event_images').select('aspect').limit(0).then(function (res) {
+          if (res.error && /^(PGRST204|42703)$/.test(String(res.error.code))) return { status: 'problem', code: 'BLITZ-SCH-001', message: "The database has no 'aspect' column on event_images yet. Run supabase/migration_event_image_aspect.sql (after migration_event_images.sql); it is safe to run twice." };
+          failFrom(res);
+          return { message: 'event_images.aspect is there (16:9, 5:4 and 4:5 are supported).' };
+        });
+      });
+
       ['announcements', 'team_members', 'event_images', 'gallery_items', 'collaborations', 'content_history'].forEach(function (table) {
         add('Table ' + table, function () {
           return sb.from(table).select('*', { count: 'exact', head: true }).then(function (res) { failFrom(res); return { message: 'Readable.' }; });

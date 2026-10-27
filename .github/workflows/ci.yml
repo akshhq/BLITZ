@@ -101,3 +101,5 @@ jobs:
         run: python supabase/tests/e2e/run_e2e.py ./postgrest
       - name: Error handling end-to-end
         run: python supabase/tests/e2e/run_error_tests.py ./postgrest
+      - name: Event images, Gallery and carousel (acceptance)
+        run: python supabase/tests/e2e/run_image_tests.py ./postgrest

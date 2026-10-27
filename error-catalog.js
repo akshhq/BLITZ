@@ -134,12 +134,18 @@
     logo: { type: 'text', migration: 'supabase/migration_add_brochure_and_logo.sql' }
   };
 
+  // Same idea for public.event_images (added after the first release).
+  var KNOWN_IMAGE_COLUMNS = {
+    aspect: { type: 'text', migration: 'supabase/migration_event_image_aspect.sql' }
+  };
+
   return {
     CATEGORIES: CATEGORIES,
     list: LIST,
     byCode: BY_CODE,
     get: function (code) { return BY_CODE[code] || BY_CODE['BLITZ-JS-001']; },
     has: function (code) { return Object.prototype.hasOwnProperty.call(BY_CODE, code); },
-    KNOWN_EVENT_COLUMNS: KNOWN_EVENT_COLUMNS
+    KNOWN_EVENT_COLUMNS: KNOWN_EVENT_COLUMNS,
+    KNOWN_IMAGE_COLUMNS: KNOWN_IMAGE_COLUMNS
   };
 }));
