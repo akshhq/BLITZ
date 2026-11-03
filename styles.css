@@ -285,11 +285,17 @@ button:disabled,
 }
 
 .introduction.surface--maroon {
-  --surface-grain: rgba(255, 249, 242, 0.052);
+  background-color: #090201;
+  background-image:
+    radial-gradient(ellipse 68% 62% at 50% 28%, #d43800 0%, #9e2200 34%, #4c0c01 66%, rgba(10, 2, 1, 0) 100%),
+    radial-gradient(ellipse 90% 75% at 50% 40%, #6b1402 0%, #240502 58%, #070101 100%),
+    linear-gradient(180deg, #7a1903 0%, #4d0d02 48%, #160301 82%, #050101 100%);
+  --surface-scanline: rgba(255, 140, 60, 0.012);
+  --surface-grain: rgba(255, 180, 120, 0.018);
 }
 
 .introduction.surface--maroon::after {
-  opacity: 0.34;
+  opacity: 0.16;
 }
 
 .surface--ink {
@@ -495,6 +501,62 @@ button:disabled,
 .introduction {
   min-height: 100vh;
   min-height: 100svh;
+}
+
+/* Hero sculpture: scroll-driven WebGL liquid-metal ring (hero-sculpture.js), behind all hero content. */
+.hero-sculpture {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: url("assets/images/hero-ring-bg.webp") center center / cover no-repeat;
+}
+
+.hero-sculpture.is-webgl-active {
+  background: none;
+}
+
+/* Studio glow & bottom shadow vignette matching the reference artwork. */
+.hero-sculpture::before,
+.hero-sculpture::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.hero-sculpture::before {
+  background:
+    radial-gradient(ellipse 52% 48% at 50% 34%, rgba(255, 68, 0, 0.28), transparent 72%),
+    radial-gradient(ellipse 44% 54% at 18% 42%, rgba(255, 76, 10, 0.18), transparent 70%),
+    radial-gradient(ellipse 44% 54% at 82% 38%, rgba(255, 64, 8, 0.16), transparent 70%);
+}
+
+.hero-sculpture-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  will-change: opacity;
+}
+
+/* Deep studio floor shadow at the bottom and subtle top edge blend for nav & copy readability. */
+.hero-sculpture::after {
+  z-index: 1;
+  background:
+    linear-gradient(to top, rgba(4, 1, 1, 0.92) 0%, rgba(10, 2, 1, 0.58) 18%, rgba(18, 3, 1, 0.18) 36%, transparent 56%),
+    radial-gradient(ellipse 48% 30% at 86% 92%, rgba(5, 1, 1, 0.68), transparent 78%),
+    linear-gradient(to bottom, rgba(12, 2, 1, 0.32), transparent 15%);
+}
+
+@media (max-width: 899px) {
+  .hero-sculpture::after {
+    background:
+      linear-gradient(to top, rgba(4, 1, 1, 0.94) 0%, rgba(10, 2, 1, 0.68) 24%, transparent 52%),
+      linear-gradient(to bottom, rgba(12, 2, 1, 0.38), transparent 18%);
+  }
 }
 
 @supports (height: 100svh) {
