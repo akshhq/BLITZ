@@ -178,12 +178,14 @@
       float spec = pow(max(dot(normal, halfVec), 0.0), 36.0);
       float rimShift = sin(lightAngle + finalUv.y * 6.0 - finalUv.x * 4.0) * 0.5 + 0.5;
 
-      // Add scroll-reactive molten specular glints & subtle caustics evolution (zero at p = 0)
+      // Add scroll-reactive crimson-rose & copper-amber specular glints (zero at p = 0)
       float dynStrength = sin(p * 3.14159265) * 0.85 + p * 0.35;
-      vec3 dynHighlight = vec3(1.0, 0.38, 0.06) * spec * ridgeStrength * sculptureMask * dynStrength * 1.35;
-      vec3 dynCaustic = vec3(0.95, 0.20, 0.02) * ridgeStrength * rimShift * sculptureMask * dynStrength * 0.24;
+      vec3 dynHighlight = vec3(0.96, 0.36, 0.28) * spec * ridgeStrength * sculptureMask * dynStrength * 1.15;
+      vec3 dynCaustic = vec3(0.78, 0.16, 0.22) * ridgeStrength * rimShift * sculptureMask * dynStrength * 0.22;
 
       vec3 col = baseCol + dynHighlight + dynCaustic;
+      // Slightly soften peak contrast of the outer ribbon lobes so foreground text remains dominant
+      col = mix(vec3(0.08, 0.025, 0.038), col, 0.88);
 
       // Soft vignette at the outer edges when rotated so the sculpture blends seamlessly into the dark backdrop
       float edgeFade = 1.0 - smoothstep(0.82, 1.02, max(abs(v_ndc.x), abs(v_ndc.y))) * p * 0.55;
@@ -299,7 +301,7 @@
     layout.w = cssW;
     layout.h = cssH;
     layout.aspect = cssW / cssH;
-    layout.maxOpacity = layout.aspect < 1 ? 0.90 : 1;
+    layout.maxOpacity = layout.aspect < 1 ? 0.74 : 0.91;
   }
 
   function render(p) {

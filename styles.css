@@ -285,13 +285,13 @@ button:disabled,
 }
 
 .introduction.surface--maroon {
-  background-color: #090201;
+  background-color: #12060A;
   background-image:
-    radial-gradient(ellipse 68% 62% at 50% 28%, #d43800 0%, #9e2200 34%, #4c0c01 66%, rgba(10, 2, 1, 0) 100%),
-    radial-gradient(ellipse 90% 75% at 50% 40%, #6b1402 0%, #240502 58%, #070101 100%),
-    linear-gradient(180deg, #7a1903 0%, #4d0d02 48%, #160301 82%, #050101 100%);
-  --surface-scanline: rgba(255, 140, 60, 0.012);
-  --surface-grain: rgba(255, 180, 120, 0.018);
+    radial-gradient(ellipse 68% 62% at 50% 28%, #8E202E 0%, #6A1826 36%, #3B0D18 68%, rgba(18, 6, 10, 0) 100%),
+    radial-gradient(ellipse 90% 75% at 50% 40%, #521320 0%, #240A11 58%, #0E0407 100%),
+    linear-gradient(180deg, #681A28 0%, #42121E 48%, #1D0B10 82%, #0C0407 100%);
+  --surface-scanline: rgba(255, 220, 210, 0.015);
+  --surface-grain: rgba(255, 225, 215, 0.02);
 }
 
 .introduction.surface--maroon::after {
@@ -528,9 +528,9 @@ button:disabled,
 
 .hero-sculpture::before {
   background:
-    radial-gradient(ellipse 52% 48% at 50% 34%, rgba(255, 68, 0, 0.28), transparent 72%),
-    radial-gradient(ellipse 44% 54% at 18% 42%, rgba(255, 76, 10, 0.18), transparent 70%),
-    radial-gradient(ellipse 44% 54% at 82% 38%, rgba(255, 64, 8, 0.16), transparent 70%);
+    radial-gradient(ellipse 52% 48% at 50% 34%, rgba(178, 38, 54, 0.24), transparent 72%),
+    radial-gradient(ellipse 44% 54% at 18% 42%, rgba(190, 48, 52, 0.15), transparent 70%),
+    radial-gradient(ellipse 44% 54% at 82% 38%, rgba(175, 42, 50, 0.14), transparent 70%);
 }
 
 .hero-sculpture-canvas {
@@ -539,23 +539,24 @@ button:disabled,
   display: block;
   width: 100%;
   height: 100%;
+  opacity: 0.82;
   will-change: opacity;
 }
 
-/* Deep studio floor shadow at the bottom and subtle top edge blend for nav & copy readability. */
+/* Subtle burgundy veil over the rings & studio floor shadow so foreground typography stays crisp. */
 .hero-sculpture::after {
   z-index: 1;
   background:
-    linear-gradient(to top, rgba(4, 1, 1, 0.92) 0%, rgba(10, 2, 1, 0.58) 18%, rgba(18, 3, 1, 0.18) 36%, transparent 56%),
-    radial-gradient(ellipse 48% 30% at 86% 92%, rgba(5, 1, 1, 0.68), transparent 78%),
-    linear-gradient(to bottom, rgba(12, 2, 1, 0.32), transparent 15%);
+    linear-gradient(180deg, rgba(28, 9, 15, 0.34) 0%, rgba(28, 9, 15, 0.20) 32%, rgba(20, 6, 11, 0.24) 64%, rgba(10, 3, 6, 0.88) 100%),
+    radial-gradient(ellipse 48% 30% at 86% 92%, rgba(12, 4, 7, 0.72), transparent 78%),
+    radial-gradient(ellipse 90% 22% at 50% 21%, rgba(32, 10, 16, 0.32), transparent 76%);
 }
 
 @media (max-width: 899px) {
   .hero-sculpture::after {
     background:
-      linear-gradient(to top, rgba(4, 1, 1, 0.94) 0%, rgba(10, 2, 1, 0.68) 24%, transparent 52%),
-      linear-gradient(to bottom, rgba(12, 2, 1, 0.38), transparent 18%);
+      linear-gradient(180deg, rgba(28, 9, 15, 0.40) 0%, rgba(26, 8, 14, 0.26) 45%, rgba(10, 3, 6, 0.92) 100%),
+      radial-gradient(ellipse 80% 30% at 50% 46%, rgba(30, 10, 16, 0.32), transparent 78%);
   }
 }
 
