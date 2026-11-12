@@ -35,7 +35,20 @@
   var burst = { start: 0, n: 0, warned: false };
   var config = { ui: 'notice', debug: false };
   var installed = false;
-  var sessionId = Math.random().toString(36).slice(2, 6);
+  function randomIdToken(bytesLen) {
+    try {
+      var c = root && root.crypto;
+      if (c && c.getRandomValues) {
+        var buf = new Uint8Array(bytesLen || 4);
+        c.getRandomValues(buf);
+        var out = '';
+        for (var i = 0; i < buf.length; i += 1) out += ('0' + buf[i].toString(16)).slice(-2);
+        return out;
+      }
+    } catch (e) { /* fall back */ }
+    return Math.random().toString(36).slice(2, 6);
+  }
+  var sessionId = randomIdToken(3);
   var counter = 0;
 
   /* ---------------------------------------------------------------- redaction */
@@ -44,7 +57,9 @@
     s = s.replace(/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{4,}/g, '[token]')
       .replace(/\bsb_(?:publishable|secret)_[A-Za-z0-9_-]+/g, '[key]')
       .replace(/Bearer\s+[A-Za-z0-9._~+\/=-]+/gi, 'Bearer [token]')
-      .replace(/(apikey|api_key|access_token|refresh_token|token|password|secret|service_role)(["']?\s*[:=]\s*["']?)[^\s"'&,}]+/gi, '$1$2[redacted]')
+      .replace(/(https?:\/\/)[^\s/@:]+:[^\s/@]+@/gi, '$1[redacted]@')
+      .replace(/([?&](?:token|apikey|api_key|key|sig|signature|code|access_token|refresh_token)=)[^&\s"']+/gi, '$1[redacted]')
+      .replace(/(apikey|api_key|access_token|refresh_token|token|password|secret|service_role|cookie|set-cookie)(["']?\s*[:=]\s*["']?)[^\s"'&,}]+/gi, '$1$2[redacted]')
       .replace(/Failing row contains \([^)]*\)/gi, 'Failing row contains [row]')
       .replace(/Key \([^)]*\)=\([^)]*\)/g, 'Key [..]')
       .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
@@ -449,6 +464,13 @@
       showNotice({ id: 'offline', kind: 'warning', title: n.title + '.', message: 'Pages you have already opened keep working; new content will load when you reconnect.', code: 'BLITZ-NET-001', dismissible: true });
     });
     root.addEventListener('online', function () { hideNotice('offline'); });
+    if (document && document.addEventListener) {
+      document.addEventListener('securitypolicyviolation', function (ev) {
+        var directive = String((ev && ev.effectiveDirective) || (ev && ev.violatedDirective) || 'csp');
+        var blocked = String((ev && ev.blockedURI) || '').split('?')[0].slice(0, 120);
+        report('Blocked by security policy (' + directive + (blocked ? ': ' + blocked : '') + ')', { kind: 'security', operation: 'csp', silent: true });
+      });
+    }
     installImageFallback();
   }
 

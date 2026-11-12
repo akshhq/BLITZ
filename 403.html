@@ -6,12 +6,15 @@
     <!-- Error pages are served at the URL that failed (e.g. /blitz/no/such/page), so relative links need a base.
          Keep this equal to the folder the site lives in; tools/set-site-url.py updates it. -->
     <base href="/blitz/" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; object-src 'none'; form-action 'none'; base-uri 'self'" />
+    <meta name="referrer" content="no-referrer" />
     <title>Access forbidden | BLITZ Computer Science Society</title>
     <meta name="description" content="You do not have access to this page." />
-    <meta name="robots" content="noindex, nofollow" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
     <meta name="theme-color" content="#26151A" />
     <meta name="color-scheme" content="dark" />
     <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="stylesheet" href="error.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,9 +28,13 @@
 
     <main id="main" class="err-main">
       <section class="err-card" aria-labelledby="err-title">
-        <p class="err-code">Error 403</p>
+        <div class="err-meta-row">
+          <p class="err-code">Error 403</p>
+          <span class="err-ref">BLITZ-HTTP-403</span>
+        </div>
         <h1 id="err-title" class="err-title">Access forbidden</h1>
-        <p class="err-text">You don't have permission to view this page. If you think you should have access, sign in or contact the BLITZ team.</p>
+        <p class="err-text">You don't have permission to view this page. If you think you should have access, sign in or email <a href="mailto:team.blitzkmv@gmail.com">team.blitzkmv@gmail.com</a>.</p>
+        <p id="err-context" class="err-context" hidden></p>
         <div class="err-actions">
           <a class="err-btn" href="index.html">Back to homepage</a>
           <a class="err-btn err-btn--ghost" href="prezi_panel/" data-show-if-path="prezi_panel" hidden>Sign in</a>

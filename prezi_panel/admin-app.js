@@ -21,6 +21,8 @@
   var dirty = false;           // unsaved changes in an open form
   var IDLE_MS = 30 * 60 * 1000;
   var idleTimer = null;
+  var idleBound = false;
+  var resetIdleTimer = null;
   var MIN_PASSWORD = 10;
 
   function canEdit() { return !!me && (me.role === 'owner' || me.role === 'editor'); }
@@ -201,14 +203,20 @@
 
   function startIdle() {
     stopIdle();
-    var reset = function () {
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(function () { signOut({ text: 'You were signed out after 30 minutes of inactivity.' }); }, IDLE_MS);
-    };
-    ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (t) { document.addEventListener(t, reset, { passive: true }); });
-    startIdle.reset = reset; reset();
+    if (!resetIdleTimer) {
+      resetIdleTimer = function () {
+        if (!me) return;
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function () { signOut({ text: 'You were signed out after 30 minutes of inactivity.' }); }, IDLE_MS);
+      };
+    }
+    if (!idleBound) {
+      idleBound = true;
+      ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (t) { document.addEventListener(t, resetIdleTimer, { passive: true }); });
+    }
+    resetIdleTimer();
   }
-  function stopIdle() { clearTimeout(idleTimer); }
+  function stopIdle() { clearTimeout(idleTimer); idleTimer = null; }
 
   function showAccessProblem(err) {
     var n = E.report(err, { operation: 'check-access', service: 'supabase', silent: true });
@@ -273,12 +281,16 @@
 
   function go(hash) { dirty = false; window.location.hash = hash; }
 
+  function safeDecodeSegment(value) {
+    try { return decodeURIComponent(value); } catch (e) { return value; }
+  }
+
   function route() {
     if (!me) return;
     dirty = false;
     var hash = window.location.hash || '#/';
     if (/^#(access_token|error)/.test(hash)) return; // auth redirect leftovers
-    var parts = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+    var parts = hash.replace(/^#\/?/, '').split('/').map(safeDecodeSegment);
     markNav(hash);
     var key = parts[0];
     if (key === '' || key === undefined) return viewDashboard();
@@ -805,8 +817,9 @@
 
     function onPreviewMessage(e) {
       if (!frame || e.source !== frame.contentWindow) return; // sandboxed frame has an opaque origin: identify it by window
-      if (e.data && e.data.type === 'preview-ready') { previewReady = true; sendPreview(); }
-      if (e.data && e.data.type === 'preview-height') frame.style.height = Math.max(420, Number(e.data.height) || 420) + 'px';
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === 'preview-ready') { previewReady = true; sendPreview(); }
+      if (e.data.type === 'preview-height') frame.style.height = Math.min(10000, Math.max(420, Number(e.data.height) || 420)) + 'px';
     }
     function sendPreview() {
       if (!frame || !previewReady || !frame.isConnected || !frame.contentWindow) return; // editor may already be closed

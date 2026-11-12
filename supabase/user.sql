@@ -10,12 +10,22 @@ create extension if not exists pgcrypto with schema extensions;
 
 do $$
 declare
-  target_email text := 'vjindal@keshav.du.ac.in';
-  target_password text := 'u^R6#3U'; -- Temporary password. Update/change after first login!
+  -- Replace these placeholder values in the Supabase SQL Editor before running; never commit real passwords.
+  target_email text := 'CHANGE_ME@example.com';
+  target_password text := 'CHANGE_ME_TEMP_PASSWORD'; -- Temporary password (min 12 chars). Update after first login!
   target_role text := 'editor'; -- Role: 'owner', 'editor', or 'viewer'
   user_id_val uuid;
   encrypted_pw text;
 begin
+  if target_email like 'CHANGE_ME%' or target_email !~ '^\S+@\S+\.\S+$' then
+    raise exception 'Set target_email to a real admin email before running supabase/user.sql.';
+  end if;
+  if target_password like 'CHANGE_ME%' or char_length(target_password) < 12 then
+    raise exception 'Set target_password to a unique temporary password (at least 12 characters) before running supabase/user.sql.';
+  end if;
+  if target_role not in ('owner', 'editor', 'viewer') then
+    raise exception 'target_role must be owner, editor, or viewer.';
+  end if;
   -- 1. Check if user already exists in auth.users
   select id into user_id_val from auth.users where lower(email) = lower(target_email);
 

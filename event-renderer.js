@@ -31,15 +31,24 @@
 
   function safeUrl(value) {
     var url = String(value || '').trim();
+    if (!url || /[\x00-\x1f\s"'<>]/.test(url)) return '';
     return /^(https?:\/\/|mailto:)/i.test(url) ? escapeHtml(url) : '';
   }
 
   function safeDocumentUrl(value) {
     var url = String(value || '').trim();
+    if (!url || /[\x00-\x1f\s"'<>]/.test(url) || url.indexOf('..') >= 0) return '';
     if (/^https?:\/\//i.test(url)) return escapeHtml(url);
-    if (!url || /^[a-z][a-z0-9+.-]*:/i.test(url) || url.indexOf('//') === 0 ||
-      url.indexOf('..') >= 0 || /[\s"'<>]/.test(url)) return '';
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url) || url.indexOf('//') === 0) return '';
     return escapeHtml(url);
+  }
+
+  function safeLogoUrl(value) {
+    var logo = String(value || '').trim();
+    if (!logo || /[\x00-\x1f\s"'<>]/.test(logo) || logo.indexOf('..') >= 0) return '';
+    if (/^(\/\/)/.test(logo)) return '';
+    if (/^[a-z][a-z0-9+.-]*:/i.test(logo) && !/^(https?:\/\/|blob:)/i.test(logo)) return '';
+    return escapeHtml(logo);
   }
 
   function brochureMarkup(event, mode) {
@@ -53,7 +62,7 @@
       '<div class="' + prefix + '-brochure-heading"><h4>' + escapeHtml(title) + '</h4>' +
       '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a></div>' +
       '<a class="' + prefix + '-brochure-preview" href="' + url + '" target="_blank" rel="noopener noreferrer">' +
-      '<object data="' + url + '" type="application/pdf" aria-label="' + escapeHtml(title) + '" onerror="this.closest(\'[data-brochure]\').remove()">' +
+      '<object data="' + url + '" type="application/pdf" aria-label="' + escapeHtml(title) + '" data-brochure-object>' +
       '<span>Open the brochure to view it.</span></object></a>' +
       '<p class="' + prefix + '-brochure-actions"><a href="' + url + '" target="_blank" rel="noopener noreferrer">Open or download original</a></p>' +
       '</section>';
@@ -100,10 +109,8 @@
   }
 
   function logoMarkup(event, mode) {
-    var logo = String(event && event.logo || '').trim();
-    if (!logo) return '';
-    if (/^[a-z][a-z0-9+.-]*:/i.test(logo) && !/^(https?:\/\/|blob:)/i.test(logo)) return '';
-    var url = escapeHtml(logo);
+    var url = safeLogoUrl(event && event.logo);
+    if (!url) return '';
     var prefix = mode === 'homepage' ? 'event-detail' : 'event-page';
     return '<figure class="' + prefix + '-logo"><img src="' + url + '" alt="' +
       escapeHtml((event.title || 'Event') + ' logo') + '" loading="lazy"></figure>';
@@ -293,6 +300,12 @@
       pending = requestAnimationFrame(function () { pending = null; syncCarousel(carousel); });
     }, true);
     window.addEventListener('resize', function () { [].forEach.call(document.querySelectorAll('.event-carousel'), syncCarousel); });
+    document.addEventListener('error', function (event) {
+      var target = event && event.target;
+      if (!target || !target.hasAttribute || !target.hasAttribute('data-brochure-object')) return;
+      var brochure = target.closest && target.closest('[data-brochure]');
+      if (brochure) brochure.remove();
+    }, true);
   }
 
   window.BLITZ_EVENT_RENDERER = {

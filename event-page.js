@@ -138,12 +138,18 @@
   function layoutOf(event) {
     return ['workshop', 'competition', 'festival', 'speaker'].indexOf(event.layout) >= 0 ? event.layout : 'event';
   }
+  function safeLogo(event) {
+    var logo = event && event.logo ? String(event.logo).trim() : '';
+    if (!logo || /[\x00-\x1f\s"'<>]/.test(logo) || logo.indexOf('..') >= 0 || logo.indexOf('//') === 0) return '';
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(logo) || /^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/|blob:)/i.test(logo)) return logo;
+    return '';
+  }
   function iconHtml(event) {
     var layout = layoutOf(event);
-    var logo = event && event.logo ? String(event.logo).trim() : '';
-    if (logo && (!/^[a-z][a-z0-9+.-]*:/i.test(logo) || /^(https?:\/\/|blob:)/i.test(logo))) {
+    var logo = safeLogo(event);
+    if (logo) {
       return '<span class="lp-icon lp-icon--' + layout + ' lp-icon--has-logo" aria-hidden="true">' +
-        '<img class="lp-icon-img" src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.classList.add(\'is-hidden\');var fb=this.nextElementSibling;if(fb)fb.classList.remove(\'is-hidden\');" />' +
+        '<img class="lp-icon-img" src="' + esc(logo) + '" alt="" loading="lazy" data-lp-logo />' +
         '<svg class="lp-icon-fallback is-hidden" viewBox="0 0 48 48" focusable="false"><path d="' + GLYPHS[layout] + '"></path></svg>' +
         '</span>';
     }
@@ -176,9 +182,10 @@
     var raw = (event.image && String(event.image).trim()) ||
       (Array.isArray(event.images) && event.images[0] && String(event.images[0].src || event.images[0].url || event.images[0] || '').trim()) ||
       '';
-    if (!raw || /^(?:data:|blob:|javascript:)/i.test(raw)) return null;
+    if (!raw || /^(?:data:|blob:|javascript:)/i.test(raw) || /[\x00-\x1f\s"'<>]/.test(raw) || raw.indexOf('..') >= 0) return null;
     try {
-      return new URL(raw, baseUrl).href;
+      var resolved = new URL(raw, baseUrl);
+      return (resolved.protocol === 'https:' || resolved.protocol === 'http:') ? resolved.href : null;
     } catch (e) {
       return null;
     }
@@ -369,10 +376,9 @@
     afterChange(null);
   }
   function windowInner(event, titleId) {
-    var logo = event && event.logo ? String(event.logo).trim() : '';
-    var hasLogo = logo && (!/^[a-z][a-z0-9+.-]*:/i.test(logo) || /^(https?:\/\/|blob:)/i.test(logo));
-    var headerLogo = hasLogo
-      ? '<img class="lp-window-title-logo" src="' + esc(logo) + '" alt="" aria-hidden="true" onerror="this.remove()" />'
+    var logo = safeLogo(event);
+    var headerLogo = logo
+      ? '<img class="lp-window-title-logo" src="' + esc(logo) + '" alt="" aria-hidden="true" data-lp-win-logo />'
       : '';
     return '<header class="lp-window-header"><div class="lp-window-controls" aria-label="Window controls">' +
       '<button type="button" class="lp-window-control lp-window-control--close" data-act="close" aria-label="Close event window" title="Close"></button>' +
@@ -442,6 +448,17 @@
   }
 
   /* ---------- events ---------- */
+  document.addEventListener('error', function (e) {
+    var target = e && e.target;
+    if (!target || target.tagName !== 'IMG') return;
+    if (target.hasAttribute('data-lp-logo')) {
+      target.classList.add('is-hidden');
+      var fb = target.nextElementSibling;
+      if (fb) fb.classList.remove('is-hidden');
+    } else if (target.hasAttribute('data-lp-win-logo')) {
+      target.remove();
+    }
+  }, true);
   pagesEl.addEventListener('click', function (e) {
     var tile = e.target.closest('.lp-tile');
     if (!tile || e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return;

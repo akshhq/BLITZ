@@ -6,12 +6,15 @@
     <!-- Error pages are served at the URL that failed (e.g. /blitz/no/such/page), so relative links need a base.
          Keep this equal to the folder the site lives in; tools/set-site-url.py updates it. -->
     <base href="/blitz/" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; object-src 'none'; form-action 'none'; base-uri 'self'" />
+    <meta name="referrer" content="no-referrer" />
     <title>You're offline | BLITZ Computer Science Society</title>
     <meta name="description" content="Your device is offline." />
-    <meta name="robots" content="noindex, nofollow" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
     <meta name="theme-color" content="#26151A" />
     <meta name="color-scheme" content="dark" />
     <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="stylesheet" href="error.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,9 +28,13 @@
 
     <main id="main" class="err-main">
       <section class="err-card" aria-labelledby="err-title">
-        <p class="err-code">Offline</p>
+        <div class="err-meta-row">
+          <p class="err-code">Offline</p>
+          <span class="err-ref">BLITZ-NET-001</span>
+        </div>
         <h1 id="err-title" class="err-title">You're offline</h1>
-        <p class="err-text">Your device isn't connected to the internet. Reconnect and we'll take you back to where you were.</p>
+        <p class="err-text">Your device isn't connected to the internet. Reconnect to Wi-Fi or mobile data and we'll take you back to where you were.</p>
+        <p id="err-context" class="err-context" hidden></p>
         <div class="err-actions">
           <button type="button" class="err-btn" data-action="recheck" hidden>Try again</button>
           <a class="err-btn err-btn--ghost" href="index.html">Go to homepage</a>

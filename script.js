@@ -56,6 +56,7 @@
   function safeUrl(url) {
     if (!url || typeof url !== 'string') return '#';
     const trimmed = url.trim();
+    if (!trimmed || /[\x00-\x1f\s"'<>]/.test(trimmed)) return '#';
     if (/^(https?:\/\/|mailto:)/i.test(trimmed)) {
       return escapeHtml(trimmed);
     }
@@ -66,8 +67,8 @@
   function safeAssetUrl(url) {
     if (!url || typeof url !== 'string') return '';
     const trimmed = url.trim();
-    if (!trimmed) return '';
-    if (/^https?:\/\//i.test(trimmed)) return escapeHtml(trimmed);
+    if (!trimmed || /[\x00-\x1f\s"'<>]/.test(trimmed) || trimmed.indexOf('..') >= 0) return '';
+    if (/^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/)/i.test(trimmed)) return escapeHtml(trimmed);
     if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed) || trimmed.indexOf('//') === 0) return '';
     return escapeHtml(trimmed);
   }

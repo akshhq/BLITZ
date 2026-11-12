@@ -7,12 +7,19 @@
   function list(v) { return Array.isArray(v) ? v : []; }
 
   function create(baseUrl) {
-    var url = String(baseUrl || '').replace(/\/+$/, '');
+    var rawUrl = String(baseUrl || '').replace(/\/+$/, '');
+    var url = /^(https:\/\/[^\/\s]+|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/i.test(rawUrl) ? rawUrl : '';
 
     function imageUrl(path) {
       if (!path || typeof path !== 'string') return '';
-      if (path.indexOf('storage:') === 0) return url + '/storage/v1/object/public/media/' + path.slice(8);
-      return path;
+      var trimmed = path.trim();
+      if (!trimmed || trimmed.indexOf('..') >= 0 || /[\x00-\x1f\s"'<>]/.test(trimmed)) return '';
+      if (trimmed.indexOf('storage:') === 0) {
+        if (!url) return '';
+        var key = trimmed.slice(8).replace(/^\/+/, '');
+        return key && /^[A-Za-z0-9/_.-]{1,200}$/.test(key) ? url + '/storage/v1/object/public/media/' + key : '';
+      }
+      return trimmed;
     }
 
     // The shape an image was cropped to in the panel. Anything else is treated as unknown (older bundled items).

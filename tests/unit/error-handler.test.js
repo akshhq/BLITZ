@@ -84,11 +84,11 @@ test('schema diagnosis does not blindly recommend a migration or a column type',
   assert.doesNotMatch(visitor, /event_details|events|schema|migration|pgrst/i);   // visitors never see database detail
 });
 
-test('redaction removes tokens, keys, emails, rows and paths', () => {
+test('redaction removes tokens, keys, emails, rows, URL credentials, signed query params and paths', () => {
   const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV';
-  const dirty = `Bearer ${jwt} apikey=sb_publishable_abcDEF123456 sb_secret_zzz9 user bob@example.com Failing row contains (a, b, c) at /home/ubuntu/app/x.js file:///C:/Users/x/y.js password: hunter2 Key (id)=(secret-slug) already exists`;
+  const dirty = `Bearer ${jwt} apikey=sb_publishable_abcDEF123456 sb_secret_zzz9 user bob@example.com https://admin:supersecret@db.internal/x?access_token=tok123&sig=hmac99 Failing row contains (a, b, c) at /home/ubuntu/app/x.js file:///C:/Users/x/y.js password: hunter2 Key (id)=(secret-slug) already exists`;
   const out = E.redact(dirty);
-  for (const leak of [jwt, 'sb_publishable_abc', 'sb_secret_zzz9', 'bob@example.com', '(a, b, c)', '/home/ubuntu', 'file:///', 'hunter2', 'secret-slug']) {
+  for (const leak of [jwt, 'sb_publishable_abc', 'sb_secret_zzz9', 'bob@example.com', 'supersecret', 'tok123', 'hmac99', '(a, b, c)', '/home/ubuntu', 'file:///', 'hunter2', 'secret-slug']) {
     assert.ok(!out.includes(leak), 'leaked: ' + leak + ' in ' + out);
   }
   assert.ok(E.redact('x'.repeat(1000)).length <= 301);

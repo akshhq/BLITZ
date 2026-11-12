@@ -113,6 +113,8 @@ errorPages.forEach((file) => {
     if (local && !exists(local)) errors.push(`${file}: missing local reference ${ref}`);
   });
   assert(!/<script(?![^>]*\bsrc=)[^>]*>/.test(html), `${file}: no inline scripts`);
+  assert(!/\son[a-z]+\s*=|\sstyle\s*=/i.test(html), `${file}: no inline event handlers or inline style attributes (CSP hardening)`);
+  assert(/http-equiv="Content-Security-Policy"/.test(html), `${file}: needs a Content-Security-Policy meta tag`);
 });
 assert(bases.size <= 1, `error pages disagree on <base href>: ${[...bases].join(', ')}`);
 const sitemapText = read('sitemap.xml');
