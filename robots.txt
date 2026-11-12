@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /blitz/prezi_panel/
+Disallow: /prezi_panel/
 
 Sitemap: https://keshav.du.ac.in/blitz/sitemap.xml

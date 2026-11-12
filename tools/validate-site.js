@@ -21,7 +21,49 @@ function checkHtml(file, canonical) {
   assert(html.includes(`<link rel="canonical" href="${canonical}"`), `${file}: canonical URL mismatch`);
   assert(/<title>[^<]+<\/title>/.test(html), `${file}: missing title`);
   assert(/<meta\s+[^>]*name="description"[^>]*content="[^"]+"/.test(html), `${file}: missing description`);
+  assert(/<meta\s+[^>]*name="robots"[^>]*content="index,\s*follow/.test(html), `${file}: missing robots index, follow`);
   assert(/<link\s+[^>]*href="styles\.css"/.test(html), `${file}: missing stylesheet`);
+  assert(/<link\s+[^>]*rel="manifest"[^>]*href="site\.webmanifest"/.test(html), `${file}: missing webmanifest link`);
+  assert(/<link\s+[^>]*rel="apple-touch-icon"[^>]*href="apple-touch-icon\.png"/.test(html), `${file}: missing apple-touch-icon link`);
+
+  // Open Graph & Twitter Card completeness
+  [
+    ['property', 'og:type', 'website'],
+    ['property', 'og:locale', 'en_IN'],
+    ['property', 'og:title', null],
+    ['property', 'og:description', null],
+    ['property', 'og:image', `${productionBase}assets/og.png`],
+    ['property', 'og:image:type', 'image/png'],
+    ['property', 'og:image:width', '1200'],
+    ['property', 'og:image:height', '630'],
+    ['property', 'og:image:alt', null],
+    ['property', 'og:url', canonical],
+    ['property', 'og:site_name', 'BLITZ Keshav Mahavidyalaya'],
+    ['name', 'twitter:card', 'summary_large_image'],
+    ['name', 'twitter:title', null],
+    ['name', 'twitter:description', null],
+    ['name', 'twitter:image', `${productionBase}assets/og.png`],
+    ['name', 'twitter:image:alt', null]
+  ].forEach(([attr, key, expected]) => {
+    const re = new RegExp(`<meta\\s+[^>]*${attr}="${key}"[^>]*content="([^"]+)"`, 'i');
+    const m = re.exec(html);
+    assert(m && m[1].trim().length > 0, `${file}: missing <meta ${attr}="${key}">`);
+    if (m && expected !== null) {
+      assert(m[1] === expected, `${file}: <meta ${attr}="${key}"> expected "${expected}", got "${m[1]}"`);
+    }
+  });
+
+  // Valid JSON-LD structured data
+  const ldMatches = [...html.matchAll(/<script\s+type="application\/ld\+json">([\s\S]*?)<\/script>/gi)];
+  assert(ldMatches.length > 0, `${file}: missing application/ld+json structured data`);
+  ldMatches.forEach((m, idx) => {
+    try {
+      const parsed = JSON.parse(m[1]);
+      assert(parsed['@context'] === 'https://schema.org', `${file}: JSON-LD #${idx + 1} missing @context https://schema.org`);
+    } catch (err) {
+      errors.push(`${file}: invalid JSON-LD #${idx + 1}: ${err.message}`);
+    }
+  });
 
   const references = [...html.matchAll(/(?:href|src)="([^"]+)"/g)]
     .map((match) => match[1])
@@ -107,6 +149,11 @@ Object.keys(siteTokens).forEach((name) => {
   if (!siteTokens[name]) return errors.push(`styles.css: could not read --${name}`);
   assert((errTokens[name] || '').toLowerCase() === siteTokens[name].toLowerCase(), `error.css --e-${name} (${errTokens[name]}) differs from styles.css --${name} (${siteTokens[name]})`);
 });
+if (exists('site.webmanifest') && siteTokens.ink) {
+  const manifest = JSON.parse(read('site.webmanifest'));
+  assert((manifest.theme_color || '').toLowerCase() === siteTokens.ink.toLowerCase(), `site.webmanifest theme_color (${manifest.theme_color}) differs from styles.css --ink (${siteTokens.ink})`);
+  assert((manifest.background_color || '').toLowerCase() === siteTokens.ink.toLowerCase(), `site.webmanifest background_color (${manifest.background_color}) differs from styles.css --ink (${siteTokens.ink})`);
+}
 
 // 4. Every error code in the catalog is documented, and the docs name no code that does not exist.
 const catalog = require(path.join(root, 'error-catalog.js'));

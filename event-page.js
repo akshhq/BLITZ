@@ -151,25 +151,71 @@
   }
 
   /* ---------- page metadata + route (reflect the front window) ---------- */
+  function getMetaContent(selector, fallback) {
+    var element = document.querySelector(selector);
+    return (element && element.getAttribute('content')) || fallback || '';
+  }
   function setMetaContent(selector, value) {
     var element = document.querySelector(selector);
     if (element && value) element.setAttribute('content', value);
   }
+  var initialMeta = {
+    title: document.title || 'Events | BLITZ Computer Science Society, Keshav Mahavidyalaya',
+    description: getMetaContent('meta[name="description"]', 'Explore BLITZ events, workshops, coding competitions, speaker sessions, and technical festivals at the Department of Computer Science, Keshav Mahavidyalaya, University of Delhi.'),
+    ogTitle: getMetaContent('meta[property="og:title"]', 'Events | BLITZ Computer Science Society, Keshav Mahavidyalaya'),
+    ogDescription: getMetaContent('meta[property="og:description"]', 'Explore BLITZ events, workshops, coding competitions, speaker sessions, and technical festivals at Keshav Mahavidyalaya, University of Delhi.'),
+    ogImage: getMetaContent('meta[property="og:image"]', 'https://keshav.du.ac.in/blitz/assets/og.png'),
+    ogImageAlt: getMetaContent('meta[property="og:image:alt"]', 'BLITZ logo framed by a crimson-burgundy 3D molten-glass ring: Computer Science Society, Keshav Mahavidyalaya, University of Delhi'),
+    twitterTitle: getMetaContent('meta[name="twitter:title"]', 'Events | BLITZ Computer Science Society, Keshav Mahavidyalaya'),
+    twitterDescription: getMetaContent('meta[name="twitter:description"]', 'Explore BLITZ events, workshops, coding competitions, speaker sessions, and technical festivals at Keshav Mahavidyalaya, University of Delhi.'),
+    twitterImage: getMetaContent('meta[name="twitter:image"]', 'https://keshav.du.ac.in/blitz/assets/og.png'),
+    twitterImageAlt: getMetaContent('meta[name="twitter:image:alt"]', 'BLITZ logo framed by a crimson-burgundy 3D molten-glass ring: Computer Science Society, Keshav Mahavidyalaya, University of Delhi')
+  };
+  function resolveEventOgImage(event, baseUrl) {
+    if (!event) return null;
+    var raw = (event.image && String(event.image).trim()) ||
+      (Array.isArray(event.images) && event.images[0] && String(event.images[0].src || event.images[0].url || event.images[0] || '').trim()) ||
+      '';
+    if (!raw || /^(?:data:|blob:|javascript:)/i.test(raw)) return null;
+    try {
+      return new URL(raw, baseUrl).href;
+    } catch (e) {
+      return null;
+    }
+  }
   function updatePageMetadata(event) {
-    var baseTitle = 'Events | BLITZ Computer Science Society';
-    var baseDescription = 'Explore BLITZ events, workshops, competitions, speaker sessions, and technical festivals.';
-    var title = event && event.title ? event.title + ' | BLITZ Events' : baseTitle;
-    var description = event && event.description ? event.description : baseDescription;
     var canonical = document.querySelector('link[rel="canonical"]');
     var baseUrl = canonical ? canonical.href : window.location.href.split('?')[0];
-    var selectedUrl = event && event.id ? baseUrl + '?event=' + encodeURIComponent(event.id) : baseUrl;
+    if (!event || !event.title) {
+      document.title = initialMeta.title;
+      setMetaContent('meta[name="description"]', initialMeta.description);
+      setMetaContent('meta[property="og:title"]', initialMeta.ogTitle);
+      setMetaContent('meta[property="og:description"]', initialMeta.ogDescription);
+      setMetaContent('meta[property="og:url"]', baseUrl);
+      setMetaContent('meta[property="og:image"]', initialMeta.ogImage);
+      setMetaContent('meta[property="og:image:alt"]', initialMeta.ogImageAlt);
+      setMetaContent('meta[name="twitter:title"]', initialMeta.twitterTitle);
+      setMetaContent('meta[name="twitter:description"]', initialMeta.twitterDescription);
+      setMetaContent('meta[name="twitter:image"]', initialMeta.twitterImage);
+      setMetaContent('meta[name="twitter:image:alt"]', initialMeta.twitterImageAlt);
+      return;
+    }
+    var title = event.title + ' | BLITZ Events';
+    var description = event.description ? event.description : initialMeta.description;
+    var selectedUrl = event.id ? baseUrl + '?event=' + encodeURIComponent(event.id) : baseUrl;
+    var eventImage = resolveEventOgImage(event, baseUrl) || initialMeta.ogImage;
+    var eventImageAlt = event.imageAlt || (event.title + ' — BLITZ Events');
     document.title = title;
     setMetaContent('meta[name="description"]', description);
     setMetaContent('meta[property="og:title"]', title);
     setMetaContent('meta[property="og:description"]', description);
     setMetaContent('meta[property="og:url"]', selectedUrl);
+    setMetaContent('meta[property="og:image"]', eventImage);
+    setMetaContent('meta[property="og:image:alt"]', eventImageAlt);
     setMetaContent('meta[name="twitter:title"]', title);
     setMetaContent('meta[name="twitter:description"]', description);
+    setMetaContent('meta[name="twitter:image"]', eventImage);
+    setMetaContent('meta[name="twitter:image:alt"]', eventImageAlt);
   }
   function setRoute(id) {
     try {

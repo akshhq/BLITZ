@@ -11,27 +11,28 @@
       name="description"
       content="BLITZ is the departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi. Fostering technical excellence, hackathons, workshops, and open computing."
     />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="author" content="BLITZ — Computer Science Society, Keshav Mahavidyalaya, University of Delhi" />
 
-    
     <link rel="canonical" href="https://keshav.du.ac.in/blitz/" />
     <meta name="theme-color" content="#26151A" />
     <meta name="color-scheme" content="dark" />
 
-    
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_IN" />
     <meta property="og:title" content="BLITZ | Computer Science Society, Keshav Mahavidyalaya" />
     <meta
       property="og:description"
       content="Silicon Minds, Circuited Hearts. Departmental Society of Computer Science at Keshav Mahavidyalaya, University of Delhi."
     />
     <meta property="og:image" content="https://keshav.du.ac.in/blitz/assets/og.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="BLITZ logo on a dark maroon background: Computer Science Society, Keshav Mahavidyalaya, University of Delhi" />
+    <meta property="og:image:alt" content="BLITZ logo framed by a crimson-burgundy 3D molten-glass ring: Computer Science Society, Keshav Mahavidyalaya, University of Delhi" />
     <meta property="og:url" content="https://keshav.du.ac.in/blitz/" />
     <meta property="og:site_name" content="BLITZ Keshav Mahavidyalaya" />
 
-    
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="BLITZ | Computer Science Society, Keshav Mahavidyalaya" />
     <meta
@@ -39,15 +40,15 @@
       content="Silicon Minds, Circuited Hearts. Technical workshops, hackathons, and student computing initiatives."
     />
     <meta name="twitter:image" content="https://keshav.du.ac.in/blitz/assets/og.png" />
+    <meta name="twitter:image:alt" content="BLITZ logo framed by a crimson-burgundy 3D molten-glass ring: Computer Science Society, Keshav Mahavidyalaya, University of Delhi" />
 
-    
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="manifest" href="site.webmanifest" />
+    <link rel="preload" as="image" type="image/webp" href="assets/images/hero-ring-bg.webp" fetchpriority="high" />
 
-    
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -55,48 +56,72 @@
       rel="stylesheet"
     />
 
-    
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="error.css" />
 
-    
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "EducationalOrganization",
-        "name": "BLITZ - Computer Science Society",
-        "alternateName": "BLITZ KMV",
-        "url": "https://keshav.du.ac.in/blitz/",
-        "logo": "https://keshav.du.ac.in/blitz/assets/logo/blitz-logo.png",
-        "image": "https://keshav.du.ac.in/blitz/assets/og.png",
-        "email": "team.blitzkmv@gmail.com",
-        "sameAs": [
-          "https://www.instagram.com/blitzkmv/",
-          "https://www.linkedin.com/in/blitz-keshav-mahavidyalaya"
-        ],
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "general enquiries",
-          "email": "team.blitzkmv@gmail.com"
-        },
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "H-4, 5 Zone, near Sainik Vihar, Co-operative Group Housing Societies Pitampura",
-          "addressLocality": "Pitampura",
-          "addressRegion": "Delhi",
-          "postalCode": "110034",
-          "addressCountry": "IN"
-        },
-        "parentOrganization": {
-          "@type": "CollegeOrUniversity",
-          "name": "Keshav Mahavidyalaya, University of Delhi",
-          "url": "https://keshav.du.ac.in"
-        },
-        "department": {
-          "@type": "Department",
-          "name": "Department of Computer Science"
-        },
-        "description": "Student-driven departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi."
+        "@graph": [
+          {
+            "@type": "EducationalOrganization",
+            "@id": "https://keshav.du.ac.in/blitz/#organization",
+            "name": "BLITZ - Computer Science Society",
+            "alternateName": "BLITZ KMV",
+            "url": "https://keshav.du.ac.in/blitz/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://keshav.du.ac.in/blitz/assets/logo/blitz-logo.png",
+              "width": 512,
+              "height": 293
+            },
+            "image": {
+              "@type": "ImageObject",
+              "url": "https://keshav.du.ac.in/blitz/assets/og.png",
+              "width": 1200,
+              "height": 630
+            },
+            "email": "team.blitzkmv@gmail.com",
+            "sameAs": [
+              "https://www.instagram.com/blitzkmv/",
+              "https://www.linkedin.com/in/blitz-keshav-mahavidyalaya"
+            ],
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "general enquiries",
+              "email": "team.blitzkmv@gmail.com"
+            },
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "H-4, 5 Zone, near Sainik Vihar, Co-operative Group Housing Societies Pitampura",
+              "addressLocality": "Pitampura",
+              "addressRegion": "Delhi",
+              "postalCode": "110034",
+              "addressCountry": "IN"
+            },
+            "parentOrganization": {
+              "@type": "CollegeOrUniversity",
+              "name": "Keshav Mahavidyalaya, University of Delhi",
+              "url": "https://keshav.du.ac.in"
+            },
+            "department": {
+              "@type": "Department",
+              "name": "Department of Computer Science"
+            },
+            "description": "Student-driven departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://keshav.du.ac.in/blitz/#website",
+            "url": "https://keshav.du.ac.in/blitz/",
+            "name": "BLITZ | Computer Science Society, Keshav Mahavidyalaya",
+            "alternateName": "BLITZ KMV",
+            "inLanguage": "en-IN",
+            "publisher": {
+              "@id": "https://keshav.du.ac.in/blitz/#organization"
+            }
+          }
+        ]
       }
     </script>
   </head>
@@ -179,7 +204,7 @@
 
         <div class="introduction-copy-stack">
           <aside class="introduction-copy" aria-label="About BLITZ Society">
-            <span class="introduction-copy-label intro-reveal">V.01 / BLITZ SOCIETY</span>
+            <span class="introduction-copy-label intro-reveal">BLITZ SOCIETY</span>
             <p class="introduction-copy-title intro-reveal">THE DEPARTMENTAL SOCIETY OF COMPUTER SCIENCE</p>
             <p class="introduction-copy-description intro-reveal">
               A STUDENT-DRIVEN COMMUNITY BUILT TO CREATE, COLLABORATE, AND PUSH THE BOUNDARIES OF COMPUTING.

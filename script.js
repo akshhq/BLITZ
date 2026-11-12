@@ -439,26 +439,77 @@
     window.history.replaceState({}, '', url);
   }
 
+  function getMetaContent(selector, fallback) {
+    const element = document.querySelector(selector);
+    return (element && element.getAttribute('content')) || fallback || '';
+  }
+
   function setMetaContent(selector, value) {
     const element = document.querySelector(selector);
     if (element && value) element.setAttribute('content', value);
   }
 
+  const initialMeta = {
+    title: document.title || 'BLITZ | Computer Science Society, Keshav Mahavidyalaya, DU',
+    description: getMetaContent('meta[name="description"]', 'BLITZ is the departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi.'),
+    ogTitle: getMetaContent('meta[property="og:title"]', 'BLITZ | Computer Science Society, Keshav Mahavidyalaya'),
+    ogDescription: getMetaContent('meta[property="og:description"]', 'Silicon Minds, Circuited Hearts. Departmental Society of Computer Science at Keshav Mahavidyalaya, University of Delhi.'),
+    ogImage: getMetaContent('meta[property="og:image"]', 'https://keshav.du.ac.in/blitz/assets/og.png'),
+    ogImageAlt: getMetaContent('meta[property="og:image:alt"]', 'BLITZ logo framed by a crimson-burgundy 3D molten-glass ring: Computer Science Society, Keshav Mahavidyalaya, University of Delhi'),
+    twitterTitle: getMetaContent('meta[name="twitter:title"]', 'BLITZ | Computer Science Society, Keshav Mahavidyalaya'),
+    twitterDescription: getMetaContent('meta[name="twitter:description"]', 'Silicon Minds, Circuited Hearts. Technical workshops, hackathons, and student computing initiatives.'),
+    twitterImage: getMetaContent('meta[name="twitter:image"]', 'https://keshav.du.ac.in/blitz/assets/og.png'),
+    twitterImageAlt: getMetaContent('meta[name="twitter:image:alt"]', 'BLITZ logo framed by a crimson-burgundy 3D molten-glass ring: Computer Science Society, Keshav Mahavidyalaya, University of Delhi')
+  };
+
+  function resolveEventOgImage(event, baseUrl) {
+    if (!event) return null;
+    const raw = (event.image && String(event.image).trim()) ||
+      (Array.isArray(event.images) && event.images[0] && String(event.images[0].src || event.images[0].url || event.images[0] || '').trim()) ||
+      '';
+    if (!raw || /^(?:data:|blob:|javascript:)/i.test(raw)) return null;
+    try {
+      return new URL(raw, baseUrl).href;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function updateHomepageMetadata(event) {
-    const baseTitle = 'BLITZ | Computer Science Society, Keshav Mahavidyalaya, DU';
-    const baseDescription = 'BLITZ is the departmental society of Computer Science at Keshav Mahavidyalaya, University of Delhi.';
-    const title = event && event.title ? `${event.title} | BLITZ` : baseTitle;
-    const description = event && event.description ? event.description : baseDescription;
     const canonical = document.querySelector('link[rel="canonical"]');
-    const pageUrl = canonical ? canonical.href : window.location.href.split('?')[0];
+    const baseUrl = canonical ? canonical.href : window.location.href.split('?')[0];
+    if (!event || !event.title) {
+      document.title = initialMeta.title;
+      setMetaContent('meta[name="description"]', initialMeta.description);
+      setMetaContent('meta[property="og:title"]', initialMeta.ogTitle);
+      setMetaContent('meta[property="og:description"]', initialMeta.ogDescription);
+      setMetaContent('meta[property="og:url"]', baseUrl);
+      setMetaContent('meta[property="og:image"]', initialMeta.ogImage);
+      setMetaContent('meta[property="og:image:alt"]', initialMeta.ogImageAlt);
+      setMetaContent('meta[name="twitter:title"]', initialMeta.twitterTitle);
+      setMetaContent('meta[name="twitter:description"]', initialMeta.twitterDescription);
+      setMetaContent('meta[name="twitter:image"]', initialMeta.twitterImage);
+      setMetaContent('meta[name="twitter:image:alt"]', initialMeta.twitterImageAlt);
+      return;
+    }
+
+    const title = `${event.title} | BLITZ`;
+    const description = event.description || initialMeta.description;
+    const pageUrl = event.id ? `${baseUrl}?event=${encodeURIComponent(event.id)}` : baseUrl;
+    const eventImage = resolveEventOgImage(event, baseUrl) || initialMeta.ogImage;
+    const eventImageAlt = event.imageAlt || `${event.title} — BLITZ Computer Science Society`;
 
     document.title = title;
     setMetaContent('meta[name="description"]', description);
     setMetaContent('meta[property="og:title"]', title);
     setMetaContent('meta[property="og:description"]', description);
     setMetaContent('meta[property="og:url"]', pageUrl);
+    setMetaContent('meta[property="og:image"]', eventImage);
+    setMetaContent('meta[property="og:image:alt"]', eventImageAlt);
     setMetaContent('meta[name="twitter:title"]', title);
     setMetaContent('meta[name="twitter:description"]', description);
+    setMetaContent('meta[name="twitter:image"]', eventImage);
+    setMetaContent('meta[name="twitter:image:alt"]', eventImageAlt);
   }
 
   function renderEventDetail(eventId) {
