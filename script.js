@@ -451,7 +451,10 @@
     const container = document.querySelector('#events-stack');
     if (!container) return;
 
-    const eventsList = sortEventsByDate(DATA.events).slice(0, 3);
+    const nonPlaceholderEvents = (Array.isArray(DATA.events) ? DATA.events : []).filter(function (event) {
+      return event && !event.placeholder;
+    });
+    const eventsList = sortEventsByDate(nonPlaceholderEvents.length ? nonPlaceholderEvents : DATA.events).slice(0, 3);
 
     if (eventsList.length === 0) {
       container.innerHTML = '<p class="events-empty">No events scheduled at this time.</p>';
@@ -667,6 +670,9 @@
     }
 
     section.classList.add('is-visible');
+    requestAnimationFrame(function () {
+      section.scrollIntoView({ behavior: isReducedMotion ? 'auto' : 'smooth', block: 'start' });
+    });
   }
 
   function syncEventDetailFromUrl() {
@@ -863,24 +869,22 @@
 
     const list = DATA.collaborations || [];
     if (list.length === 0) {
+      const contactMail = (DATA.contact && DATA.contact.mail) ? String(DATA.contact.mail).trim() : 'team.blitzkmv@gmail.com';
+      const mailHref = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactMail)
+        ? `mailto:${encodeURIComponent(contactMail)}?subject=${encodeURIComponent('Collaboration Inquiry — BLITZ KMV')}`
+        : '#contact';
       grid.innerHTML = `
-        <div class="collab-card collab-card--placeholder">
-          <div class="collab-logo-box collab-logo-box--placeholder" aria-hidden="true"><span>01</span></div>
-          <h3 class="collab-name">Campus collaborations</h3>
-          <p class="collab-placeholder-copy">A space for confirmed society and department partnerships.</p>
-          <span class="collab-type">Placeholder / awaiting confirmation</span>
-        </div>
-        <div class="collab-card collab-card--placeholder">
-          <div class="collab-logo-box collab-logo-box--placeholder" aria-hidden="true"><span>02</span></div>
-          <h3 class="collab-name">Developer communities</h3>
-          <p class="collab-placeholder-copy">Future community connections will be published here after verification.</p>
-          <span class="collab-type">Placeholder / awaiting confirmation</span>
-        </div>
-        <div class="collab-card collab-card--placeholder">
-          <div class="collab-logo-box collab-logo-box--placeholder" aria-hidden="true"><span>03</span></div>
-          <h3 class="collab-name">Open opportunities</h3>
-          <p class="collab-placeholder-copy">Partner-led workshops, initiatives, and opportunities will appear here.</p>
-          <span class="collab-type">Placeholder / awaiting confirmation</span>
+        <div class="collab-callout">
+          <div class="collab-callout-copy">
+            <span class="collab-type">PARTNERSHIPS &amp; COMMUNITY NETWORK</span>
+            <h3 class="collab-callout-title">Partner with BLITZ</h3>
+            <p class="collab-placeholder-copy">We collaborate with student societies, developer communities, and industry partners on technical workshops, hackathons, and speaker sessions at Keshav Mahavidyalaya.</p>
+          </div>
+          <div class="collab-callout-action">
+            <a class="events-detail-btn collab-callout-btn" href="${mailHref}">
+              Collaborate with us &#8599;
+            </a>
+          </div>
         </div>
       `;
       return;

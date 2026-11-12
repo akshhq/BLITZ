@@ -33,8 +33,7 @@ return {
         'Research problems and literature review',
         'Research design and methodology',
         'Assessment guidelines and academic integrity'
-      ],
-      additionalInfo: 'Speakers: Prof. Preeti Sehgal, Dr. Ashutosh Singh and Prof. Vinita Jindal. Time: 12:30 PM.'
+      ]
     },
     {
       id: 'uiux-design-workshop-2025',
@@ -51,8 +50,7 @@ return {
         'Design thinking and problem identification',
         'Double Diamond process',
         'Wireframing and prototyping'
-      ],
-      additionalInfo: 'Time: 11:00 AM.'
+      ]
     },
     {
       id: 'code-verse-2026',
@@ -76,8 +74,7 @@ return {
         'Six coding questions',
         'Easy, medium and hard categories',
         'Nine teams participated'
-      ],
-      additionalInfo: 'Winners: 1st Vishal and Daksh Sahni; 2nd Mayank Kansal and Aniket Jaiswal; 3rd Tarun Jaiswal and Krish Kumar Jaiswal. Time: 11:00 AM–12:30 PM.'
+      ]
     },
     {
       id: 'technyx-2026',
@@ -93,8 +90,7 @@ return {
         { id: 'git-github-bootcamp', title: 'Git and GitHub — Bootcamp', date: '2026-01-29', speakers: ['Natya Vidhan Biswas', 'Parth Arora'], summary: 'Session on version control, repositories, commits and collaboration workflows.' },
         { id: 'from-url-to-webpage', title: 'From URL to Webpage — Understanding the Web', date: '2026-02-01', speakers: ['Aksh Kumar', 'Ayushi Jain'], summary: 'Session on URLs, DNS, servers, HTTP/HTTPS, web development, APIs and databases.' },
         { id: 'natural-language-processing', title: 'Natural Language Processing', date: '2026-02-02', speakers: ['Vrinda Goyal', 'Priyal Vatsa'], summary: 'Session on AI, NLP fundamentals, tokenization, stop-word removal, stemming, lemmatization and text mining.' }
-      ],
-      additionalInfo: 'Sessions included: Internships — What Companies Expect (27 Jan); Git and GitHub Bootcamp (29 Jan); From URL to Webpage — Understanding the Web (1 Feb); Natural Language Processing (2 Feb).'
+      ]
     },
     {
       id: 'agentic-ai-speaker-session-2026',
@@ -111,8 +107,7 @@ return {
         'Practical demonstrations',
         'API-based agents, applications and limitations',
         'Responsible implementation'
-      ],
-      additionalInfo: 'Speaker: Dr. Manish Gupta.'
+      ]
     },
     {
       id: 'blitzkrieg-2026',
@@ -130,8 +125,7 @@ return {
         { title: 'Upside Showdown', type: 'BGMI Tournament' },
         { title: 'Hawkings Hack', type: 'Hackathon' },
         { title: 'Escape the Upside Down', type: 'Treasure Hunt' }
-      ],
-      additionalInfo: 'Featured sub-events: Eleven’s Logic Lab — Quiz; Between the 2 Worlds — Debate; Upside Showdown — BGMI Tournament; Hawkings Hack — Hackathon; Escape the Upside Down — Treasure Hunt.'
+      ]
     },
     {
       id: 'teachers-day-placeholder',
