@@ -210,6 +210,65 @@
               A STUDENT-DRIVEN COMMUNITY BUILT TO CREATE, COLLABORATE, AND PUSH THE BOUNDARIES OF COMPUTING.
             </p>
           </aside>
+
+          <aside id="announcements" class="announcements-bar hero-announcements is-single" aria-labelledby="announcements-title">
+            <h2 id="announcements-title" class="sr-only">Announcements</h2>
+            <div class="announcements-bar-inner">
+              <div class="announcements-header">
+                <div class="announcements-chip">
+                  <span class="announcements-pulse" aria-hidden="true"></span>
+                  <span class="announcements-label">ANNOUNCEMENTS</span>
+                  <span id="announcements-badge" class="announcements-badge">NEW</span>
+                </div>
+
+                <div class="announcements-controls">
+                  <span id="announcements-counter" class="announcements-counter" aria-hidden="true">01 / 01</span>
+                  <button
+                    id="announcements-toggle-play"
+                    class="announcements-btn"
+                    type="button"
+                    aria-label="Pause announcements ticker"
+                    title="Pause ticker"
+                  >
+                    <span id="announcements-play-icon" aria-hidden="true">⏸</span>
+                  </button>
+                  <button
+                    id="announcements-prev"
+                    class="announcements-btn"
+                    type="button"
+                    aria-label="Previous announcement"
+                    title="Previous announcement"
+                  >
+                    &#8592;
+                  </button>
+                  <button
+                    id="announcements-next"
+                    class="announcements-btn"
+                    type="button"
+                    aria-label="Next announcement"
+                    title="Next announcement"
+                  >
+                    &#8594;
+                  </button>
+                </div>
+              </div>
+
+              <div
+                id="announcements-ticker-viewport"
+                class="announcements-viewport"
+                tabindex="0"
+                aria-label="Announcements feed. Press Enter or Space on an announcement for full details."
+              >
+                <div id="announcements-ticker-track" class="announcements-track">
+                  <!-- ns:announcements:start -->
+          <noscript><span class="announcement-item-btn"><span class="announcement-item-title">Internal SIH Results Are Out</span></span></noscript>
+          <!-- ns:announcements:end -->
+                </div>
+              </div>
+            </div>
+            
+            <p id="announcements-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+          </aside>
         </div>
       </section>
 
@@ -249,62 +308,6 @@
             </div>
           </div>
         </div>
-      </section>
-
-      
-      <section id="announcements" class="announcements-bar" aria-labelledby="announcements-title">
-        <h2 id="announcements-title" class="sr-only">Announcements</h2>
-        <div class="announcements-bar-inner">
-          <div class="announcements-chip">
-            <span class="announcements-pulse" aria-hidden="true"></span>
-            <span class="announcements-label">ANNOUNCEMENTS</span>
-          </div>
-
-          <div
-            id="announcements-ticker-viewport"
-            class="announcements-viewport"
-            tabindex="0"
-            aria-label="Announcements feed. Press Enter or Space on an announcement for full details."
-          >
-            <div id="announcements-ticker-track" class="announcements-track">
-              <!-- ns:announcements:start -->
-          <noscript><span class="announcement-item-btn"><span class="announcement-item-title">Internal SIH Results Are Out</span></span></noscript>
-          <!-- ns:announcements:end -->
-            </div>
-          </div>
-
-          <div class="announcements-controls">
-            <button
-              id="announcements-toggle-play"
-              class="announcements-btn"
-              type="button"
-              aria-label="Pause announcements ticker"
-              title="Pause ticker"
-            >
-              <span id="announcements-play-icon" aria-hidden="true">⏸</span>
-            </button>
-            <button
-              id="announcements-prev"
-              class="announcements-btn"
-              type="button"
-              aria-label="Previous announcement"
-              title="Previous announcement"
-            >
-              &#8592;
-            </button>
-            <button
-              id="announcements-next"
-              class="announcements-btn"
-              type="button"
-              aria-label="Next announcement"
-              title="Next announcement"
-            >
-              &#8594;
-            </button>
-          </div>
-        </div>
-        
-        <p id="announcements-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
       </section>
 
       

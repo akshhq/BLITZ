@@ -548,6 +548,7 @@ button:disabled,
   z-index: 1;
   background:
     linear-gradient(180deg, rgba(28, 9, 15, 0.34) 0%, rgba(28, 9, 15, 0.20) 32%, rgba(20, 6, 11, 0.24) 64%, rgba(10, 3, 6, 0.88) 100%),
+    radial-gradient(ellipse 48% 30% at 14% 92%, rgba(12, 4, 7, 0.72), transparent 78%),
     radial-gradient(ellipse 48% 30% at 86% 92%, rgba(12, 4, 7, 0.72), transparent 78%),
     radial-gradient(ellipse 90% 22% at 50% 21%, rgba(32, 10, 16, 0.32), transparent 76%);
 }
@@ -661,20 +662,26 @@ html:not(.js) .transition-logo {
 
 .introduction-copy-stack {
   position: absolute;
-  bottom: clamp(32px, 5.5vh, 64px);
+  bottom: clamp(28px, 4.5vh, 52px);
   left: 0;
   right: 0;
-  z-index: 2;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: minmax(0, 440px) minmax(0, 440px);
+  grid-template-areas: "announcements copy";
+  align-items: end;
+  justify-content: space-between;
+  gap: clamp(24px, 4vw, 56px);
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-pad);
 }
 
 .introduction-copy {
-  width: min(44vw, 480px);
+  grid-area: copy;
+  justify-self: end;
+  width: 100%;
+  max-width: 440px;
   overflow-wrap: break-word;
   color: var(--cream);
   font-family: var(--font-mono);
@@ -886,24 +893,43 @@ html:not(.js) .transition-logo {
 
 
 .announcements-bar {
+  grid-area: announcements;
+  justify-self: start;
   position: relative;
-  z-index: 10;
+  z-index: 6;
   width: 100%;
-  background: #42121E;
-  border-top: 1px solid var(--accent);
-  border-bottom: 1px solid rgba(212, 164, 92, 0.4);
-  box-shadow: 0 4px 20px rgba(38, 21, 26, 0.4);
+  max-width: 440px;
+  background: linear-gradient(145deg, rgba(36, 11, 18, 0.78) 0%, rgba(20, 6, 11, 0.86) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 164, 92, 0.28);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(10, 3, 6, 0.5), inset 0 1px 0 rgba(255, 249, 242, 0.06);
+  transition: border-color var(--duration-normal) ease, box-shadow var(--duration-normal) ease,
+    transform var(--duration-normal) ease;
+}
+
+.announcements-bar:hover,
+.announcements-bar:focus-within {
+  border-color: rgba(212, 164, 92, 0.52);
+  box-shadow: 0 18px 42px rgba(10, 3, 6, 0.62), 0 0 22px rgba(212, 164, 92, 0.08);
+  transform: translateY(-2px);
 }
 
 .announcements-bar-inner {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 13px 16px;
+}
+
+.announcements-header {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  max-width: var(--container-max);
-  min-height: 54px;
-  margin: 0 auto;
-  padding: 8px var(--container-pad);
+  gap: 10px;
 }
 
 .announcements-chip {
@@ -911,15 +937,11 @@ html:not(.js) .transition-logo {
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
-  padding: 6px 14px;
-  background: rgba(212, 164, 92, 0.12);
-  border: 1px solid rgba(212, 164, 92, 0.35);
-  border-radius: 999px;
 }
 
 .announcements-pulse {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: var(--accent);
   box-shadow: 0 0 8px var(--accent);
@@ -934,68 +956,163 @@ html:not(.js) .transition-logo {
 .announcements-label {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.announcements-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(212, 164, 92, 0.16);
+  border: 1px solid rgba(212, 164, 92, 0.4);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.announcements-counter {
+  color: var(--cream-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-right: 2px;
+}
+
+.announcements-bar.is-single .announcements-controls {
+  display: none;
 }
 
 .announcements-viewport {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  border-top: 1px solid rgba(255, 249, 242, 0.09);
+  padding-top: 9px;
 }
 
 .announcements-track {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
 }
 
 .announcement-item-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "date date"
+    "title title"
+    "summary cta";
+  align-items: end;
+  gap: 3px 12px;
   width: 100%;
-  min-height: 36px;
   text-align: left;
   color: var(--cream);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 4px 6px;
+  padding: 2px 0;
   border-radius: 4px;
   transition: color var(--duration-normal) ease;
 }
 
-.announcement-item-btn:hover,
-.announcement-item-btn:focus-visible {
-  color: var(--accent);
+.announcement-item-body {
+  display: contents;
 }
 
 .announcement-item-date {
-  flex: 0 0 auto;
+  grid-area: date;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .announcement-item-title {
-  min-width: 0;
+  grid-area: title;
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: clamp(14.5px, 1.05vw, 16px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
+  transition: color var(--duration-normal) ease;
+}
+
+.announcement-item-summary {
+  grid-area: summary;
+  color: var(--cream-dim);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.announcement-item-cta {
+  grid-area: cta;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(212, 164, 92, 0.12);
+  border: 1px solid rgba(212, 164, 92, 0.34);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background var(--duration-normal) ease, border-color var(--duration-normal) ease,
+    color var(--duration-normal) ease, transform var(--duration-normal) ease;
+}
+
+.announcement-item-btn:hover .announcement-item-title,
+.announcement-item-btn:focus-visible .announcement-item-title {
+  color: var(--accent);
+}
+
+.announcement-item-btn:hover .announcement-item-cta,
+.announcement-item-btn:focus-visible .announcement-item-cta {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink);
 }
 
 .announcement-item-arrow {
   flex: 0 0 auto;
+  transition: transform var(--duration-normal) ease;
+}
+
+.announcement-item-btn:hover .announcement-item-arrow,
+.announcement-item-btn:focus-visible .announcement-item-arrow {
+  transform: translate(1px, -1px);
 }
 
 .announcements-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex: 0 0 auto;
 }
 
@@ -1003,13 +1120,13 @@ html:not(.js) .transition-logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--tap);
-  height: var(--tap);
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
   background: rgba(255, 249, 242, 0.06);
-  border: 1px solid rgba(255, 249, 242, 0.12);
+  border: 1px solid rgba(255, 249, 242, 0.14);
   color: var(--cream);
-  font-size: 13px;
+  font-size: 12px;
   transition: all var(--duration-normal) ease;
 }
 
@@ -2638,8 +2755,8 @@ html.js .reveal-tier.is-revealed {
 
 @media (max-width: 899px), (pointer: coarse) {
   .announcements-btn {
-    width: var(--tap);
-    height: var(--tap);
+    width: 30px;
+    height: 30px;
   }
 
   .announcement-item-btn {
@@ -2797,8 +2914,46 @@ html.js .reveal-tier.is-revealed {
     padding: 8px 16px;
   }
 
+  .introduction {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-top: calc(28.5svh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + 86px);
+    padding-bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+  }
+
+  .transition-logo {
+    top: 28.5vh;
+    top: 28.5svh;
+  }
+
+  .hero-heading-shell {
+    top: calc(28.5vh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + 12px);
+    top: calc(28.5svh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + 12px);
+  }
+
   .introduction-copy-stack {
-    bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .introduction-copy {
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+  }
+
+  .announcements-bar {
+    width: 100%;
+    max-width: 440px;
   }
 
   
@@ -2919,65 +3074,68 @@ html.js .reveal-tier.is-revealed {
 
 
 @media (max-width: 640px) {
-  
   .announcements-bar-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "chip"
-      "headline"
-      "controls";
-    gap: 10px;
-    padding-top: 14px;
-    padding-bottom: 14px;
+    padding: 11px 14px;
+    gap: 7px;
+  }
+
+  .announcements-header {
+    gap: 6px;
   }
 
   .announcements-chip {
-    grid-area: chip;
-    justify-self: start;
+    gap: 6px;
+    min-width: 0;
   }
 
-  .announcements-viewport {
-    grid-area: headline;
-    touch-action: pan-y; 
+  .announcements-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+  }
+
+  .announcements-badge {
+    padding: 2px 6px;
+    font-size: 9.5px;
+  }
+
+  .announcements-counter {
+    font-size: 10.5px;
   }
 
   .announcements-controls {
-    grid-area: controls;
-    gap: 10px;
+    gap: 4px;
+  }
+
+  .announcements-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .announcements-viewport {
+    touch-action: pan-y;
+    padding-top: 8px;
   }
 
   .announcement-item-btn {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "date arrow"
-      "title arrow";
-    align-items: center;
-    gap: 2px 12px;
-    min-height: 76px;
-    padding: 6px 0;
-    white-space: normal;
-    font-size: 16px;
-    line-height: 1.4;
-  }
-
-  .announcement-item-date {
-    grid-area: date;
+    gap: 3px 10px;
+    min-height: 44px;
   }
 
   .announcement-item-title {
-    display: -webkit-box;
-    grid-area: title;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
+    font-size: 14.5px;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
   }
 
-  .announcement-item-arrow {
-    grid-area: arrow;
-    font-size: 20px;
+  .announcement-item-summary {
+    font-size: 12px;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+
+  .announcement-item-cta {
+    padding: 4px 9px;
+    font-size: 10.5px;
   }
 
   
@@ -3102,14 +3260,9 @@ html.js .reveal-tier.is-revealed {
     padding-top: 24px;
   }
 
-  
-  .introduction-copy-stack {
-    justify-content: center;
-  }
-
   .introduction-copy {
     width: 100%;
-    max-width: 36ch;
+    max-width: 38ch;
     text-align: center;
   }
 }
@@ -3129,14 +3282,15 @@ html.js .reveal-tier.is-revealed {
 @media (max-height: 520px) and (orientation: landscape) {
   .introduction {
     min-height: max(100svh, 420px);
+    padding-top: 0;
   }
 
   .transition-logo {
-    top: 50svh;
+    top: 42svh;
   }
 
   .hero-heading-shell {
-    top: calc(50svh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + 10px);
+    top: calc(42svh + var(--hero-logo-w) / var(--hero-logo-ratio) / 2 + 8px);
   }
 
   .department-marquee {
@@ -3149,10 +3303,23 @@ html.js .reveal-tier.is-revealed {
   }
 
   .introduction-copy-stack {
+    position: absolute;
     bottom: 10px;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "announcements copy";
+    align-items: end;
+    gap: 16px;
   }
 
-  .introduction-copy-description {
+  .introduction-copy {
+    text-align: right;
+  }
+
+  .introduction-copy-description,
+  .announcement-item-summary {
     display: none;
   }
 }

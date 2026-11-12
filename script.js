@@ -141,6 +141,8 @@
     const nextBtn = document.querySelector('#announcements-next');
     const toggleBtn = document.querySelector('#announcements-toggle-play');
     const playIcon = document.querySelector('#announcements-play-icon');
+    const badgeEl = document.querySelector('#announcements-badge');
+    const counterEl = document.querySelector('#announcements-counter');
     const modal = document.querySelector('#announcement-modal');
     const modalClose = document.querySelector('#modal-close-btn');
 
@@ -164,13 +166,22 @@
       return dateValue(b.date) - dateValue(a.date);
     });
 
+    if (section) {
+      section.classList.toggle('is-single', items.length <= 1);
+      section.classList.toggle('is-empty', items.length === 0);
+    }
+
     if (items.length === 0) {
-      track.innerHTML = '<span class="announcement-item-btn">No announcements right now. Check back soon.</span>';
+      track.innerHTML = '<span class="announcement-item-btn announcement-item-btn--empty"><span class="announcement-item-body"><span class="announcement-item-title">No announcements right now</span><span class="announcement-item-summary">Check back soon for society updates and results.</span></span></span>';
+      if (badgeEl) badgeEl.hidden = true;
+      if (counterEl) counterEl.hidden = true;
       if (prevBtn) prevBtn.disabled = true;
       if (nextBtn) nextBtn.disabled = true;
       if (toggleBtn) toggleBtn.disabled = true;
       return;
     }
+
+    if (badgeEl) badgeEl.hidden = false;
 
     let index = 0;
     let timer = null;
@@ -180,16 +191,35 @@
     
     function updateTicker(announce) {
       const current = items[index];
+      const dateStr = current.date ? formatDate(current.date) : '';
+      const shortDesc = (current.summary && String(current.summary).trim()) ||
+        (current.body && String(current.body).trim()) || '';
+
+      if (badgeEl) {
+        badgeEl.textContent = index === 0 ? 'NEW' : 'UPDATE';
+        badgeEl.classList.toggle('is-new', index === 0);
+      }
+      if (counterEl) {
+        counterEl.textContent = padZero(index + 1, 2) + ' / ' + padZero(items.length, 2);
+        counterEl.hidden = items.length <= 1;
+      }
+
       track.innerHTML = `
         <button
           type="button"
           class="announcement-item-btn"
           data-id="${escapeHtml(current.id)}"
         >
-          ${current.date ? `<span class="announcement-item-date">${escapeHtml(formatDate(current.date))}</span>` : ''}
-          <span class="announcement-item-title">${escapeHtml(current.title)}</span>
-          <span class="sr-only">(opens full details)</span>
-          <span class="announcement-item-arrow" aria-hidden="true">&#8599;</span>
+          <span class="announcement-item-body">
+            ${dateStr ? `<span class="announcement-item-date">${escapeHtml(dateStr)}</span>` : ''}
+            <span class="announcement-item-title">${escapeHtml(current.title)}</span>
+            ${shortDesc ? `<span class="announcement-item-summary">${escapeHtml(shortDesc)}</span>` : ''}
+          </span>
+          <span class="announcement-item-cta">
+            <span class="announcement-item-cta-label">${current.link ? 'View notice' : 'Read details'}</span>
+            <span class="sr-only">(opens full details)</span>
+            <span class="announcement-item-arrow" aria-hidden="true">&#8599;</span>
+          </span>
         </button>
       `;
 
@@ -197,7 +227,7 @@
         openModal(current);
       });
       if (announce && status) {
-        status.textContent = `Announcement ${index + 1} of ${items.length}: ${current.title}${current.date ? ', ' + formatDate(current.date) : ''}`;
+        status.textContent = `Announcement ${index + 1} of ${items.length}: ${current.title}${dateStr ? ', ' + dateStr : ''}`;
       }
     }
 
@@ -246,6 +276,18 @@
       viewport.addEventListener('mouseleave', function () { state.hovered = false; syncTicker(); }, { signal });
       viewport.addEventListener('focusin', function () { state.focused = true; syncTicker(); }, { signal });
       viewport.addEventListener('focusout', function () { state.focused = false; syncTicker(); }, { signal });
+      viewport.addEventListener('keydown', function (event) {
+        if (items.length <= 1) return;
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          step(1, true);
+          setPaused(true);
+        } else if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          step(-1, true);
+          setPaused(true);
+        }
+      }, { signal });
       let startX = 0;
       let startY = 0;
       viewport.addEventListener('touchstart', function (event) {
