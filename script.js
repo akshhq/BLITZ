@@ -141,10 +141,12 @@
     const nextBtn = document.querySelector('#announcements-next');
     const toggleBtn = document.querySelector('#announcements-toggle-play');
     const playIcon = document.querySelector('#announcements-play-icon');
-    const badgeEl = document.querySelector('#announcements-badge');
+    const openModalBtn = document.querySelector('#announcements-open-modal');
+    const actionLabelEl = document.querySelector('#announcements-action-label');
     const counterEl = document.querySelector('#announcements-counter');
     const modal = document.querySelector('#announcement-modal');
     const modalClose = document.querySelector('#modal-close-btn');
+    const hoverFineQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
 
     if (!track) return;
     if (announcementsTeardown) {
@@ -161,6 +163,7 @@
     if (prevBtn) prevBtn.disabled = false;
     if (nextBtn) nextBtn.disabled = false;
     if (toggleBtn) toggleBtn.disabled = false;
+    if (openModalBtn) openModalBtn.disabled = false;
 
     const items = [...(DATA.announcements || [])].sort(function (a, b) {
       return dateValue(b.date) - dateValue(a.date);
@@ -169,63 +172,95 @@
     if (section) {
       section.classList.toggle('is-single', items.length <= 1);
       section.classList.toggle('is-empty', items.length === 0);
+      section.classList.remove('is-expanded');
     }
 
     if (items.length === 0) {
-      track.innerHTML = '<span class="announcement-item-btn announcement-item-btn--empty"><span class="announcement-item-body"><span class="announcement-item-title">No announcements right now</span><span class="announcement-item-summary">Check back soon for society updates and results.</span></span></span>';
-      if (badgeEl) badgeEl.hidden = true;
-      if (counterEl) counterEl.hidden = true;
+      track.innerHTML = '<span class="announcement-item-btn announcement-item-btn--empty"><span class="announcement-item-title">No announcements right now</span></span>';
+      if (counterEl) {
+        counterEl.hidden = false;
+        counterEl.textContent = '00/00';
+      }
       if (prevBtn) prevBtn.disabled = true;
       if (nextBtn) nextBtn.disabled = true;
       if (toggleBtn) toggleBtn.disabled = true;
+      if (openModalBtn) openModalBtn.disabled = true;
       return;
     }
 
-    if (badgeEl) badgeEl.hidden = false;
+    if (counterEl) counterEl.hidden = false;
+    const isSingle = items.length <= 1;
+    if (prevBtn) prevBtn.disabled = isSingle;
+    if (nextBtn) nextBtn.disabled = isSingle;
+    if (toggleBtn) toggleBtn.disabled = isSingle;
 
     let index = 0;
     let timer = null;
-    const state = { paused: false, hovered: false, focused: false, onScreen: true, modalOpen: false };
+    const state = { paused: false, hovered: false, focused: false, onScreen: true, modalOpen: false, expanded: false };
     let lastFocusedElement = null;
 
-    
+    function setExpanded(expanded) {
+      state.expanded = !!expanded;
+      if (section) section.classList.toggle('is-expanded', state.expanded);
+      const itemBtn = track.querySelector('.announcement-item-btn');
+      if (itemBtn) itemBtn.setAttribute('aria-expanded', state.expanded ? 'true' : 'false');
+    }
+
     function updateTicker(announce) {
       const current = items[index];
       const dateStr = current.date ? formatDate(current.date) : '';
       const shortDesc = (current.summary && String(current.summary).trim()) ||
         (current.body && String(current.body).trim()) || '';
 
-      if (badgeEl) {
-        badgeEl.textContent = index === 0 ? 'NEW' : 'UPDATE';
-        badgeEl.classList.toggle('is-new', index === 0);
-      }
       if (counterEl) {
-        counterEl.textContent = padZero(index + 1, 2) + ' / ' + padZero(items.length, 2);
-        counterEl.hidden = items.length <= 1;
+        counterEl.textContent = padZero(index + 1, 2) + '/' + padZero(items.length, 2);
+      }
+      if (actionLabelEl) {
+        actionLabelEl.textContent = current.link ? 'Notice' : 'Details';
+      }
+      if (openModalBtn) {
+        const actionText = (current.link ? 'View notice' : 'Read details') + ': ' + current.title;
+        openModalBtn.setAttribute('aria-label', actionText);
+        openModalBtn.title = current.link ? 'View notice' : 'Read details';
+      }
+      if (section) {
+        section.classList.toggle('has-summary', !!shortDesc);
       }
 
       track.innerHTML = `
-        <button
-          type="button"
-          class="announcement-item-btn"
-          data-id="${escapeHtml(current.id)}"
-        >
-          <span class="announcement-item-body">
-            ${dateStr ? `<span class="announcement-item-date">${escapeHtml(dateStr)}</span>` : ''}
-            <span class="announcement-item-title">${escapeHtml(current.title)}</span>
-            ${shortDesc ? `<span class="announcement-item-summary">${escapeHtml(shortDesc)}</span>` : ''}
-          </span>
-          <span class="announcement-item-cta">
-            <span class="announcement-item-cta-label">${current.link ? 'View notice' : 'Read details'}</span>
-            <span class="sr-only">(opens full details)</span>
-            <span class="announcement-item-arrow" aria-hidden="true">&#8599;</span>
-          </span>
-        </button>
+        <div class="announcement-card-item">
+          <div class="announcement-item-row">
+            <button
+              type="button"
+              class="announcement-item-btn"
+              data-id="${escapeHtml(current.id)}"
+              aria-expanded="${state.expanded ? 'true' : 'false'}"
+            >
+              <span class="announcement-item-title">${escapeHtml(current.title)}</span>
+              <span class="sr-only">(expand or open full details)</span>
+            </button>
+          </div>
+          <div class="announcement-summary-drawer" aria-hidden="${shortDesc ? 'false' : 'true'}">
+            <div class="announcement-summary-inner">
+              <p class="announcement-item-summary">${dateStr ? `<span class="announcement-summary-date">${escapeHtml(dateStr)} &mdash; </span>` : ''}${escapeHtml(shortDesc)}</p>
+            </div>
+          </div>
+        </div>
       `;
 
-      track.querySelector('.announcement-item-btn').addEventListener('click', function () {
-        openModal(current);
-      });
+      const itemBtn = track.querySelector('.announcement-item-btn');
+
+      if (itemBtn) {
+        itemBtn.addEventListener('click', function () {
+          if (!hoverFineQuery.matches && shortDesc) {
+            setExpanded(!state.expanded);
+            if (state.expanded) setPaused(true);
+            syncTicker();
+          } else {
+            openModal(current);
+          }
+        });
+      }
       if (announce && status) {
         status.textContent = `Announcement ${index + 1} of ${items.length}: ${current.title}${dateStr ? ', ' + dateStr : ''}`;
       }
@@ -253,7 +288,11 @@
 
     function setPaused(paused) {
       state.paused = paused;
-      if (playIcon) playIcon.textContent = paused ? '▶' : '⏸';
+      if (playIcon) {
+        playIcon.innerHTML = paused
+          ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5l5.5 3.5L4 9.5v-7z" fill="currentColor"/></svg>'
+          : '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5v7M8 2.5v7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>';
+      }
       if (toggleBtn) {
         toggleBtn.setAttribute('aria-label', paused ? 'Resume announcements ticker' : 'Pause announcements ticker');
         toggleBtn.title = paused ? 'Resume ticker' : 'Pause ticker';
@@ -269,6 +308,11 @@
     }
     if (nextBtn) {
       nextBtn.addEventListener('click', function () { step(1, true); setPaused(true); }, { signal });
+    }
+    if (openModalBtn) {
+      openModalBtn.addEventListener('click', function () {
+        if (items[index]) openModal(items[index]);
+      }, { signal });
     }
 
     if (viewport) {
