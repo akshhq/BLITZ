@@ -39,7 +39,6 @@ if (!fs.existsSync(envPath)) {
     fail('SUPABASE_ANON_KEY must be the public anon/publishable key, not a secret key.');
   } else {
     var config = [
-      '',
       'window.BLITZ_CONFIG = {',
       "  supabaseUrl: '" + url.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "',",
       "  supabaseKey: '" + key.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'",

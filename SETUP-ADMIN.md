@@ -200,7 +200,7 @@ Requirements and advice for whoever runs the server:
 
 Supabase's free plan **pauses a project after about a week with no activity.** Do both of these:
 
-1. **GitHub Action (included).** In the GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**. Add `SUPABASE_URL` and `SUPABASE_ANON_KEY` (the same public values as `config.js`). The workflow in `.github/workflows/keepalive.yml` then reads the public content every 3 days. Run it once by hand (**Actions → Supabase keep-alive → Run workflow**) and check it is green. *GitHub switches scheduled workflows off after 60 days without repository activity; if that happens, press “Enable workflow”.*
+1. **GitHub Action (included).** In the GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (the same public values as `config.js`; `.env` calls the key `SUPABASE_ANON_KEY` locally). The workflow in `.github/workflows/keepalive.yml` then reads the public content daily at 03:17 UTC (08:47 IST). Run it once by hand (**Actions → Supabase Keep Alive → Run workflow**) and check it is green. *GitHub switches scheduled workflows off after 60 days without repository activity; if that happens, press “Enable workflow”.*
 2. **Backup ping (recommended).** On <https://cron-job.org> (free) create a job every 3 days: method **POST** to `YOUR_SUPABASE_URL/rest/v1/rpc/site_content`, headers `apikey: YOUR_ANON_KEY` and `Content-Type: application/json`, body `{}`.
 
 If a project does get paused, open the Supabase dashboard and press **Restore**. Meanwhile the website keeps working from its saved copy.

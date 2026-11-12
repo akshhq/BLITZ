@@ -29,29 +29,32 @@ BLITZ/
 ├── index.html            # Markup, head/SEO/JSON-LD, <noscript> fallbacks, dialog
 ├── event.html            # Launchpad-style event browser and selected-event view
 ├── styles.css            # Design system, responsive rules (section 17 = mobile)
+├── event-launchpad.css   # Event Launchpad windowing, dock and detail layout
 ├── data.js               # ALL content (announcements, events, team, contact, ...)
 ├── BLITZ_EVENT_TEMPLATE.json # Canonical event import template downloaded by admins
 ├── BLITZ_EVENT_TEMPLATE_GUIDE.md # Template preparation and import guide
-├── script.js             # Vanilla JS: ticker, modal, nav sheet, rails, hero logo
-├── event-renderer.js      # Shared, escaped event-detail markup for both pages
-├── event-page.js          # Data-driven event selector and route-aware page shell
+├── script.js             # Vanilla JS: hero announcements, modal, nav sheet, rails
+├── hero-sculpture.js     # WebGL magma ring background for the hero section
+├── event-renderer.js     # Shared, escaped event-detail markup for both pages
+├── event-page.js         # Data-driven event selector and route-aware page shell
 ├── .env.example          # Local Supabase configuration template
 ├── config.js             # PUBLIC runtime config generated from .env
 ├── content-map.js        # database rows -> site objects (shared by site and admin)
 ├── content-loader.js     # loads live content (cached), falls back to data.js, says which one is on screen
 ├── error-catalog.js  error-handler.js  error.css  error-page.js   # ONE error system (see ERRORS.md)
 ├── 404.html  403.html  500.html  503.html  offline.html          # static error pages (need server config)
-├── .htaccess.example     # Apache config that makes the server use those pages (nginx notes inside)
+├── .htaccess  .htaccess.example   # Apache config that makes the server use those pages (nginx notes inside)
 ├── ERRORS.md             # error codes, diagnostics, recovery steps, hosting, known limitations
 ├── tests/unit/           # node:test unit tests (error handler, catalog, event validator)
 ├── prezi_panel/          # THE ADMIN PANEL (own folder, own strict CSP, noindex)
 │   ├── index.html  admin.css  admin-core.js  admin-forms.js  admin-app.js
-│   ├── event-validator.js  database-diagnostics.js  operation-status.js   # validation, system check, safe writes
+│   ├── event-validator.js  event-template.js  database-diagnostics.js  operation-status.js
 │   ├── preview.html  preview.js   # live event preview (sandboxed frame)
 │   ├── .htaccess.example          # recommended security headers (give to the server admin)
 │   └── vendor/supabase.js         # pinned supabase-js 2.117.2 (MIT)
 ├── supabase/
 │   ├── schema.sql  seed.sql  user.sql  admins.sql   # run in the Supabase SQL editor (see SETUP-ADMIN.md)
+│   ├── migration_*.sql                    # incremental database migrations for existing projects
 │   └── tests/                             # schema/RLS tests + end-to-end tests (see Testing below)
 ├── .github/workflows/ci.yml               # syntax, validators, unit, schema and browser tests
 ├── .github/workflows/keepalive.yml        # daily read so the free database is less likely to be paused
@@ -68,13 +71,17 @@ BLITZ/
 │   │   ├── blitz-logo-dark.png    # ink-coloured variant for LIGHT backgrounds
 │   │   └── blitz-logo-source.webp # untouched master, input for the build script
 │   └── images/
-│       ├── gallery/      # Event photos
-│       ├── team/         # 400x400 WebP portraits + avatar-placeholder.svg
+│       ├── hero-ring-bg.webp  background.avif   # Hero ring fallback & backdrop assets
+│       ├── events/           # Event cover and carousel WebP photos
+│       ├── gallery/          # Gallery illustration fallbacks
+│       ├── team/             # 400x400 WebP portraits + avatar-placeholder.svg
 │       └── collaborations/
 ├── tools/
+│   ├── configure-env.js         # .env -> config.js
 │   ├── build-brand-assets.py    # logo -> favicons, icons, og.png
 │   ├── optimize-team-images.py  # photos -> 400x400 WebP
 │   ├── set-site-url.py          # change the production URL everywhere
+│   ├── validate-data.js         # content, templates, JSON syntax, event rules
 │   ├── validate-site.js         # metadata, URL, sitemap, robots, asset checks
 │   ├── generate-seed.js         # data.js -> supabase/seed.sql (one-time import)
 │   └── sync-noscript.js         # regenerate <noscript> blocks from data.js
@@ -136,9 +143,9 @@ The website follows this exact sequential structure with assigned anchor IDs for
 
 | # | Section | Element / Tag | Anchor ID | In Navbar? | Notes |
 |---|---|---|---|---|---|
-| 1 | **Home** | `<section>` | `#home` | Yes | Hero section with the logo image & marquee |
-| 2 | **About** | `<section>` | `#about` | Yes | "Silicon Minds, Circuited Hearts" & "What We Do" |
-| 3 | **Announcements** | `<section>` | `#announcements` | No (Strip) | Slim news-headline ticker with dialog modal |
+| 1 | **Home** | `<section>` | `#home` | Yes | Hero section with 3D magma ring background, compact `#announcements` card & intro copy |
+| 2 | **Announcements** | `<div>` (in `#home`) | `#announcements` | No (Hero Card) | Compact progressive-disclosure card (hover on desktop, tap on mobile) with dialog modal |
+| 3 | **About** | `<section>` | `#about` | Yes | "Silicon Minds, Circuited Hearts" & "What We Do" |
 | 4 | **Events** | `<section>` | `#events` | Yes | Sticky stacking panels, sorted newest-first |
 | 5 | **Team** | `<section>` | `#team` | Yes | High-contrast cream break with member tiers |
 | 6 | **Gallery** | `<section>` | `#gallery` | Yes | Event imagery on smooth horizontal rail |
@@ -180,9 +187,8 @@ Defined in `styles.css`:
 ```
 
 ### Surface Rhythm
-- **Home**: `.surface--maroon`
+- **Home (`#home` + `#announcements`)**: `.surface--maroon` with WebGL magma ring sculpture and dark glassmorphic announcement card
 - **About**: `.surface--ink`
-- **Announcements**: Dark amber terminal strip
 - **Events**: `.surface--maroon`
 - **Team**: `.surface--cream` (High-contrast light surface with dark text)
 - **Gallery**: `.surface--ink`

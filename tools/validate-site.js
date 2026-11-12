@@ -167,9 +167,32 @@ catalog.list.forEach((entry) => assert(errorsDoc.includes(entry.code), `ERRORS.m
 });
 
 // 5. No secret or service-role key anywhere in files that ship to the browser or are committed.
+const IGNORED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  'vendor',
+  'assets',
+  '.codex',
+  '.gemini',
+  '.impeccable',
+  '.claude',
+  '.cursor',
+  '.agents',
+  '.windsurf',
+  '.venv',
+  'venv',
+  'env',
+  '__pycache__',
+  '.pytest_cache',
+  '.vscode',
+  '.idea',
+  'playwright-report',
+  'test-results',
+  '.playwright'
+]);
 function walk(dir, found = []) {
   fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
-    if (['node_modules', '.git', 'vendor', 'assets'].includes(entry.name)) return;
+    if (IGNORED_DIRS.has(entry.name)) return;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full, found); else if (/\.(js|html|css|json|md|yml|yaml|sql|py|example|env)$/.test(entry.name) || entry.name.startsWith('.env')) found.push(full);
   });

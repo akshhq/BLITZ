@@ -1,29 +1,63 @@
-# Local environment and credential files
+# Local environment, credentials, and overrides
 .env
 .env.*
 !.env.example
 *.local
+*.local.*
 config.local.js
 atlas-credentials.env
-BLITZ.zip
+supabase/*.local.sql
 
-# Local Python environments
+# AI assistants, agent hooks, and local skill configs
+.codex/
+.gemini/
+.impeccable/
+.claude/
+.cursor/
+.agents/
+.windsurf/
+.aider*
+
+# Node.js, test runners, and E2E binaries
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+postgrest
+postgrest.exe
+pgrest.tar.xz
+playwright-report/
+test-results/
+.playwright/
+
+# Local Python environments and bytecode
 .venv/
 venv/
 env/
-
-# Python-generated files
 __pycache__/
 *.py[cod]
+.pytest_cache/
+
+# Temporary image-processing folders and review sheets
+assets/team_images/
+_contact-sheet.png
 
 # Local editor and operating-system files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
+Desktop.ini
 
-# Generated archives and source documents
+# Generated archives and raw source documents
+BLITZ.zip
 *.zip
+*.tar.gz
+*.tar.xz
 *.docx
 *.xlsx
 *.pdf
