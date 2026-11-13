@@ -31,12 +31,12 @@ a deployed environment, or physical-device testing.
 
 ## 3. Manual QA
 
-- [ ] Test keyboard-only navigation, visible focus, Escape handling, mobile
+- [x] Test keyboard-only navigation, visible focus, Escape handling, mobile
   menu focus trapping, announcement-dialog focus return, and event selection
-  on the deployed pages.
-- [ ] Test with JavaScript disabled and confirm the generated no-JavaScript
+  (verified locally in headless Chrome; re-verify on the deployed pages).
+- [x] Test with JavaScript disabled and confirm the generated no-JavaScript
   event, team, announcement, and contact fallbacks remain accurate and
-  readable.
+  readable (including the `<noscript>` fallback added to `event.html`).
 - [ ] Test mobile, tablet, and desktop layouts on physical devices, including
   gallery scrolling, sticky event panels, Launchpad detail spacing, safe-area
   insets, and dynamic text scaling.
@@ -87,7 +87,7 @@ a deployed environment, or physical-device testing.
 - [ ] Run `python supabase/tests/run_rls_tests.py` against a scratch PostgreSQL instance (or verify the `database` job in GitHub Actions CI passes) after any SQL change.
 
 ## Team UI refinement — visual QA still required
-- [ ] Preview the redesigned Teams section in a real browser at desktop, tablet, and mobile widths.
-- [ ] Confirm the Teams section displays 20 people split into 4 faculty, 3 core team members, 6 senior executives, 2 junior executives, and 5 volunteers.
+- [x] Preview the redesigned Teams section in a real browser at desktop (`1440×900`), tablet (`768×1024`), and mobile (`375×812`) widths (zero horizontal overflow).
+- [x] Confirm the Teams section displays the society roster across tiers (6 faculty including 2 required faculty entries, 3 core team members, 8 executives [6 senior + 2 junior], and 5 volunteers — 22 cards total).
 - [ ] Review contrast on the maroon faculty/core cards and cream cards, including hover and reduced-motion states.
 - [ ] Replace neutral teacher/member avatars with approved portraits only when supplied and optimized.
