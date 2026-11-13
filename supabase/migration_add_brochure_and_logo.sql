@@ -10,12 +10,12 @@ begin;
 alter table public.events add column if not exists brochure text;
 alter table public.events add column if not exists logo text;
 
--- 2. Add validation constraint for brochure (HTTPS or assets/ path)
+-- 2. Add validation constraint for brochure (HTTPS or safe relative assets/ path)
 alter table public.events drop constraint if exists events_brochure_check;
 alter table public.events add constraint events_brochure_check check (
   brochure is null or (
-    brochure ~* '^https://[^[:space:]<>"'']+$' or
-    brochure ~ '^assets/[A-Za-z0-9/_.-]{1,200}$'
+    (brochure ~* '^https://[^[:space:]<>"'']+$' and char_length(brochure) <= 1000) or
+    (brochure ~ '^assets/[A-Za-z0-9/_.-]{1,200}$' and brochure !~ '\.\.' and brochure !~ '//')
   )
 );
 
@@ -33,6 +33,8 @@ create or replace view public.events_public as
   from public.events
   where published = true;
 
+revoke all on public.events_public from public;
+revoke all on public.events_public from public;
 grant select on public.events_public to anon, authenticated;
 
 -- 5. Recreate site_content RPC function to include logo and brochure

@@ -56,6 +56,13 @@ a deployed environment, or physical-device testing.
 - [ ] Verify that `/blitz/`, `/blitz/event.html`, all relative assets, and
   query-string event URLs work over HTTPS on the chosen host.
 - [ ] Enable and verify the production TLS certificate before sharing the URL.
+- [ ] Deploy root [`.htaccess`](.htaccess) and [`prezi_panel/.htaccess`](prezi_panel/.htaccess.example) (or equivalent nginx config) with `mod_headers` and `mod_rewrite` enabled, then verify:
+  - Custom `403.html`, `404.html`, `500.html`, `503.html` pages return real HTTP status codes.
+  - Sensitive files and folders (`.env`, `.git`, `tools/`, `supabase/`, `tests/`, `*.sql`, `*.py`, `README.md`) return `403 Forbidden`.
+  - `TRACE`/`TRACK` HTTP methods return `403 Forbidden`.
+  - Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, and `Strict-Transport-Security` once HTTPS-only) are present on live responses.
+- [ ] Run [`supabase/schema.sql`](supabase/schema.sql) (or [`supabase/migration_add_brochure_and_logo.sql`](supabase/migration_add_brochure_and_logo.sql) on an existing project) in the Supabase SQL Editor to apply RLS policies, `valid_image`, `valid_brochure`, and `events_public` privilege restrictions.
+- [ ] Confirm [`config.js`](config.js) uses only the public `sb_publishable_` / anon key (never `service_role` or `sb_secret_`), and verify admin accounts/roles in `public.admins` via [`supabase/admins.sql`](supabase/admins.sql) (updating any temporary passwords from [`supabase/user.sql`](supabase/user.sql)).
 - [ ] Submit `sitemap.xml` to Search Console for the final host.
 - [ ] Confirm whether the host serves `robots.txt` at the domain root. A
   subdirectory `robots.txt` is not automatically discovered as the domain's
@@ -63,15 +70,21 @@ a deployed environment, or physical-device testing.
 - [ ] Re-run `node tools/validate-site.js` and the live metadata checks after
   every production-domain or hosting change.
 
-## 5. Optional improvements
+## 5. Completed & optional improvements
 
-- [ ] Add a privacy-preserving content workflow or CMS only if the society
-  needs non-technical editors; the current static architecture does not
-  require a framework.
-- [ ] Add CI automation for JavaScript syntax, data validation, no-JavaScript
-  fallback synchronization, link/asset checks, and accessibility smoke tests.
+- [x] Add a privacy-preserving admin workflow (`prezi_panel/` + Supabase RLS + `supabase/schema.sql`; see `SETUP-ADMIN.md`).
+- [x] Add CI automation for JavaScript syntax, unit tests, data validation, site/security validation, seed synchronization, PostgreSQL RLS/schema contract tests, and Playwright Chromium E2E tests (`.github/workflows/ci.yml`).
 - [ ] Add a production social-preview regression check for event query URLs if
   the society regularly publishes event-specific links.
+
+## 6. Security, database & error handling (implemented — production check remaining)
+
+- [x] Database RLS & privilege isolation: `anon` revoked on base tables, `public.site_content()` and `public.events_public` restricted to published content, `touch_row()` server-side `auth.uid()` enforcement, and SQL path-traversal (`..`, `//`) + scheme checks on images, links, and brochures.
+- [x] Strict Content Security Policy (`<meta http-equiv="Content-Security-Policy">`) and `Referrer-Policy` across `index.html`, `event.html`, `prezi_panel/index.html`, `prezi_panel/preview.html`, and all 5 static error pages (`403.html`, `404.html`, `500.html`, `503.html`, `offline.html`).
+- [x] Zero inline event handlers (`onerror=`) or inline `style=` attributes on error pages and event renderers; delegated capture listeners used instead.
+- [x] Input/URL/JSON hardening: protocol-relative `//` and `..` traversal blocked across `script.js`, `content-map.js`, `event-renderer.js`, `event-page.js`, and `prezi_panel/preview.js`; prototype-pollution key stripping (`__proto__`, `constructor`, `prototype`) in `prezi_panel/event-template.js`; safe hash decoding and single-bind idle timeout in `prezi_panel/admin-app.js`.
+- [x] Central error handler (`error-handler.js`, `error-catalog.js`) and static error pages (`error.css`, `error-page.js`): token/credential/cookie/path redaction, `crypto.getRandomValues` correlation IDs, silent `securitypolicyviolation` reporting, safe same-origin `returnTarget()` and `Go back` checks, and `BLITZ-HTTP-*` / `BLITZ-NET-001` diagnostics.
+- [ ] Run `python supabase/tests/run_rls_tests.py` against a scratch PostgreSQL instance (or verify the `database` job in GitHub Actions CI passes) after any SQL change.
 
 ## Team UI refinement — visual QA still required
 - [ ] Preview the redesigned Teams section in a real browser at desktop, tablet, and mobile widths.

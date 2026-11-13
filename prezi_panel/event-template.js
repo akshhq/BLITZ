@@ -22,7 +22,16 @@
 
   function text(value) { return typeof value === 'string' ? value.trim() : ''; }
   function array(value) { return Array.isArray(value) ? value : []; }
-  function clone(value) { return JSON.parse(JSON.stringify(value)); }
+  function clone(value) {
+    if (value === null || typeof value !== 'object') return value;
+    if (Array.isArray(value)) return value.map(clone);
+    var out = {};
+    Object.keys(value).forEach(function (k) {
+      if (k === '__proto__' || k === 'constructor' || k === 'prototype') return;
+      out[k] = clone(value[k]);
+    });
+    return out;
+  }
   function validLayout(value) {
     return ['event', 'workshop', 'competition', 'festival', 'speaker'].indexOf(value) >= 0;
   }
@@ -120,12 +129,14 @@
     event.links = details.links;
     event.speakers = details.speakers;
     event.sessions = details.sessions;
-    event.logo = /^https:\/\//i.test(text(details.media.logo)) ||
-      /^(assets\/|storage:)[A-Za-z0-9/_.-]{1,200}$/.test(text(details.media.logo))
-      ? text(details.media.logo) : '';
-    event.brochure = /^https:\/\//i.test(text(details.media.brochure)) ||
-      /^assets\/[A-Za-z0-9/_.-]{1,200}$/.test(text(details.media.brochure))
-      ? text(details.media.brochure) : '';
+    var logoRef = text(details.media.logo);
+    event.logo = (logoRef.indexOf('..') < 0 && logoRef.indexOf('//') !== 0 &&
+      (/^https:\/\/[^\s<>"']+$/i.test(logoRef) || /^(assets\/|storage:)[A-Za-z0-9/_.-]{1,200}$/.test(logoRef)))
+      ? logoRef : '';
+    var brochureRef = text(details.media.brochure);
+    event.brochure = (brochureRef.indexOf('..') < 0 &&
+      (/^https:\/\/[^\s<>"']+$/i.test(brochureRef) || /^assets\/[A-Za-z0-9/_.-]{1,200}$/.test(brochureRef)))
+      ? brochureRef : '';
     if (details.media.brochure && !event.brochure) {
       warnings.push('Brochure reference was not copied as a URL; upload the brochure or provide an HTTPS/assets path.');
     }

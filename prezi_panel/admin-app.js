@@ -14,6 +14,10 @@
   var topbar = document.getElementById('topbar');
   var mainnav = document.getElementById('mainnav');
   var whoami = document.getElementById('whoami');
+  var whoamiRole = document.getElementById('whoami-role');
+  var userMenuBtn = document.getElementById('user-menu-btn');
+  var userCard = document.getElementById('user-card');
+  var userAccountLink = document.getElementById('user-account-link');
 
   var me = null;               // { id, email, role }
   var recovery = false;        // arrived via a password-reset link
@@ -37,7 +41,15 @@
     return h1;
   }
 
+  function closeUserCard(restoreFocus) {
+    if (!userCard || !userMenuBtn) return;
+    userCard.hidden = true;
+    userMenuBtn.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) userMenuBtn.focus();
+  }
+
   function showAuth(title, intro, body, links, notice) {
+    closeUserCard(false);
     topbar.hidden = true;
     PP.clear(main);
     var card = el('section', { class: 'auth', 'aria-labelledby': 'auth-title' }, [
@@ -199,7 +211,29 @@
     signingOut = true;
     return sb.auth.signOut().catch(function () { /* the local session is cleared either way */ }).then(function () { signingOut = false; showLogin(notice && notice.text ? notice : null); });
   }
-  document.getElementById('signout').addEventListener('click', function () { guardNav(function () { signOut(); }); });
+  document.getElementById('signout').addEventListener('click', function () {
+    closeUserCard(false);
+    guardNav(function () { signOut(); });
+  });
+  if (userMenuBtn && userCard) {
+    userMenuBtn.addEventListener('click', function () {
+      var nextOpen = userCard.hidden;
+      userCard.hidden = !nextOpen;
+      userMenuBtn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) {
+      if (!userCard.hidden && !e.target.closest('.topbar-user')) closeUserCard(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !userCard.hidden) closeUserCard(true);
+    });
+  }
+  if (userAccountLink) {
+    userAccountLink.addEventListener('click', function (e) {
+      closeUserCard(false);
+      if (dirty) { e.preventDefault(); guardNav(function () { window.location.hash = '#/account'; }); }
+    });
+  }
 
   function startIdle() {
     stopIdle();
@@ -240,7 +274,10 @@
         if (!r.data) { showNotAdmin(user.email); return; }
         me = { id: user.id, email: user.email, role: r.data.role };
         topbar.hidden = false;
-        whoami.textContent = me.email + ' · ' + me.role;
+        if (whoami) whoami.textContent = me.email;
+        if (whoamiRole) whoamiRole.textContent = me.role;
+        if (userMenuBtn) userMenuBtn.setAttribute('aria-label', 'Account menu (' + me.email + ')');
+        closeUserCard(false);
         buildNav();
         startIdle();
         route();
@@ -253,7 +290,7 @@
   }
   function buildNav() {
     PP.clear(mainnav);
-    var items = [['#/', 'Dashboard']].concat(COLL_KEYS.map(function (k) { return ['#/' + k, COLLS[k].label]; })).concat([['#/activity', 'Activity'], ['#/account', 'Account']]);
+    var items = [['#/', 'Dashboard']].concat(COLL_KEYS.map(function (k) { return ['#/' + k, COLLS[k].label]; })).concat([['#/activity', 'Activity']]);
     items.forEach(function (it) {
       var a = el('a', { href: it[0], text: it[1] });
       a.addEventListener('click', function (e) {

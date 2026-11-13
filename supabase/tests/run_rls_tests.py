@@ -99,6 +99,8 @@ bad = [
   ('data: link rejected', "insert into public.collaborations (name,type,url) values ('n','t','data:text/html,x')"),
   ('bad slug rejected', "insert into public.announcements (id,title,date) values ('Bad Slug!','x','2026-01-01')"),
   ('image with .. rejected', "insert into public.team_members (name,position,tier,photo) values ('n','p','core','assets/../../etc/passwd')"),
+  ('brochure with .. rejected', "insert into public.events (id,title,description,category,brochure) values ('br1','t','d','c','assets/../../etc/passwd')"),
+  ('brochure javascript: rejected', "insert into public.events (id,title,description,category,brochure) values ('br2','t','d','c','javascript:alert(1)')"),
   ('image as external URL rejected', "insert into public.team_members (name,position,tier,photo) values ('n','p','core','https://evil.test/x.png')"),
   ('image javascript: rejected', "insert into public.gallery_items (title,image) values ('t','javascript:alert(1)')"),
   ('unknown tier rejected', "insert into public.team_members (name,position,tier) values ('n','p','boss')"),

@@ -53,14 +53,16 @@
   }
 
   
-  function safeUrl(url) {
-    if (!url || typeof url !== 'string') return '#';
+  function safeRawUrl(url) {
+    if (!url || typeof url !== 'string') return '';
     const trimmed = url.trim();
-    if (!trimmed || /[\x00-\x1f\s"'<>]/.test(trimmed)) return '#';
-    if (/^(https?:\/\/|mailto:)/i.test(trimmed)) {
-      return escapeHtml(trimmed);
-    }
-    return '#';
+    if (!trimmed || /[\x00-\x1f\s"'<>]/.test(trimmed)) return '';
+    return /^(https?:\/\/|mailto:)/i.test(trimmed) ? trimmed : '';
+  }
+
+  function safeUrl(url) {
+    const raw = safeRawUrl(url);
+    return raw ? escapeHtml(raw) : '#';
   }
 
   
@@ -379,10 +381,12 @@
       if (textEl) textEl.textContent = item.body || '';
 
       if (linkWrap && linkEl) {
-        if (item.link && item.link.trim()) {
-          linkEl.href = safeUrl(item.link);
+        const cleanHref = safeRawUrl(item.link);
+        if (cleanHref) {
+          linkEl.href = cleanHref;
           linkWrap.style.display = 'block';
         } else {
+          linkEl.removeAttribute('href');
           linkWrap.style.display = 'none';
         }
       }

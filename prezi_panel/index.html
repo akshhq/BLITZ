@@ -27,8 +27,28 @@
         </a>
         <nav id="mainnav" class="mainnav" aria-label="Sections"></nav>
         <div class="topbar-user">
-          <span id="whoami" class="whoami"></span>
-          <button id="signout" type="button" class="btn btn--ghost">Sign out</button>
+          <button
+            id="user-menu-btn"
+            type="button"
+            class="user-trigger"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-controls="user-card"
+            aria-label="Account menu"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20a8 8 0 0 1 16 0" />
+            </svg>
+          </button>
+          <div id="user-card" class="user-card" role="region" aria-label="Account" hidden>
+            <div class="user-card-head">
+              <span id="whoami" class="user-card-email"></span>
+              <span id="whoami-role" class="user-card-role"></span>
+            </div>
+            <a id="user-account-link" class="user-card-link" href="#/account">Account settings</a>
+            <button id="signout" type="button" class="btn btn--danger user-card-signout">Sign out</button>
+          </div>
         </div>
       </div>
     </header>

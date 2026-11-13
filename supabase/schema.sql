@@ -30,7 +30,15 @@ create policy admins_read on public.admins for select to authenticated
   using (user_id = auth.uid() or public.is_owner());
 create or replace function public.valid_image(p text) returns boolean
 language sql immutable as $$
-  select p is null or (p ~ '^(assets/|storage:)[A-Za-z0-9/_.-]{1,200}$' and p !~ '\.\.');
+  select p is null or (p ~ '^(assets/|storage:)[A-Za-z0-9/_.-]{1,200}$' and p !~ '\.\.' and p !~ '//');
+$$;
+
+create or replace function public.valid_brochure(b text) returns boolean
+language sql immutable as $$
+  select b is null or (
+    (b ~* '^https://[^[:space:]<>"'']+$' and char_length(b) <= 1000) or
+    (b ~ '^assets/[A-Za-z0-9/_.-]{1,200}$' and b !~ '\.\.' and b !~ '//')
+  );
 $$;
 
 create or replace function public.valid_https(u text) returns boolean
@@ -86,9 +94,7 @@ create table if not exists public.events (
   image                text check (public.valid_image(image)),
   image_alt            text check (char_length(image_alt) <= 300),
   logo                 text check (public.valid_image(logo)),
-  brochure             text check (brochure is null or (
-                           brochure ~* '^https://[^[:space:]<>"'']+$' or
-                           brochure ~ '^assets/[A-Za-z0-9/_.-]{1,200}$')),
+  brochure             text check (public.valid_brochure(brochure)),
   event_details        jsonb not null default '{}'::jsonb check (
                            jsonb_typeof(event_details) = 'object' and octet_length(event_details::text) <= 50000),
   placeholder          boolean not null default false,
@@ -106,12 +112,16 @@ alter table public.events add column if not exists logo text;
 alter table public.events add column if not exists event_details jsonb not null default '{}'::jsonb;
 alter table public.events add column if not exists placeholder boolean not null default false;
 
+alter table public.events drop constraint if exists events_brochure_check;
+alter table public.events add constraint events_brochure_check check (public.valid_brochure(brochure));
+
 create or replace view public.events_public as
   select id, title, date, time, location, description, category, layout,
          format, platform, participants, speakers, key_points, winners, sessions, competition_sections,
          links, image, image_alt, logo, brochure, event_details, placeholder, additional_info
   from public.events
   where published = true;
+revoke all on public.events_public from public;
 grant select on public.events_public to anon, authenticated;
 
 create table if not exists public.team_members (

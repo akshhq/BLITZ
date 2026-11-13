@@ -25,13 +25,15 @@ Options -Indexes
 # --- Security headers and sensitive-file protection -------------------------------------------------
 # Block web access to dotfiles (.env, .git, .htaccess), maintainer docs, SQL, and internal scripts.
 <IfModule mod_authz_core.c>
-  <FilesMatch "(^\.(?:env|git|ht)|^README\.md$|^ERRORS\.md$|^SETUP-ADMIN\.md$|^package(?:-lock)?\.json$|^pytest\.ini$|.*\.(?:sql|py|sh|example)$)">
+  <FilesMatch "(?i)(^\.(?:env|git|ht)|^README\.md$|^ERRORS\.md$|^SETUP-ADMIN\.md$|^package(?:-lock)?\.json$|^pytest\.ini$|.*\.(?:sql|py|sh|example)$)">
     Require all denied
   </FilesMatch>
 </IfModule>
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) [NC]
+  RewriteRule .* - [F,L]
   RewriteRule (^|/)\.(?!well-known/) - [F,L]
   RewriteRule ^(?:tools|supabase|tests|node_modules|__pycache__)(/|$) - [F,L]
 </IfModule>
@@ -42,6 +44,7 @@ Options -Indexes
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
   Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set X-Permitted-Cross-Domain-Policies "none"
   # Uncomment the next line only once the whole domain is served strictly over HTTPS:
   # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
