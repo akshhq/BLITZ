@@ -1723,8 +1723,10 @@ html:not(.js) .transition-logo {
 .event-detail-media img {
   display: block;
   width: 100%;
-  max-height: 360px;
+  height: auto;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
+  object-position: center;
   border: 1px solid rgba(212, 164, 92, 0.22);
 }
 .event-carousel {
