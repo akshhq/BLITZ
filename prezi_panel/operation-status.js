@@ -29,7 +29,7 @@
 
   function setBusy(buttons, text) {
     return list(buttons).map(function (b) {
-      var before = { disabled: b.disabled, text: b.textContent };
+      var before = { disabled: b.disabled, text: b.textContent, hasText: !!text };
       b.disabled = true;
       b.setAttribute('aria-busy', 'true');
       if (text) b.textContent = text;
@@ -39,7 +39,7 @@
   function restore(saved) {
     saved.forEach(function (s) {
       s.b.disabled = s.before.disabled;
-      s.b.textContent = s.before.text;
+      if (s.before.hasText) s.b.textContent = s.before.text;
       s.b.removeAttribute('aria-busy');
     });
   }

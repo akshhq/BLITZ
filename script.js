@@ -517,8 +517,6 @@
         </article>
       `;
     }).join('');
-
-    setUpStickyGuard();
   }
 
   function updateEventDetailRoute(eventId) {
@@ -695,46 +693,6 @@
   }
 
   window.addEventListener('popstate', syncEventDetailFromUrl);
-
-  
-  let stickyGuardBound = false;
-  let stickyFrame = null;
-  let stickyLastWidth = -1;
-
-  function evaluateStickyGuard() {
-    stickyFrame = null;
-    const panels = [...document.querySelectorAll('.events-panel')];
-    const viewportHeight = window.innerHeight;
-    panels.forEach(function (panel) {
-      panel.classList.remove('is-tall');
-    });
-    panels.forEach(function (panel) {
-      const stuckTop = parseFloat(getComputedStyle(panel).top) || 0;
-      const tooTall = panel.offsetHeight > viewportHeight - stuckTop + 2;
-      panel.classList.toggle('is-tall', tooTall);
-    });
-  }
-
-  function scheduleStickyGuard() {
-    if (stickyFrame) return;
-    stickyFrame = requestAnimationFrame(evaluateStickyGuard);
-  }
-
-  function setUpStickyGuard() {
-    if (!stickyGuardBound) {
-      stickyGuardBound = true;
-      window.addEventListener('resize', function () {
-        if (window.innerWidth !== stickyLastWidth) {
-          stickyLastWidth = window.innerWidth;
-          scheduleStickyGuard();
-        }
-      });
-      window.addEventListener('load', scheduleStickyGuard);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleStickyGuard);
-    }
-    stickyLastWidth = window.innerWidth;
-    evaluateStickyGuard();
-  }
   function renderTeam() {
     const container = document.querySelector('#team-content');
     if (!container) return;

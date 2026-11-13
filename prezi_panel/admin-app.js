@@ -462,6 +462,7 @@
         'aria-label': 'Show in the public Gallery: ' + title + ', image ' + (n + 1) + ' of ' + total,
         title: canEdit() ? (row.gallery_enabled ? 'Shown in the public Gallery. Click to hide it.' : 'Not shown. Click to show it in the public Gallery.') : 'Your role cannot change this.' }, [starIcon()]);
       if (!canEdit()) star.setAttribute('aria-disabled', 'true');
+      var item;
       star.addEventListener('click', function () {
         if (!canEdit()) { PP.toast(E.catalog.get('BLITZ-PERM-002').message + ' ' + E.catalog.get('BLITZ-PERM-002').hint, ''); return; }
         var want = row.gallery_enabled !== true;
@@ -469,15 +470,21 @@
           key: 'star:' + row.id, buttons: star, operation: 'toggle-gallery-image', requireRows: true,
           task: function () { return sb.from('event_images').update({ gallery_enabled: want }).eq('id', row.id).select('id'); },
           success: want ? 'Added to the public Gallery.' + (published ? '' : ' It will appear once its event is published.') : 'Removed from the public Gallery. The image stays on its event.',
-          onSuccess: function () { row.gallery_enabled = want; star.setAttribute('aria-pressed', want ? 'true' : 'false'); star.title = want ? 'Shown in the public Gallery. Click to hide it.' : 'Not shown. Click to show it in the public Gallery.'; },
+          onSuccess: function () {
+            row.gallery_enabled = want;
+            star.setAttribute('aria-pressed', want ? 'true' : 'false');
+            star.title = want ? 'Shown in the public Gallery. Click to hide it.' : 'Not shown. Click to show it in the public Gallery.';
+            if (item) item.classList.toggle('is-on', want);
+          },
           onError: function () { load(); }
         });
       });
-      return el('li', { class: 'gal-card' + (row.gallery_enabled ? ' is-on' : '') }, [
+      item = el('li', { class: 'gal-card' + (row.gallery_enabled ? ' is-on' : '') }, [
         el('img', { class: 'gal-img', src: PP.imgSrc(row.image), alt: row.alt || ('Image ' + (n + 1) + ' of ' + title), loading: 'lazy' }),
         star,
         el('div', { class: 'gal-meta' }, [el('div', { class: 'gal-event-name', text: title }), el('div', { class: 'hint', text: 'Image ' + (n + 1) + ' of ' + total + ' · ' + (row.aspect || '16:9') + (row.alt ? ' · ' + row.alt : '') })])
       ]);
+      return item;
     }
     load();
   }

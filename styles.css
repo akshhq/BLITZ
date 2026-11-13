@@ -1447,12 +1447,6 @@ html:not(.js) .transition-logo {
   border-top: 1px solid rgba(212, 164, 92, 0.28);
 }
 
-
-.events-panel.is-tall {
-  position: relative;
-  top: auto;
-}
-
 .events-panel-inner {
   position: relative;
   z-index: 1;
