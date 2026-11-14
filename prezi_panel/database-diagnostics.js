@@ -61,7 +61,14 @@
       add('Connection and public content function', function () {
         return sb.rpc('site_content').then(function (res) {
           failFrom(res);
-          return { message: 'The database answered and public.site_content() works.' };
+          var events = res.data && res.data.events;
+          if (Array.isArray(events) && events.some(function (e) { return !Array.isArray(e.images); })) {
+            return {
+              status: 'problem',
+              message: 'public.site_content() is running an older version (events are missing "images" and Gallery still reads legacy gallery_items instead of starred event images). Run supabase/schema.sql in the Supabase SQL Editor.'
+            };
+          }
+          return { message: 'The database answered and public.site_content() includes event images and starred gallery items.' };
         });
       });
 

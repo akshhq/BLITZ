@@ -1150,8 +1150,21 @@
     if (ctx && (ctx.kind === 'script' || ctx.kind === 'promise' || ctx.kind === 'resource')) PP.toast(n.message + ' ' + n.hint + ' (Code ' + n.code + ' · ' + n.correlationId + ')', 'error');
   });
 
-  sb.auth.getSession().then(function (res) {
-    if (PP.recoveryInUrl || recovery) { recovery = true; showSetPassword(); return; }
-    if (res.data && res.data.session) enter(); else showLogin();
-  });
+  var hasStoredSession = false;
+  try { hasStoredSession = !!window.sessionStorage.getItem('blitz-admin-auth'); } catch (e) { hasStoredSession = true; }
+  var hasAuthHash = /^#(access_token|error)=/.test(window.location.hash || '');
+
+  if (PP.recoveryInUrl || recovery) {
+    recovery = true;
+    showSetPassword();
+  } else if (!hasStoredSession && !hasAuthHash) {
+    showLogin();
+  } else {
+    E.withTimeout(sb.auth.getSession(), 5000, 'Session check').then(function (res) {
+      if (PP.recoveryInUrl || recovery) { recovery = true; showSetPassword(); return; }
+      if (res && res.data && res.data.session) enter(); else showLogin();
+    }).catch(function () {
+      showLogin();
+    });
+  }
 }());
