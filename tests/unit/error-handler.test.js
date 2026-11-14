@@ -74,7 +74,7 @@ test('schema diagnosis does not blindly recommend a migration or a column type',
   const known = E.explain({ code: 'PGRST204', message: "Could not find the 'event_details' column of 'events' in the schema cache" }, { audience: 'admin' });
   assert.match(known, /event_details/);
   assert.match(known, /jsonb/);                                   // the real type, never "text"
-  assert.match(known, /migration_add_event_details\.sql/);
+  assert.match(known, /schema\.sql/);
   assert.match(known, /if it exists, the schema cache is stale/i);
   assert.doesNotMatch(known, /ADD COLUMN/i);
   const unknown = E.explain({ code: 'PGRST204', message: "Could not find the 'mystery' column of 'events' in the schema cache" }, { audience: 'admin' });

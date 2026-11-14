@@ -185,9 +185,8 @@ where c not in (
 );
 ```
 
-- Missing `event_details` or `placeholder` → run `supabase/migration_add_event_details.sql`.
-- Missing only `brochure` or `logo` → run `supabase/migration_add_brochure_and_logo.sql`.
-- Both migrations keep existing rows, never drop anything, and are safe to run twice. Never drop or recreate a table to fix a missing column.
+- Missing `event_details`, `placeholder`, `brochure`, or `logo` → run `supabase/schema.sql` in the Supabase SQL Editor.
+- `supabase/schema.sql` keeps existing rows, never drops anything, and is safe to run twice. Never drop or recreate a table to fix a missing column.
 
 **4.3 Does the public content function exist with the right signature?** Expected: one row, no arguments, returns `jsonb`.
 
@@ -355,9 +354,9 @@ python supabase/tests/e2e/run_error_tests.py /path/to/postgrest     # do not run
 
 **One source of images.** Every image belongs to an event (`public.event_images`: its own id, the event, the image, a description, an order, and `gallery_enabled`, default **false**). The panel's Gallery section is a list of those images with a star each; it has no upload of its own. The public Gallery is *generated* in `site_content()` from images that are **starred AND belong to a PUBLISHED event AND have a valid reference**. Nothing is copied into a separate collection. `events.image` is kept equal to the first image so older readers still work.
 
-**Installing it.** Run `supabase/migration_event_images.sql` in the Supabase SQL Editor **before** deploying the new panel (the panel calls `public.set_event_images`). It is safe to run twice, deletes nothing, copies each existing single event image in as that event's first image (star off), and turns the star **on** only for a legacy Gallery photo whose image is exactly an event's image. The old `public.gallery_items` table is kept untouched but no longer feeds the website.
+**Installing it.** Run `supabase/schema.sql` in the Supabase SQL Editor **before** deploying the new panel (the panel calls `public.set_event_images`). It is safe to run twice, deletes nothing, copies each existing single event image in as that event's first image (star off), and turns the star **on** only for a legacy Gallery photo whose image is exactly an event's image. The old `public.gallery_items` table is kept untouched but no longer feeds the website.
 
-**Image shapes (16:9, 5:4, 4:5).** When adding images in the event editor you choose a shape first (Wide 16:9, Landscape 5:4, Portrait 4:5); the crop frame follows it and the shape is saved with the image. The public Gallery shows every card at the same picture height, with the width following the shape, so mixed shapes sit in one tidy row without cropping or jumping while images load. Older bundled items without a shape stay 4:3. This needs one extra migration: run `supabase/migration_event_image_aspect.sql` **after** `migration_event_images.sql` (if you already ran the first, just run this one). Existing images become 16:9, which is how they were cropped. If it has not been run, the dashboard **System check** says so ("Event image shapes") and the event editor reports a missing `aspect` column with the right file name.
+**Image shapes (16:9, 5:4, 4:5).** When adding images in the event editor you choose a shape first (Wide 16:9, Landscape 5:4, Portrait 4:5); the crop frame follows it and the shape is saved with the image. The public Gallery shows every card at the same picture height, with the width following the shape, so mixed shapes sit in one tidy row without cropping or jumping while images load. Older bundled items without a shape stay 4:3. Existing images become 16:9, which is how they were cropped. If `schema.sql` has not been re-run on an older database, the dashboard **System check** says so ("Event image shapes") and the event editor reports a missing `aspect` column.
 
 **What to expect after the migration.** The public Gallery shows only starred event images, so it is empty until editors star some. Older standalone Gallery photos stay in the database but are not shown; the panel's Gallery page lists them in a notice. To show one again, add the image to an event and star it.
 
@@ -387,7 +386,7 @@ order by e.title, i.sort_order;
 ```
 
 ```sql
--- Which shape is each image? (Expected: only 16:9, 5:4 or 4:5; an error here means migration_event_image_aspect.sql has not been run)
+-- Which shape is each image? (Expected: only 16:9, 5:4 or 4:5; an error here means supabase/schema.sql has not been re-run)
 select aspect, count(*) from public.event_images group by aspect order by aspect;
 ```
 

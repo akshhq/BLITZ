@@ -126,17 +126,17 @@
   LIST.forEach(function (entry) { BY_CODE[entry.code] = entry; });
 
   // Columns that exist in supabase/schema.sql for public.events and are known to be missing from
-  // projects created before they were added. Used only to point at the RIGHT migration.
+  // older projects. Used to point admins to supabase/schema.sql (which is idempotent).
   var KNOWN_EVENT_COLUMNS = {
-    event_details: { type: 'jsonb', migration: 'supabase/migration_add_event_details.sql' },
-    placeholder: { type: 'boolean', migration: 'supabase/migration_add_event_details.sql' },
-    brochure: { type: 'text', migration: 'supabase/migration_add_brochure_and_logo.sql' },
-    logo: { type: 'text', migration: 'supabase/migration_add_brochure_and_logo.sql' }
+    event_details: { type: 'jsonb', migration: 'supabase/schema.sql' },
+    placeholder: { type: 'boolean', migration: 'supabase/schema.sql' },
+    brochure: { type: 'text', migration: 'supabase/schema.sql' },
+    logo: { type: 'text', migration: 'supabase/schema.sql' }
   };
 
   // Same idea for public.event_images (added after the first release).
   var KNOWN_IMAGE_COLUMNS = {
-    aspect: { type: 'text', migration: 'supabase/migration_event_image_aspect.sql' }
+    aspect: { type: 'text', migration: 'supabase/schema.sql' }
   };
 
   return {

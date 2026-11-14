@@ -91,7 +91,7 @@ def old_database(drop):
     cur.execute("insert into public.announcements (id,title,published) values ('keep-ann','Keep Ann',true)")
     for c in drop: cur.execute(f"alter table public.events drop column {c} cascade")
     return {c for c in drop if c not in cols('events')}
-for mig, drop in (('migration_add_event_details.sql', ['event_details', 'placeholder', 'brochure', 'logo']), ('migration_add_brochure_and_logo.sql', ['brochure', 'logo'])):
+for mig, drop in (('schema.sql', ['event_details', 'placeholder', 'brochure', 'logo']),):
     gone = old_database(drop)
     ok(f'[{mig}] test setup: outdated schema really lacks {sorted(gone)}', gone == set(drop), gone)
     try:
@@ -110,13 +110,11 @@ for mig, drop in (('migration_add_event_details.sql', ['event_details', 'placeho
     ok(f'[{mig}] RLS is still enabled afterwards', q("select relrowsecurity from pg_class where oid='public.events'::regclass")[0][0])
     ok(f'[{mig}] anon still cannot read the events table directly', q("select has_table_privilege('anon','public.events','select')")[0][0] is False)
 
-print('\n== 5. migrations never destroy data')
-for f in sorted(os.listdir(SUP)):
-    if f.startswith('migration_') and f.endswith('.sql'):
-        body = re.sub(r'--[^\n]*', '', read(SUP, f)).lower()
-        body = re.sub(r'delete from public\.event_images where event_id = p_event_id and id <> all \(v_ids\);', '', body)   # set_event_images: removes only the images taken off ONE event's list
-        bad = [w for w in ('drop table', 'truncate', 'delete from', 'drop column', 'drop schema') if w in body]
-        ok(f'{f}: contains no {", ".join(("drop table", "truncate", "delete from", "drop column"))}', not bad, bad)
+print('\n== 5. schema.sql never destroys data')
+body = re.sub(r'--[^\n]*', '', read(SUP, 'schema.sql')).lower()
+body = re.sub(r'delete from public\.event_images where event_id = p_event_id and id <> all \(v_ids\);', '', body)   # set_event_images: removes only the images taken off ONE event's list
+bad = [w for w in ('drop table', 'truncate', 'delete from', 'drop column', 'drop schema') if w in body]
+ok(f'schema.sql: contains no {", ".join(("drop table", "truncate", "delete from", "drop column"))}', not bad, bad)
 
 print('\n== 6. seed.sql applies to schema.sql')
 try: fresh(with_seed=True); seeded = True
@@ -217,7 +215,7 @@ ok('site_content gives events their images WITH shapes', [i['aspect'] for e in s
 ok('...and the Gallery items carry the shape too, so the page can size each card before the image loads', sorted(g['aspect'] for g in site['gallery'] if g['title'] == 'Shapes') == ['4:5', '5:4'], site['gallery'])
 cur.execute("delete from public.events where id='ev-s'")
 
-print('\n== 8. migration_event_images.sql applied to the PRE-CHANGE schema, with real data')
+print('\n== 8. schema.sql applied to the PRE-CHANGE schema, with real data')
 fixture = read(HERE, 'fixtures', 'schema_before_event_images.sql')
 def old_db():
     cur.execute("drop schema if exists public cascade; create schema public; drop schema if exists auth cascade; drop schema if exists storage cascade;")
@@ -229,10 +227,9 @@ cur.execute("insert into public.events (id,title,description,category,published,
 cur.execute("insert into public.gallery_items (title,image,published) values ('Same file','assets/images/legacy/one.webp',true),('Standalone','assets/gallery/standalone.svg',true),('Hidden','assets/gallery/hidden.svg',false)")
 before_gallery = q("select id, title, image, published from public.gallery_items order by title")
 before_old_site = q("select public.site_content()")[0][0]
-cur.execute(read(SUP, 'migration_event_images.sql'))
-ok('migration applies', True)
-cur.execute(read(SUP, 'migration_event_image_aspect.sql'))
-ok('the shape migration applies on top (and existing images become 16:9, as they were cropped)', q("select aspect from public.event_images") == [('16:9',)])
+cur.execute(read(SUP, 'schema.sql'))
+ok('schema.sql applies cleanly to old database', True)
+ok('aspect column is present (and existing images become 16:9, as they were cropped)', q("select aspect from public.event_images") == [('16:9',)])
 ok('existing single-image events were backfilled as image 1 (alt kept, star OFF)', q("select event_id, image, alt, gallery_enabled, sort_order from public.event_images order by event_id") == [('one', 'assets/images/legacy/one.webp', 'alt one', True, 10)] or q("select event_id, image, alt, sort_order from public.event_images order by event_id") == [('one', 'assets/images/legacy/one.webp', 'alt one', 10)], q("select * from public.event_images"))
 ok('events without an image get no row; nothing is invented', q("select count(*) from public.event_images")[0][0] == 1)
 ok('a legacy gallery photo that is EXACTLY an event image keeps its place: that image\'s star is switched on', q("select gallery_enabled from public.event_images")[0][0] is True)
@@ -241,13 +238,13 @@ new_site = q("select public.site_content()")[0][0]
 ok('the public Gallery now contains only the matched image; standalone legacy items are not shown', [x['title'] for x in new_site['gallery']] == ['One'] and 'Standalone' not in json.dumps(new_site['gallery']), new_site['gallery'])
 ok('the rest of site_content is unchanged (announcements, team, collaborations, and every event field)', all(new_site[k] == before_old_site[k] for k in ('announcements', 'team', 'collaborations')) and [{k: v for k, v in e.items() if k != 'images'} for e in new_site['events']] == before_old_site['events'])
 ok('the existing event now also lists its image in `images`', [e['images'] for e in new_site['events'] if e['id'] == 'one'][0][0]['image'] == 'assets/images/legacy/one.webp')
-cur.execute(read(SUP, 'migration_event_images.sql')); cur.execute(read(SUP, 'migration_event_image_aspect.sql')); ok('running BOTH migrations a second time is safe (no duplicates, shapes kept)', q("select count(*), min(aspect) from public.event_images")[0] == (1, '16:9'))
+cur.execute(read(SUP, 'schema.sql')); ok('running schema.sql a second time is safe (no duplicates, shapes kept)', q("select count(*), min(aspect) from public.event_images")[0] == (1, '16:9'))
 def fdef(db_fn): return q("select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname=%s", db_fn)[0][0]
 mig_defs = {n: fdef(n) for n in ('site_content', 'set_event_images')}
-mig_cols = cols('event_images'); fresh(); ok('schema.sql and the two migrations define IDENTICAL functions and the same event_images columns (no drift)', mig_defs == {n: fdef(n) for n in ('site_content', 'set_event_images')} and mig_cols == cols('event_images'))
-body = re.sub(r'--[^\n]*', '', read(SUP, 'migration_event_images.sql')).lower()
+mig_cols = cols('event_images'); fresh(); ok('schema.sql on an old DB and a fresh DB define IDENTICAL functions and the same event_images columns (no drift)', mig_defs == {n: fdef(n) for n in ('site_content', 'set_event_images')} and mig_cols == cols('event_images'))
+body = re.sub(r'--[^\n]*', '', read(SUP, 'schema.sql')).lower()
 body = re.sub(r'delete from public\.event_images where event_id = p_event_id and id <> all \(v_ids\);', '', body)
-ok('the migration contains no drop / truncate / delete from (apart from the RPC removing images taken off one event)', not [w for w in ('drop table', 'truncate', 'delete from', 'drop column', 'drop schema') if w in body])
+ok('schema.sql contains no drop / truncate / delete from (apart from the RPC removing images taken off one event)', not [w for w in ('drop table', 'truncate', 'delete from', 'drop column', 'drop schema') if w in body])
 
 print(f"\n{sum(R)}/{len(R)} passed")
 sys.exit(0 if all(R) else 1)

@@ -11,7 +11,7 @@ You will set up a free database once (about 30–40 minutes), then the society e
 · [5 Connect the site](#5-connect-the-website) · [6 Deploy](#6-put-the-files-on-the-college-server) ·
 [7 Keep-alive](#7-stop-the-free-database-from-pausing) · [8 Test](#8-first-run-checklist) ·
 [9 Daily use](#9-daily-use-and-admin-people) · [10 Limits](#10-limits-and-things-to-know) ·
-[11 Troubleshooting](#11-troubleshooting)
+[11 Troubleshooting](#11-troubleshooting) · [12 Commands](#12-supabase-commands-reference-copy-paste-ready)
 
 ---
 
@@ -300,8 +300,147 @@ content and history.
 | Image upload fails | The file must be PNG/JPEG/WebP and under 20 MB before cropping; check you are an `owner` or `editor`. |
 | Site still shows old content | Refresh once; check the item is **published**; check `config.js` on the server is filled in. |
 | Schema step fails in the SQL editor | Run it again from the top (it is safe to repeat). If it still fails, copy the red error message to a developer. |
-| Saving an event says “Could not find the 'brochure' (or 'logo') column in schema cache” | Run `supabase/migration_add_brochure_and_logo.sql` in the SQL Editor and reload the schema cache under **Project Settings → API**. |
+| Saving an event says “Could not find the 'brochure' (or 'logo') column in schema cache” | Run `supabase/schema.sql` in the SQL Editor and reload the schema cache under **Project Settings → API** (or run `notify pgrst, 'reload schema';`). |
 | `seed.sql` complains about a value | A piece of content breaks a database rule (e.g. a link not starting with `https://`). Fix it in `data.js`, run `node tools/generate-seed.js`, and run it again. |
+
+## 12. Supabase commands reference (copy-paste ready)
+
+Anyone maintaining the site can copy and paste these commands directly.
+
+| What you want to do | Where to run it | Jump to |
+|---|---|---|
+| Update `config.js` after editing `.env` | Project folder terminal | [Local commands](#a-local-terminal-commands-run-in-your-project-folder) |
+| Check if the website is ready to upload | Project folder terminal | [Local commands](#a-local-terminal-commands-run-in-your-project-folder) |
+| Test what the live database sends to the website | Any terminal (PowerShell / Bash) | [API check](#b-test-the-live-website-api-one-command) |
+| Add/remove an admin or change their role | Supabase → **SQL Editor** | [SQL #1–#3](#c-supabase-sql-editor-commands-dashboard--sql-editor--new-query) |
+| Fix "column not found in schema cache" | Supabase → **SQL Editor** | [SQL #4](#c-supabase-sql-editor-commands-dashboard--sql-editor--new-query) |
+| See live vs. draft counts, Gallery images, or audit log | Supabase → **SQL Editor** | [SQL #5–#9](#c-supabase-sql-editor-commands-dashboard--sql-editor--new-query) |
+
+---
+
+### A. Local terminal commands (run in your project folder)
+
+Open a terminal in the `BLITZ` folder and run whichever command you need:
+
+```bash
+# Update config.js from your .env file (run after changing SUPABASE_URL or SUPABASE_ANON_KEY)
+node tools/configure-env.js
+
+# Rebuild supabase/seed.sql from data.js (run if you edited data.js and want to re-seed Supabase)
+node tools/generate-seed.js
+
+# Check all pages, links, security rules, and config before uploading to hosting
+node tools/validate-site.js
+
+# Check data.js formatting and links
+node tools/validate-data.js
+```
+
+---
+
+### B. Test the live website API (one command)
+
+Replace `YOUR_PROJECT` and `YOUR_PUBLISHABLE_OR_ANON_KEY` with the values from your `.env` file (`SUPABASE_URL` and `SUPABASE_ANON_KEY`), then run:
+
+**Windows PowerShell:**
+```powershell
+Invoke-RestMethod -Method Post -Uri "https://YOUR_PROJECT.supabase.co/rest/v1/rpc/site_content" -Headers @{ apikey = "YOUR_PUBLISHABLE_OR_ANON_KEY"; "Content-Type" = "application/json" } -Body "{}"
+```
+
+**macOS / Linux (Bash):**
+```bash
+curl -s -X POST "https://YOUR_PROJECT.supabase.co/rest/v1/rpc/site_content" -H "apikey: YOUR_PUBLISHABLE_OR_ANON_KEY" -H "Content-Type: application/json" -d "{}"
+```
+If it prints JSON containing `announcements`, `events`, `team`, `gallery`, and `collaborations`, your live database connection is working.
+
+---
+
+### C. Supabase SQL Editor commands (Dashboard → SQL Editor → New query)
+
+Open **Supabase Dashboard → SQL Editor → New query**, paste a block below, replace any `REPLACE_...` text, and click **Run**.
+
+#### 1. See everyone who currently has Prezi Panel access
+```sql
+select email, role, created_at
+from public.admins
+order by role, email;
+```
+
+#### 2. Give someone Prezi Panel access (or change their role)
+> **Note:** Create the user in **Authentication → Users → Add user** first, then run this.  
+> Replace `person@keshav.du.ac.in` and pick a role: `'owner'`, `'editor'`, or `'viewer'`.
+```sql
+insert into public.admins (user_id, email, role)
+select id, email, 'editor'
+from auth.users
+where lower(email) = lower('person@keshav.du.ac.in')
+on conflict (user_id) do update
+  set role = excluded.role,
+      email = excluded.email;
+```
+*(You can also keep your permanent team list in `supabase/admins.sql` and paste that entire file into SQL Editor whenever you sync roles.)*
+
+#### 3. Remove someone's Prezi Panel access
+> Replace `person@keshav.du.ac.in` with their email. This removes admin access immediately without deleting their Auth account.
+```sql
+delete from public.admins
+where lower(email) = lower('person@keshav.du.ac.in');
+```
+
+#### 4. Fix "column not found in schema cache" errors
+> Run this right after running `schema.sql`.
+```sql
+notify pgrst, 'reload schema';
+```
+
+#### 5. See how many items are live vs. draft
+```sql
+select 'announcements' as section, count(*) filter (where published) as live, count(*) filter (where not published) as draft from public.announcements
+union all
+select 'events', count(*) filter (where published), count(*) filter (where not published) from public.events
+union all
+select 'team_members', count(*) filter (where published), count(*) filter (where not published) from public.team_members
+union all
+select 'collaborations', count(*) filter (where published), count(*) filter (where not published) from public.collaborations;
+```
+
+#### 6. Check why a photo is not showing in the Gallery
+```sql
+select e.title as event_title, e.published as event_published, i.gallery_enabled as gallery_toggle_on, i.image, i.sort_order
+from public.event_images i
+join public.events e on e.id = i.event_id
+order by e.date desc nulls last, i.sort_order;
+```
+An image shows on the homepage Gallery only when **both** `event_published` and `gallery_toggle_on` are `true`.
+
+#### 7. Check how many items the public website currently receives
+```sql
+select
+  jsonb_array_length(c -> 'announcements') as announcements,
+  jsonb_array_length(c -> 'events') as events,
+  jsonb_array_length(c -> 'team') as team,
+  jsonb_array_length(c -> 'gallery') as gallery,
+  jsonb_array_length(c -> 'collaborations') as collaborations
+from (select public.site_content() as c) t;
+```
+
+#### 8. See the last 20 edits made in the Prezi Panel (audit log)
+```sql
+select h.changed_at, h.table_name, h.row_pk, h.op, a.email as edited_by
+from public.content_history h
+left join public.admins a on a.user_id = h.changed_by
+order by h.changed_at desc
+limit 20;
+```
+
+#### 9. List the latest uploaded images in Storage (`media` bucket)
+```sql
+select name, created_at, (metadata ->> 'size')::bigint as bytes
+from storage.objects
+where bucket_id = 'media'
+order by created_at desc
+limit 30;
+```
 
 ## For developers: tests
 

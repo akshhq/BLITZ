@@ -61,7 +61,7 @@ a deployed environment, or physical-device testing.
   - Sensitive files and folders (`.env`, `.git`, `tools/`, `supabase/`, `tests/`, `*.sql`, `*.py`, `README.md`) return `403 Forbidden`.
   - `TRACE`/`TRACK` HTTP methods return `403 Forbidden`.
   - Security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, and `Strict-Transport-Security` once HTTPS-only) are present on live responses.
-- [ ] Run [`supabase/schema.sql`](supabase/schema.sql) (or [`supabase/migration_add_brochure_and_logo.sql`](supabase/migration_add_brochure_and_logo.sql) on an existing project) in the Supabase SQL Editor to apply RLS policies, `valid_image`, `valid_brochure`, and `events_public` privilege restrictions.
+- [ ] Run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL Editor to apply RLS policies, `valid_image`, `valid_brochure`, and `events_public` privilege restrictions.
 - [ ] Confirm [`config.js`](config.js) uses only the public `sb_publishable_` / anon key (never `service_role` or `sb_secret_`), and verify admin accounts/roles in `public.admins` via [`supabase/admins.sql`](supabase/admins.sql) (updating any temporary passwords from [`supabase/user.sql`](supabase/user.sql)).
 - [ ] Submit `sitemap.xml` to Search Console for the final host.
 - [ ] Confirm whether the host serves `robots.txt` at the domain root. A

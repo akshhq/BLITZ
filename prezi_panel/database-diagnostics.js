@@ -131,7 +131,7 @@
 
       add('Event image shapes', function () {
         return sb.from('event_images').select('aspect').limit(0).then(function (res) {
-          if (res.error && /^(PGRST204|42703)$/.test(String(res.error.code))) return { status: 'problem', code: 'BLITZ-SCH-001', message: "The database has no 'aspect' column on event_images yet. Run supabase/migration_event_image_aspect.sql (after migration_event_images.sql); it is safe to run twice." };
+          if (res.error && /^(PGRST204|42703)$/.test(String(res.error.code))) return { status: 'problem', code: 'BLITZ-SCH-001', message: "The database has no 'aspect' column on event_images yet. Run supabase/schema.sql in the Supabase SQL Editor; it is safe to run twice." };
           failFrom(res);
           return { message: 'event_images.aspect is there (16:9, 5:4 and 4:5 are supported).' };
         });

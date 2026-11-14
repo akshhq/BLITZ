@@ -8,7 +8,8 @@
 
 -- 1. Sync / Upsert desired admin roles from auth.users
 with wanted (email, role) as (values
-  ('aksh2425709@keshav.du.ac.in', 'owner')
+  ('aksh2425709@keshav.du.ac.in', 'owner'),
+  ('vjindal@keshav.du.ac.in', 'editor')
   -- Add additional team members below:
   -- ('editor-email@keshav.du.ac.in', 'editor'),
   -- ('viewer-email@keshav.du.ac.in', 'viewer')
@@ -25,7 +26,8 @@ on conflict (user_id) do update
 -- (Uncomment below if you want this script to strictly prune removed administrators)
 -- delete from public.admins
 -- where lower(email) not in (
---   lower('aksh2425709@keshav.du.ac.in')
+--   lower('aksh2425709@keshav.du.ac.in'),
+--   lower('vjindal@keshav.du.ac.in')
 -- );
 
 -- 3. Show current active admins and roles
