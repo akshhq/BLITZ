@@ -151,7 +151,7 @@ return {
     }
   ],
   team: [
-    { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/avatar-placeholder.svg' },
+    { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/arpana-sharma.webp' },
     { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: 'assets/images/team/avatar-placeholder.svg' },
     { name: 'Prof. (Dr.) Vinita Jindal', position: 'Convenor', tier: 'faculty', photo: 'assets/images/team/vinita-jindal.webp' },
     { name: 'Ms. Jyoti Kumari', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/jyoti-kumari.webp' },

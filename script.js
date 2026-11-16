@@ -706,7 +706,7 @@
 
     const defaultAvatar = 'assets/images/team/avatar-placeholder.svg';
     const requiredFaculty = [
-      { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: defaultAvatar },
+      { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/arpana-sharma.webp' },
       { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: defaultAvatar }
     ];
     const sourceTeam = Array.isArray(DATA.team) ? DATA.team.slice() : [];
