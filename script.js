@@ -697,6 +697,21 @@
     const container = document.querySelector('#team-content');
     if (!container) return;
 
+    /* Default per-row counts for each tier (desktop).
+       Override from DATA.teamLayout or local storage. */
+    const defaultPerRow = { faculty: 3, core: 3, executive: 4, volunteer: 5 };
+    var localLayout = null;
+    try { localLayout = JSON.parse(localStorage.getItem('blitz:team_layout')); } catch (e) {}
+    const layoutCfg = (DATA.teamLayout && typeof DATA.teamLayout === 'object')
+      ? DATA.teamLayout
+      : (localLayout || {});
+    const perRow = {
+      faculty:   Math.max(1, Math.min(8, parseInt(layoutCfg.faculty, 10)   || defaultPerRow.faculty)),
+      core:      Math.max(1, Math.min(8, parseInt(layoutCfg.core, 10)      || defaultPerRow.core)),
+      executive: Math.max(1, Math.min(8, parseInt(layoutCfg.executive, 10) || defaultPerRow.executive)),
+      volunteer: Math.max(1, Math.min(8, parseInt(layoutCfg.volunteer, 10) || defaultPerRow.volunteer))
+    };
+
     const tiers = [
       { key: 'faculty', label: 'Faculty Team', shortLabel: 'FACULTY TEAM', gridClass: 'team-grid--faculty' },
       { key: 'core', label: 'Core Student Team', shortLabel: 'CORE STUDENT TEAM', gridClass: 'team-grid--core' },
@@ -706,45 +721,42 @@
 
     const defaultAvatar = 'assets/images/team/avatar-placeholder.svg';
     const requiredFaculty = [
-      { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/arpana-sharma.webp' },
-      { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: defaultAvatar }
+      { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/arpana-sharma.webp', sort_order: 10 },
+      { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: 'assets/images/team/roli-bansal.webp', sort_order: 20 }
     ];
+    function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
     const sourceTeam = Array.isArray(DATA.team) ? DATA.team.slice() : [];
     requiredFaculty.forEach(function (requiredMember) {
       const exists = sourceTeam.some(function (member) {
-        return member && member.name === requiredMember.name && member.tier === 'faculty';
+        return member && member.tier === 'faculty' && (norm(member.name) === norm(requiredMember.name) || norm(member.position) === norm(requiredMember.position));
       });
       if (!exists) sourceTeam.push(requiredMember);
     });
-    const facultyMembers = requiredFaculty.map(function (requiredMember) {
-      return sourceTeam.find(function (member) {
-        return member && member.name === requiredMember.name && member.tier === 'faculty';
-      });
-    }).concat(sourceTeam.filter(function (member) {
-      return !requiredFaculty.some(function (requiredMember) {
-        return member && member.name === requiredMember.name && member.tier === 'faculty';
-      }) && member && member.tier === 'faculty';
-    }));
-    const nonFacultyMembers = sourceTeam.filter(function (member) {
-      return !member || member.tier !== 'faculty';
-    });
-    const orderedTeam = facultyMembers.concat(nonFacultyMembers);
-    const teamList = orderedTeam.map(function (member) {
+
+    const teamList = sourceTeam.map(function (member, fallbackIndex) {
       return {
         name: String((member && member.name) || '').trim(),
         position: String((member && member.position) || '').trim(),
         tier: member && (member.tier === 'senior' || member.tier === 'junior' ? 'executive' : member.tier),
-        photo: member && member.photo
+        photo: member && member.photo,
+        sortOrder: typeof (member && member.sort_order) === 'number' ? member.sort_order : (fallbackIndex + 1) * 10
       };
     }).filter(function (member) {
       return member.name;
     });
 
     container.innerHTML = tiers.map(function (tier) {
-      const members = teamList.filter(function (m) {
+      var members = teamList.filter(function (m) {
         return m.tier === tier.key;
       });
       if (members.length === 0) return '';
+
+      /* Sort by sort_order (from DB), then alphabetically as tiebreaker */
+      members.sort(function (a, b) {
+        return (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name);
+      });
+
+      const cols = perRow[tier.key] || 3;
 
       const cardsHtml = members.map(function (member, index) {
         const photo = safeAssetUrl(member.photo);
@@ -778,13 +790,14 @@
           <div class="team-tier-heading">
             <div class="team-tier-title-wrap"><span class="team-tier-kicker">${escapeHtml(tier.shortLabel)}</span><h3 id="team-tier-${tier.key}">${escapeHtml(tier.label)}</h3></div>
           </div>
-          <div class="team-grid ${tier.gridClass}">
+          <div class="team-grid ${tier.gridClass}" style="--cols:${cols}">
             ${cardsHtml}
           </div>
         </section>
       `;
     }).join('');
   }
+  window.BLITZ_RENDER_TEAM = renderTeam;
   function renderGallery() {
     const track = document.querySelector('#gallery-track');
     if (!track) return;

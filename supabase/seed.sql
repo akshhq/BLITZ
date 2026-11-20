@@ -17,8 +17,8 @@ insert into public.events (id, title, date, time, location, description, categor
 -- event images (the one source of images: an event's own image is its first image; the Gallery star starts off)
 
 -- team (sort_order in steps of 10 so the admin can slot people in between)
-insert into public.team_members (id, name, position, tier, photo, sort_order) values ('0711b6e4-8ecd-b1ae-ee02-bdcaac860e0f', 'Prof. (Dr.) Arpana Sharma', 'Principal', 'faculty', 'assets/images/team/avatar-placeholder.svg', 10) on conflict (id) do nothing;
-insert into public.team_members (id, name, position, tier, photo, sort_order) values ('04c666ba-0dee-ae01-1cd4-00fef841a002', 'Prof. (Dr.) Roli Bansal', 'TIC', 'faculty', 'assets/images/team/avatar-placeholder.svg', 20) on conflict (id) do nothing;
+insert into public.team_members (id, name, position, tier, photo, sort_order) values ('0711b6e4-8ecd-b1ae-ee02-bdcaac860e0f', 'Prof. (Dr.) Arpana Sharma', 'Principal', 'faculty', 'assets/images/team/arpana-sharma.webp', 10) on conflict (id) do nothing;
+insert into public.team_members (id, name, position, tier, photo, sort_order) values ('04c666ba-0dee-ae01-1cd4-00fef841a002', 'Prof. (Dr.) Roli Bansal', 'TIC', 'faculty', 'assets/images/team/roli-bansal.webp', 20) on conflict (id) do nothing;
 insert into public.team_members (id, name, position, tier, photo, sort_order) values ('c7129d71-e6a3-4142-c2c3-025e6f8eec38', 'Prof. (Dr.) Vinita Jindal', 'Convenor', 'faculty', 'assets/images/team/vinita-jindal.webp', 30) on conflict (id) do nothing;
 insert into public.team_members (id, name, position, tier, photo, sort_order) values ('f735c998-cd9e-1370-5b14-44b244363590', 'Ms. Jyoti Kumari', 'Faculty Member', 'faculty', 'assets/images/team/jyoti-kumari.webp', 40) on conflict (id) do nothing;
 insert into public.team_members (id, name, position, tier, photo, sort_order) values ('bea920fa-4795-5b3f-6345-92f9d24bd89f', 'Mr. Anand', 'Faculty Member', 'faculty', 'assets/images/team/anand.webp', 50) on conflict (id) do nothing;
@@ -48,5 +48,8 @@ insert into public.gallery_items (id, title, description, image, alt, media_type
 insert into public.gallery_items (id, title, description, image, alt, media_type, date_label, location, sort_order) values ('a35b4db3-6472-8f55-2d77-b3c63e65e50c', 'TECHNYX 2026', 'A series of technical sessions covering web fundamentals, Git workflows and NLP.', 'assets/images/gallery/tech-quiz-finals.svg', 'Illustration representing technical sessions on web fundamentals, GitHub and NLP', 'illustration', 'Jan 2026', 'Keshav Mahavidyalaya', 50) on conflict (id) do nothing;
 
 -- collaborations
+
+-- site settings
+insert into public.site_settings (key, value) values ('team_layout', '{"faculty":3,"core":3,"executive":4,"volunteer":5}'::jsonb) on conflict (key) do update set value = excluded.value;
 
 commit;

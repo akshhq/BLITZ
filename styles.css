@@ -3611,23 +3611,25 @@ html:not(.js) .nav-menu-toggle {
 }
 .team-grid--faculty,
 .team-grid--core {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
 }
+
 .team-grid--executive {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
 }
+
 .team-grid--volunteer {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
 }
 
 @media (max-width: 900px) {
   .team-grid--faculty,
   .team-grid--core {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(min(var(--cols, 3), 2), minmax(0, 1fr));
   }
   .team-grid--executive,
   .team-grid--volunteer {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(min(var(--cols, 4), 3), minmax(0, 1fr));
   }
 }
 

@@ -165,6 +165,13 @@ create table if not exists public.collaborations (
   updated_at timestamptz not null default now(),
   updated_by uuid
 );
+
+create table if not exists public.site_settings (
+  key         text primary key,
+  value       jsonb not null default '{}'::jsonb,
+  updated_at  timestamptz not null default now()
+);
+
 create table if not exists public.content_history (
   id         bigint generated always as identity primary key,
   table_name text not null,
@@ -240,6 +247,24 @@ begin
     execute format('create trigger trg_history after insert or update or delete on public.%I for each row execute function public.log_change()', t);
   end loop;
 end $$;
+
+-- Site settings: universal key-value config (team_layout, etc.)
+alter table public.site_settings enable row level security;
+revoke all on public.site_settings from anon, authenticated;
+grant select on public.site_settings to anon, authenticated;
+grant insert, update, delete on public.site_settings to authenticated;
+
+drop policy if exists site_settings_select on public.site_settings;
+create policy site_settings_select on public.site_settings for select using (true);
+
+drop policy if exists site_settings_insert on public.site_settings;
+create policy site_settings_insert on public.site_settings for insert to authenticated with check (public.can_edit());
+
+drop policy if exists site_settings_update on public.site_settings;
+create policy site_settings_update on public.site_settings for update to authenticated using (public.can_edit()) with check (public.can_edit());
+
+drop policy if exists site_settings_delete on public.site_settings;
+create policy site_settings_delete on public.site_settings for delete to authenticated using (public.can_edit());
 
 -- ======================================================================================
 -- Event images: one source of images (the images uploaded to events).
@@ -365,6 +390,9 @@ language sql stable security definer set search_path = public, pg_temp as $$
     'collaborations', coalesce((
       select jsonb_agg(to_jsonb(x) order by x.sort_order, x.name)
       from (select id, name, type, logo, url, sort_order from public.collaborations where published) x), '[]'),
+    'settings', coalesce((
+      select jsonb_object_agg(key, value) from public.site_settings
+    ), '{}'::jsonb),
     'generated_at', now()
   );
 $$;

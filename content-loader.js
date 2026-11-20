@@ -121,6 +121,10 @@
 
   function apply(mapped) {
     COLLECTIONS.forEach(function (k) { DATA[k] = mapped[k]; });
+    if (mapped.settings && mapped.settings.team_layout) {
+      DATA.teamLayout = mapped.settings.team_layout;
+      try { localStorage.setItem('blitz:team_layout', JSON.stringify(mapped.settings.team_layout)); } catch (e) {}
+    }
   }
 
   var startSource = 'snapshot';
@@ -186,6 +190,18 @@
       }
       try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), v: 1, raw: raw })); } catch (e) { /* storage full or blocked: fine */ }
       apply(mapped);
+      if (!mapped.settings || !mapped.settings.team_layout) {
+        fetch(url + '/rest/v1/site_settings?key=eq.team_layout&select=value', {
+          headers: { apikey: key },
+          cache: 'no-store'
+        }).then(function (res) { return res.ok ? res.json() : null; }).then(function (rows) {
+          if (Array.isArray(rows) && rows[0] && rows[0].value) {
+            DATA.teamLayout = rows[0].value;
+            try { localStorage.setItem('blitz:team_layout', JSON.stringify(rows[0].value)); } catch (e) {}
+            if (typeof window.BLITZ_RENDER_TEAM === 'function') window.BLITZ_RENDER_TEAM();
+          }
+        }).catch(function () {});
+      }
       live.lastSync = Date.now();
       setStatus('live', 'live');
       var now = fingerprint();

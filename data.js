@@ -152,7 +152,7 @@ return {
   ],
   team: [
     { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/arpana-sharma.webp' },
-    { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: 'assets/images/team/avatar-placeholder.svg' },
+    { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: 'assets/images/team/roli-bansal.webp' },
     { name: 'Prof. (Dr.) Vinita Jindal', position: 'Convenor', tier: 'faculty', photo: 'assets/images/team/vinita-jindal.webp' },
     { name: 'Ms. Jyoti Kumari', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/jyoti-kumari.webp' },
     { name: 'Mr. Anand', position: 'Faculty Member', tier: 'faculty', photo: 'assets/images/team/anand.webp' },
@@ -177,6 +177,9 @@ return {
     { name: 'Neha Bisht', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/neha-bisht.webp' },
     { name: 'Yashika Gupta', position: 'Volunteer', tier: 'volunteer', photo: 'assets/images/team/yashika-gupta.webp' }
   ],
+
+  /* How many team cards per row for each tier (desktop). Responsive breakpoints scale down automatically. */
+  teamLayout: { faculty: 3, core: 3, executive: 4, volunteer: 5 },
 
   gallery: [
     {

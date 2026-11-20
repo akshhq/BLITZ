@@ -248,3 +248,39 @@ details.group > .group-body { padding: 0 14px 14px; display: grid; gap: 12px; }
 .gal-star:disabled { opacity: 0.6; }
 .gal-key { color: var(--accent); font-size: 18px; vertical-align: -2px; }
 .evimg-shape { min-height: var(--tap); padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; }
+
+/* Team grid layout control */
+.team-layout-box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.team-layout-box h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: var(--accent);
+}
+.team-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin: 14px 0 16px;
+}
+.team-layout-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.team-layout-field input {
+  width: 100%;
+}
+.team-layout-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}

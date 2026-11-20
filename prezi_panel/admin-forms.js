@@ -178,20 +178,43 @@
   function textWidget(def, value, ctx) {
     var id = PP.uid('f');
     var isArea = def.type === 'textarea';
+    var isNum = def.type === 'number';
     var control = el(isArea ? 'textarea' : 'input', {
       id: id, name: def.key,
-      type: isArea ? null : (def.kind === 'date' ? 'date' : def.kind === 'url' ? 'url' : 'text'),
+      type: isArea ? null : (isNum ? 'number' : def.kind === 'date' ? 'date' : def.kind === 'url' ? 'url' : 'text'),
       value: value == null ? '' : String(value),
-      placeholder: def.placeholder, maxlength: def.max ? String(def.max + 50) : null, autocomplete: 'off', spellcheck: def.kind === 'url' || def.type === 'slug' ? 'false' : null
+      min: def.min != null ? String(def.min) : null,
+      max: def.max != null && isNum ? String(def.max) : null,
+      step: def.step != null ? String(def.step) : null,
+      placeholder: def.placeholder, maxlength: def.max && !isNum ? String(def.max + 50) : null, autocomplete: 'off', spellcheck: def.kind === 'url' || def.type === 'slug' ? 'false' : null
     });
     if (def.type === 'slug' && !ctx.isNew) control.readOnly = true;
     if (ctx.readOnly) control.disabled = true;
     var s = shell(def, control, id);
-    function get() { var v = control.value.trim(); return v === '' ? (def.emptyAs !== undefined ? def.emptyAs : null) : v; }
+    function get() {
+      var v = control.value.trim();
+      if (v === '') return def.emptyAs !== undefined ? def.emptyAs : null;
+      if (isNum) {
+        var n = Number(v);
+        return isNaN(n) ? (def.emptyAs !== undefined ? def.emptyAs : 0) : n;
+      }
+      return v;
+    }
     return {
       node: s.node, control: control, setError: s.setError, focus: function () { control.focus(); },
       get: get,
-      check: function () { var m = checkString(def, control.value.trim()); s.setError(m); return m; }
+      check: function () {
+        if (isNum) {
+          var val = control.value.trim();
+          if (def.required && val === '') { s.setError('This field is required.'); return 'This field is required.'; }
+          if (val !== '' && isNaN(Number(val))) { s.setError('Please enter a valid number.'); return 'Please enter a valid number.'; }
+          if (val !== '' && def.min != null && Number(val) < def.min) { s.setError('Must be at least ' + def.min); return 'Must be at least ' + def.min; }
+          if (val !== '' && def.max != null && Number(val) > def.max) { s.setError('Must be at most ' + def.max); return 'Must be at most ' + def.max; }
+          s.setError('');
+          return '';
+        }
+        var m = checkString(def, control.value.trim()); s.setError(m); return m;
+      }
     };
   }
 

@@ -531,6 +531,7 @@
     var status = el('select', { 'aria-label': 'Filter by status' }, [el('option', { value: '', text: 'All' }), el('option', { value: 'live', text: 'Published' }), el('option', { value: 'draft', text: 'Drafts' })]);
     var listHost = el('div');
     var info = el('p', { class: 'hint', hidden: true });
+    var teamLayoutBox = key === 'team' ? buildTeamLayoutBox() : null;
     show(coll.label, [
       el('div', { class: 'pagehead' }, [
         el('p', { class: 'muted', text: coll.ordered ? 'Use the arrows to change the order shown on the website.' : 'Newest first.' }),
@@ -539,16 +540,137 @@
           el('a', { class: 'btn btn--primary', href: '#/' + key + '/new', text: 'New ' + coll.singular })
         ]) : null
       ]),
+      teamLayoutBox,
       el('div', { class: 'toolbar' }, [search, status]), info, listHost
     ]);
     listHost.appendChild(el('p', { class: 'loading', text: 'Loading…' }));
+
+    function ensureRequiredFaculty(loadedRows, focusSpec) {
+      var requiredFaculty = [
+        { name: 'Prof. (Dr.) Arpana Sharma', position: 'Principal', tier: 'faculty', photo: 'assets/images/team/arpana-sharma.webp', sort_order: 10, published: true },
+        { name: 'Prof. (Dr.) Roli Bansal', position: 'TIC', tier: 'faculty', photo: 'assets/images/team/roli-bansal.webp', sort_order: 20, published: true }
+      ];
+      function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+      var missing = requiredFaculty.filter(function (req) {
+        return !loadedRows.some(function (r) {
+          if (r.tier !== 'faculty') return false;
+          var matchName = norm(r.name) === norm(req.name) || (r.name && r.name.toLowerCase().indexOf(norm(req.position)) >= 0);
+          var matchPos = norm(r.position) === norm(req.position);
+          return matchName || matchPos;
+        });
+      });
+      if (missing.length && canEdit()) {
+        sb.from('team_members').insert(missing).select().then(function (ins) {
+          if (!ins.error && ins.data && ins.data.length) {
+            load(focusSpec);
+          } else {
+            missing.forEach(function (m) {
+              loadedRows.unshift(Object.assign({ id: 'builtin-' + m.position.toLowerCase() }, m));
+            });
+            draw(focusSpec);
+          }
+        }).catch(function () {
+          missing.forEach(function (m) {
+            loadedRows.unshift(Object.assign({ id: 'builtin-' + m.position.toLowerCase() }, m));
+          });
+          draw(focusSpec);
+        });
+        return;
+      } else if (missing.length) {
+        missing.forEach(function (m) {
+          loadedRows.unshift(Object.assign({ id: 'builtin-' + m.position.toLowerCase() }, m));
+        });
+      }
+      draw(focusSpec);
+    }
+
+    function buildTeamLayoutBox() {
+      var defaultLayout = { faculty: 3, core: 3, executive: 4, volunteer: 5 };
+      var storedLayout = null;
+      try { storedLayout = JSON.parse(localStorage.getItem('blitz:team_layout')); } catch (e) {}
+      var currentLayout = Object.assign({}, defaultLayout, (window.BLITZ_DATA && window.BLITZ_DATA.teamLayout) || {}, storedLayout || {});
+
+      var facInput = el('input', { type: 'number', min: '1', max: '6', value: String(currentLayout.faculty || 3), id: 'team-cols-faculty' });
+      var coreInput = el('input', { type: 'number', min: '1', max: '6', value: String(currentLayout.core || 3), id: 'team-cols-core' });
+      var execInput = el('input', { type: 'number', min: '1', max: '8', value: String(currentLayout.executive || 4), id: 'team-cols-executive' });
+      var volInput = el('input', { type: 'number', min: '1', max: '8', value: String(currentLayout.volunteer || 5), id: 'team-cols-volunteer' });
+
+      sb.from('site_settings').select('value').eq('key', 'team_layout').maybeSingle().then(function (res) {
+        if (!res.error && res.data && res.data.value) {
+          var val = res.data.value;
+          if (val.faculty) facInput.value = String(val.faculty);
+          if (val.core) coreInput.value = String(val.core);
+          if (val.executive) execInput.value = String(val.executive);
+          if (val.volunteer) volInput.value = String(val.volunteer);
+          try { localStorage.setItem('blitz:team_layout', JSON.stringify(val)); } catch (e) {}
+        }
+      }).catch(function () {});
+
+      var statusMsg = el('span', { class: 'hint', style: 'margin-left: 8px;' });
+      var saveBtn = el('button', {
+        type: 'button', class: 'btn btn--primary btn--small', text: 'Save Grid Layout',
+        disabled: !canEdit(),
+        onclick: function () {
+          var newLayout = {
+            faculty: Math.max(1, Math.min(6, parseInt(facInput.value, 10) || 3)),
+            core: Math.max(1, Math.min(6, parseInt(coreInput.value, 10) || 3)),
+            executive: Math.max(1, Math.min(8, parseInt(execInput.value, 10) || 4)),
+            volunteer: Math.max(1, Math.min(8, parseInt(volInput.value, 10) || 5))
+          };
+          facInput.value = String(newLayout.faculty);
+          coreInput.value = String(newLayout.core);
+          execInput.value = String(newLayout.executive);
+          volInput.value = String(newLayout.volunteer);
+
+          try { localStorage.setItem('blitz:team_layout', JSON.stringify(newLayout)); } catch (e) {}
+          if (window.BLITZ_DATA) window.BLITZ_DATA.teamLayout = newLayout;
+
+          saveBtn.disabled = true;
+          statusMsg.textContent = 'Saving…';
+
+          sb.from('site_settings').upsert({ key: 'team_layout', value: newLayout, updated_at: new Date().toISOString() }).then(function (res) {
+            saveBtn.disabled = false;
+            if (res.error) {
+              statusMsg.textContent = 'Saved locally.';
+              PP.toast('Saved locally. To sync across all visitors, run schema.sql in Supabase SQL editor.', 'ok');
+            } else {
+              statusMsg.textContent = 'Saved to database.';
+              PP.toast('Team grid layout saved to database.', 'ok');
+            }
+            setTimeout(function () { statusMsg.textContent = ''; }, 4000);
+          }).catch(function () {
+            saveBtn.disabled = false;
+            statusMsg.textContent = 'Saved locally.';
+            PP.toast('Saved locally.', 'ok');
+            setTimeout(function () { statusMsg.textContent = ''; }, 4000);
+          });
+        }
+      });
+
+      return el('div', { class: 'team-layout-box' }, [
+        el('h3', { text: 'Team Grid Layout (People per row on main website)' }),
+        el('p', { class: 'hint', text: 'Set how many team cards appear in a row on desktop for each category. (Mobile and tablet adapt automatically).' }),
+        el('div', { class: 'team-layout-grid' }, [
+          el('div', { class: 'team-layout-field' }, [el('label', { for: 'team-cols-faculty', text: 'Faculty Team' }), facInput]),
+          el('div', { class: 'team-layout-field' }, [el('label', { for: 'team-cols-core', text: 'Core Student Team' }), coreInput]),
+          el('div', { class: 'team-layout-field' }, [el('label', { for: 'team-cols-executive', text: 'Executives' }), execInput]),
+          el('div', { class: 'team-layout-field' }, [el('label', { for: 'team-cols-volunteer', text: 'Volunteers' }), volInput])
+        ]),
+        el('div', { class: 'team-layout-actions' }, [saveBtn, statusMsg])
+      ]);
+    }
 
     function load(focusSpec) {
       var q = sb.from(coll.table).select('*').order(coll.order.column, { ascending: coll.order.ascending, nullsFirst: !!coll.order.nullsFirst });
       if (coll.ordered) q = q.order(coll.groupBy ? 'name' : 'created_at', { ascending: true });
       PP.read(function () { return q; }, 'load-' + key).then(function (res) {
         if (res.error) { PP.loadFailure(listHost, res.error, 'load-' + key, function () { listHost.appendChild(el('p', { class: 'loading', text: 'Loading…' })); load(focusSpec); }); return; }
-        rows = res.data; draw(focusSpec);
+        rows = res.data;
+        if (key === 'team') {
+          ensureRequiredFaculty(rows, focusSpec);
+        } else {
+          draw(focusSpec);
+        }
       }).catch(function (err) {
         PP.loadFailure(listHost, err, 'load-' + key, function () { load(focusSpec); });
       });
@@ -585,11 +707,13 @@
           actions.appendChild(el('button', { type: 'button', class: 'btn btn--small', text: isLive ? 'Unpublish' : 'Publish', 'aria-label': (isLive ? 'Unpublish ' : 'Publish ') + titleText, onclick: function (ev) { togglePublished(r, ev.currentTarget); } }));
           actions.appendChild(el('button', { type: 'button', class: 'btn btn--small btn--danger', text: 'Delete', 'aria-label': 'Delete ' + titleText, onclick: function (ev) { remove(r, ev.currentTarget); } }));
         }
+        var metaText = coll.item.meta(r);
+        var indexPrefix = (coll.ordered && typeof indexInGroup === 'number' && indexInGroup >= 0) ? '#' + (indexInGroup + 1) + (metaText ? ' · ' : '') : '';
         return el('li', { class: 'item' }, [
           thumbFor(coll, r),
           el('div', { class: 'item-main' }, [
             el('div', { class: 'item-title', text: titleText }),
-            el('div', { class: 'item-meta', text: coll.item.meta(r) || '' }),
+            el('div', { class: 'item-meta', text: indexPrefix + (metaText || '') }),
             el('span', { class: 'badge ' + (isLive ? 'badge--live' : 'badge--draft'), text: isLive ? 'Published' : 'Draft' })
           ]),
           actions

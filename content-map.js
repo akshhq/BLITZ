@@ -57,7 +57,7 @@
         };
       },
       team: function (t) {
-        return { name: str(t.name), position: str(t.position), tier: str(t.tier), photo: imageUrl(t.photo) };
+        return { name: str(t.name), position: str(t.position), tier: str(t.tier), photo: imageUrl(t.photo), sort_order: typeof t.sort_order === 'number' ? t.sort_order : 0 };
       },
       gallery: function (g) {
         return {
@@ -77,13 +77,17 @@
         var total = 0;
         COLLECTIONS.forEach(function (k) { total += raw[k].length; });
         if (total === 0 && !(options && options.allowEmpty)) return null;
-        return {
+        var mapped = {
           announcements: raw.announcements.map(m.announcement),
           events: raw.events.map(m.event),
           team: raw.team.map(m.team),
           gallery: raw.gallery.map(m.gallery),
           collaborations: raw.collaborations.map(m.collaboration)
         };
+        if (raw.settings && typeof raw.settings === 'object') {
+          mapped.settings = raw.settings;
+        }
+        return mapped;
       }
     };
     return m;

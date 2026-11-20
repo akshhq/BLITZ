@@ -48,6 +48,11 @@ out.push('', '-- collaborations');
 (D.collaborations || []).forEach((c, i) => out.push(
   `insert into public.collaborations (id, name, type, logo, url, sort_order) values ('${uuid('collab:' + c.name)}', ${q(c.name)}, ${q(c.type)}, ${q(c.logo)}, ${q(c.url)}, ${(i + 1) * 10}) on conflict (id) do nothing;`));
 
+if (D.teamLayout && typeof D.teamLayout === 'object') {
+  out.push('', '-- site settings');
+  out.push(`insert into public.site_settings (key, value) values ('team_layout', '${JSON.stringify(D.teamLayout).replace(/'/g, "''")}'::jsonb) on conflict (key) do update set value = excluded.value;`);
+}
+
 out.push('', 'commit;', '');
 fs.writeFileSync(path.join(root, 'supabase', 'seed.sql'), out.join('\n'));
 console.log(`supabase/seed.sql written: ${(D.announcements || []).length} announcements, ${(D.events || []).length} events, ${(D.team || []).length} team, ${(D.gallery || []).length} gallery, ${(D.collaborations || []).length} collaborations`);
