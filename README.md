@@ -355,6 +355,7 @@ What is actually implemented (and checked with Lighthouse mobile, headless Chrom
 - **Mobile menu:** body scroll lock, focus trap, ESC and outside-tap close, `aria-expanded` kept in sync.
 - **Motion:** `prefers-reduced-motion` disables the logo float, marquee and reveals; animations pause when the hero is off-screen.
 - **Touch rails:** the gallery snaps to cards and can be swiped.
+- **Sticky stacking events:** Event panels (`N°001`, `N°002`, `N°003`) use CSS `position: sticky` with staggered sticky top offsets (`calc(var(--header-h) + var(--event-index) * var(--stack-step))`). The stack container (`#events-stack`) maintains uniform panel minimum heights and scroll runway padding (`padding-bottom: clamp(160px, 24vh, 320px)`) ensuring earlier cards remain pinned until all cards reach their stacked resting positions before scrolling away together.
 
 ## Event Launchpad (event.html)
 

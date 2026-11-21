@@ -1428,6 +1428,7 @@ html:not(.js) .transition-logo {
 .events-stack {
   position: relative;
   z-index: 1;
+  padding-bottom: clamp(160px, 24vh, 320px);
 }
 
 .events-section {
@@ -1441,10 +1442,11 @@ html:not(.js) .transition-logo {
   z-index: calc(10 + var(--event-index, 0));
   display: flex;
   flex-direction: column;
-  min-height: max(420px, calc(100vh - var(--header-h) - var(--event-index, 0) * var(--stack-step)));
-  min-height: max(420px, calc(100svh - var(--header-h) - var(--event-index, 0) * var(--stack-step)));
+  min-height: max(460px, calc(100vh - var(--header-h)));
+  min-height: max(460px, calc(100svh - var(--header-h)));
   overflow: visible; 
   border-top: 1px solid rgba(212, 164, 92, 0.28);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .events-panel-inner {

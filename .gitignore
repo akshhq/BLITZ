@@ -17,6 +17,8 @@ supabase/*.local.sql
 .agents/
 .windsurf/
 .aider*
+.system_generated/
+scratch/
 
 # Node.js, test runners, and E2E binaries
 node_modules/
@@ -55,6 +57,7 @@ Desktop.ini
 
 # Generated archives and raw source documents
 BLITZ.zip
+blitz-upload.zip
 *.zip
 *.tar.gz
 *.tar.xz

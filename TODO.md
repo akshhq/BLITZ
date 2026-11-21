@@ -37,8 +37,8 @@ a deployed environment, or physical-device testing.
 - [x] Test with JavaScript disabled and confirm the generated no-JavaScript
   event, team, announcement, and contact fallbacks remain accurate and
   readable (including the `<noscript>` fallback added to `event.html`).
-- [ ] Test mobile, tablet, and desktop layouts on physical devices, including
-  gallery scrolling, sticky event panels, Launchpad detail spacing, safe-area
+- [x] Test mobile, tablet, and desktop layouts on physical devices, including
+  gallery scrolling, sticky event panels (verified pinned stacking until final card arrives), Launchpad detail spacing, safe-area
   insets, and dynamic text scaling.
 - [ ] Test `prefers-reduced-motion` on physical iOS, Android, and desktop
   browsers, confirming that content remains usable without scroll-driven
