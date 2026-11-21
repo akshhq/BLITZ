@@ -1428,7 +1428,15 @@ html:not(.js) .transition-logo {
 .events-stack {
   position: relative;
   z-index: 1;
-  padding-bottom: clamp(160px, 24vh, 320px);
+}
+
+.events-sticky-stage {
+  position: sticky;
+  top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  height: calc(100svh - var(--header-h));
+  overflow: hidden;
+  width: 100%;
 }
 
 .events-section {
@@ -1437,16 +1445,36 @@ html:not(.js) .transition-logo {
 
 
 .events-panel {
-  position: sticky;
-  top: calc(var(--header-h) + var(--event-index, 0) * var(--stack-step));
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
   z-index: calc(10 + var(--event-index, 0));
   display: flex;
   flex-direction: column;
-  min-height: max(460px, calc(100vh - var(--header-h)));
-  min-height: max(460px, calc(100svh - var(--header-h)));
   overflow: visible; 
   border-top: 1px solid rgba(212, 164, 92, 0.28);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  will-change: transform;
+}
+
+html:not(.js) .events-sticky-stage {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+
+html:not(.js) .events-panel {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  height: auto;
+  min-height: max(460px, calc(100vh - var(--header-h)));
+  box-shadow: none;
 }
 
 .events-panel-inner {
@@ -1516,30 +1544,30 @@ html:not(.js) .transition-logo {
 }
 
 .events-panel-content h3 {
-  margin: 0 0 clamp(20px, 3vh, 36px);
+  margin: 0 0 clamp(16px, 2.5vh, 28px);
   color: var(--cream);
-  font-size: clamp(40px, 6.5vw, 96px);
+  font-size: clamp(32px, 4.5vw, 68px);
   font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 0.98;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
   overflow-wrap: break-word;
   text-wrap: balance;
 }
 
 .events-panel-description {
   max-width: 680px;
-  margin: 0 0 clamp(28px, 4vh, 52px);
+  margin: 0 0 clamp(18px, 2.8vh, 32px);
   color: var(--cream-dim);
-  font-size: clamp(16px, 1.25vw, 19px);
-  line-height: 1.65;
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.6;
 }
 
 .events-panel-details {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(24px, 5vw, 72px);
+  gap: clamp(20px, 4vw, 56px);
   margin: 0;
-  padding-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid rgba(255, 249, 242, 0.16);
 }
 

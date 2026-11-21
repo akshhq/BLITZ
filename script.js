@@ -452,6 +452,107 @@
     updateTicker(false);
     syncTicker();
   }
+  let cleanUpEventsStack = null;
+
+  function setUpEventsStack() {
+    if (typeof cleanUpEventsStack === 'function') {
+      cleanUpEventsStack();
+      cleanUpEventsStack = null;
+    }
+
+    const stack = document.querySelector('#events-stack');
+    if (!stack) return;
+    const stage = stack.querySelector('.events-sticky-stage');
+    if (!stage) return;
+    const panels = Array.from(stage.querySelectorAll('.events-panel'));
+    const count = panels.length;
+    if (count <= 1) {
+      stack.style.height = 'auto';
+      return;
+    }
+
+    let isReducedMotion = false;
+    try {
+      isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch (_) {}
+
+    function computeDimensions() {
+      const isMobile = window.innerWidth <= 900;
+      const navHeight = isMobile ? 64 : 74;
+      const header = document.querySelector('.site-header');
+      const headerH = header ? header.offsetHeight : navHeight;
+      const step = isMobile ? 28 : 48;
+      const cardTravel = Math.max(300, Math.round(window.innerHeight * 0.72));
+      const totalTrack = (count - 1) * cardTravel;
+
+      stack.style.height = `calc(100vh - var(--header-h) + ${totalTrack}px)`;
+
+      return { headerH, step, cardTravel, totalTrack };
+    }
+
+    let dims = computeDimensions();
+    let frame = null;
+
+    function update() {
+      frame = null;
+      if (isReducedMotion) {
+        panels.forEach(function (p, idx) {
+          p.style.transform = `translate3d(0, ${idx * dims.step}px, 0)`;
+        });
+        return;
+      }
+
+      const stackRect = stack.getBoundingClientRect();
+      const stackTop = stackRect.top + window.scrollY;
+      const stagePinScrollY = stackTop - dims.headerH;
+      const relY = Math.max(0, window.scrollY - stagePinScrollY);
+      const stageH = stage.offsetHeight || window.innerHeight;
+
+      panels.forEach(function (p, idx) {
+        if (idx === 0) {
+          p.style.transform = 'translate3d(0, 0, 0)';
+          return;
+        }
+
+        const startScroll = (idx - 1) * dims.cardTravel;
+        const endScroll = idx * dims.cardTravel;
+        const targetRestY = idx * dims.step;
+        const startY = stageH;
+
+        if (relY <= startScroll) {
+          p.style.transform = `translate3d(0, ${startY}px, 0)`;
+        } else if (relY >= endScroll) {
+          p.style.transform = `translate3d(0, ${targetRestY}px, 0)`;
+        } else {
+          const progress = (relY - startScroll) / (endScroll - startScroll);
+          const currentY = startY - progress * (startY - targetRestY);
+          p.style.transform = `translate3d(0, ${Math.round(currentY)}px, 0)`;
+        }
+      });
+    }
+
+    function onScroll() {
+      if (!frame) {
+        frame = requestAnimationFrame(update);
+      }
+    }
+
+    function onResize() {
+      dims = computeDimensions();
+      update();
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+    update();
+
+    cleanUpEventsStack = function () {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
+  }
+
   function renderEvents() {
     const container = document.querySelector('#events-stack');
     if (!container) return;
@@ -463,12 +564,13 @@
 
     if (eventsList.length === 0) {
       container.innerHTML = '<p class="events-empty">No events scheduled at this time.</p>';
+      if (typeof cleanUpEventsStack === 'function') cleanUpEventsStack();
       return;
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    container.innerHTML = eventsList.map(function (event, index) {
+    const panelsMarkup = eventsList.map(function (event, index) {
       const eventDate = parseLocalDate(event.date);
       const isUpcoming = !!eventDate && eventDate.getTime() >= today.getTime();
       const badgeText = !eventDate ? 'DATE TBC' : (isUpcoming ? 'UPCOMING' : 'PAST');
@@ -517,6 +619,9 @@
         </article>
       `;
     }).join('');
+
+    container.innerHTML = `<div class="events-sticky-stage">${panelsMarkup}</div>`;
+    setUpEventsStack();
   }
 
   function updateEventDetailRoute(eventId) {
