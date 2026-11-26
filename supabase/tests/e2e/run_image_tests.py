@@ -94,7 +94,7 @@ def new_context(p, viewport=(1280, 900), mobile=False):
             return r.fulfill(response=resp, body=body)
         r.continue_()
     import re
-    ctx.route(re.compile(r'^http://localhost:54321/(config\.js|prezi_panel/(index\.html|preview\.html)?)$'), route)
+    ctx.route(re.compile(r'^http://localhost:54321/((?:js/)?config\.js|prezi_panel/(index\.html|preview\.html)?)$'), route)
     return b, ctx
 
 def login(page, who, pw=None):

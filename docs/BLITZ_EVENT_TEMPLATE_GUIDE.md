@@ -2,7 +2,7 @@
 
 ## Purpose
 
-[`BLITZ_EVENT_TEMPLATE.json`](./BLITZ_EVENT_TEMPLATE.json) is the official,
+[`templates/BLITZ_EVENT_TEMPLATE.json`](../templates/BLITZ_EVENT_TEMPLATE.json) is the official,
 versioned JSON template for preparing BLITZ events with an AI assistant or
 manually. It is the same format accepted by the Prezi Panel importer. Imported
 data is reviewed in the normal event editor; importing never saves, publishes,
@@ -10,7 +10,7 @@ uploads files, or changes administrator permissions.
 
 ## Create a new event file
 
-1. Download or copy [`BLITZ_EVENT_TEMPLATE.json`](./BLITZ_EVENT_TEMPLATE.json).
+1. Download or copy [`templates/BLITZ_EVENT_TEMPLATE.json`](../templates/BLITZ_EVENT_TEMPLATE.json).
 2. Keep `"template": "BLITZ_EVENT"` and `"version": 1` unchanged.
 3. Duplicate the file for the event and edit only the `event` object.
 4. Keep unknown facts empty (`""`, `null`, or `[]`) instead of guessing.
@@ -68,7 +68,7 @@ only confirmed HTTPS URLs should be entered.
 Validate the JSON with any standard JSON parser, for example:
 
 ```bash
-node -e "JSON.parse(require('fs').readFileSync('BLITZ_EVENT_TEMPLATE.json', 'utf8')); console.log('valid JSON')"
+node -e "JSON.parse(require('fs').readFileSync('templates/BLITZ_EVENT_TEMPLATE.json', 'utf8')); console.log('valid JSON')"
 ```
 
 Then:

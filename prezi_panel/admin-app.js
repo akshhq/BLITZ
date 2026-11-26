@@ -82,7 +82,7 @@
   }
   function showSetup() {
     showAuth('Not connected yet', 'This panel needs the project URL and public key.', el('div', { class: 'notice notice--error', role: 'alert' }, [
-      'Open ', el('code', { text: 'config.js' }), ' in the site folder and fill in ', el('code', { text: 'supabaseUrl' }), ' and ', el('code', { text: 'supabaseKey' }), '. See the setup guide (SETUP-ADMIN.md).'
+      'Open ', el('code', { text: 'js/config.js' }), ' in the site folder and fill in ', el('code', { text: 'supabaseUrl' }), ' and ', el('code', { text: 'supabaseKey' }), '. See the setup guide (docs/SETUP-ADMIN.md).'
     ]));
   }
   var failures = 0, lockedUntil = 0;
@@ -536,7 +536,7 @@
       el('div', { class: 'pagehead' }, [
         el('p', { class: 'muted', text: coll.ordered ? 'Use the arrows to change the order shown on the website.' : 'Newest first.' }),
         canEdit() ? el('div', { class: 'pagehead-actions' }, [
-          key === 'events' ? el('a', { class: 'btn', href: '../BLITZ_EVENT_TEMPLATE.json', download: 'BLITZ_EVENT_TEMPLATE.json', text: 'Download Event Template (.json)' }) : null,
+          key === 'events' ? el('a', { class: 'btn', href: '../templates/BLITZ_EVENT_TEMPLATE.json', download: 'BLITZ_EVENT_TEMPLATE.json', text: 'Download Event Template (.json)' }) : null,
           el('a', { class: 'btn btn--primary', href: '#/' + key + '/new', text: 'New ' + coll.singular })
         ]) : null
       ]),
@@ -830,7 +830,7 @@
           el('h2', { id: 'template-title', text: 'Template import' }),
           el('p', { class: 'hint', text: 'Download the official JSON template, complete it with AI or manually, then validate it here. Importing never saves or publishes an event.' })
         ]),
-        el('a', { class: 'btn', href: '../BLITZ_EVENT_TEMPLATE.json', download: 'BLITZ_EVENT_TEMPLATE.json', text: 'Download Event Template (.json)' })
+        el('a', { class: 'btn', href: '../templates/BLITZ_EVENT_TEMPLATE.json', download: 'BLITZ_EVENT_TEMPLATE.json', text: 'Download Event Template (.json)' })
       ]),
       el('p', { class: 'hint', text: 'Supported format: JSON · Maximum size: 1 MB · Media filenames are references only; upload actual assets below.' }),
       drop,
@@ -1240,7 +1240,7 @@
       el('p', { text: 'The website reads live data, so you never have to do this for edits to show up. Export a snapshot only before handing over a new zip of the site: it refreshes the fallback copy used when the database is unreachable and the text shown to visitors without JavaScript.' }),
       el('ol', null, [
         el('li', { text: 'Click the button below to download data.js.' }),
-        el('li', { text: 'Replace data.js in the site folder with it (optionally run: node tools/sync-noscript.js).' }),
+        el('li', { text: 'Replace js/data.js in the site folder with it (optionally run: node tools/sync-noscript.js).' }),
         el('li', { text: 'Zip the site folder and hand it over as usual.' })
       ]),
       canEdit() ? btn : el('p', { class: 'notice', text: 'Viewers cannot export.' })

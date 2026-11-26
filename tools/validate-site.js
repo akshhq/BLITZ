@@ -22,7 +22,7 @@ function checkHtml(file, canonical) {
   assert(/<title>[^<]+<\/title>/.test(html), `${file}: missing title`);
   assert(/<meta\s+[^>]*name="description"[^>]*content="[^"]+"/.test(html), `${file}: missing description`);
   assert(/<meta\s+[^>]*name="robots"[^>]*content="index,\s*follow/.test(html), `${file}: missing robots index, follow`);
-  assert(/<link\s+[^>]*href="styles\.css"/.test(html), `${file}: missing stylesheet`);
+  assert(/<link\s+[^>]*href="css\/styles\.css"/.test(html), `${file}: missing stylesheet`);
   assert(/<link\s+[^>]*rel="manifest"[^>]*href="site\.webmanifest"/.test(html), `${file}: missing webmanifest link`);
   assert(/<link\s+[^>]*rel="apple-touch-icon"[^>]*href="apple-touch-icon\.png"/.test(html), `${file}: missing apple-touch-icon link`);
 
@@ -95,7 +95,7 @@ assert(robots.includes(`Sitemap: ${productionBase}sitemap.xml`), 'robots.txt: si
 const exists = (file) => fs.existsSync(path.join(root, file));
 
 // 1. Static error pages exist, are noindex, share one <base>, and every local reference resolves.
-const errorPages = ['404.html', '403.html', '500.html', '503.html', 'offline.html'];
+const errorPages = ['errors/404.html', 'errors/403.html', 'errors/500.html', 'errors/503.html', 'errors/offline.html'];
 const bases = new Set();
 errorPages.forEach((file) => {
   if (!exists(file)) return errors.push(`${file}: error page is missing`);
@@ -104,8 +104,8 @@ errorPages.forEach((file) => {
   assert(base, `${file}: needs <base href> because it is served at the failing URL`);
   if (base) bases.add(base[1]);
   assert(/<meta name="robots" content="noindex/.test(html), `${file}: must be noindex`);
-  assert(/<link rel="stylesheet" href="error\.css"/.test(html), `${file}: must load error.css`);
-  assert(/<script src="error-page\.js"/.test(html), `${file}: must load error-page.js`);
+  assert(/<link rel="stylesheet" href="css\/error\.css"/.test(html), `${file}: must load css/error.css`);
+  assert(/<script src="js\/error-page\.js"/.test(html), `${file}: must load js/error-page.js`);
   assert(/<h1[ >]/.test(html) && /<main/.test(html), `${file}: needs a main landmark and an h1`);
   assert(/href="index\.html"/.test(html), `${file}: needs a way back to the homepage`);
   [...html.replace(/<base\b[^>]*>/gi, '').matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]).filter((v) => !/^(?:[a-z]+:|\/\/|#)/i.test(v)).forEach((ref) => {
@@ -134,38 +134,38 @@ function scriptOrder(file, order) {
   return scripts;
 }
 ['index.html', 'event.html'].forEach((file) => {
-  scriptOrder(file, ['error-catalog.js', 'error-handler.js', 'data.js', 'config.js', 'content-map.js', 'content-loader.js']);
-  assert(/<link rel="stylesheet" href="error\.css"/.test(read(file)), `${file}: must load error.css`);
+  scriptOrder(file, ['js/error-catalog.js', 'js/error-handler.js', 'js/data.js', 'js/config.js', 'js/content-map.js', 'js/content-loader.js']);
+  assert(/<link rel="stylesheet" href="css\/error\.css"/.test(read(file)), `${file}: must load css/error.css`);
 });
-const panelScripts = scriptOrder('prezi_panel/index.html', ['vendor/supabase.js', '../error-catalog.js', '../error-handler.js', 'event-validator.js', 'admin-core.js',
+const panelScripts = scriptOrder('prezi_panel/index.html', ['vendor/supabase.js', '../js/error-catalog.js', '../js/error-handler.js', 'event-validator.js', 'admin-core.js',
   'database-diagnostics.js', 'operation-status.js', 'event-template.js', 'admin-forms.js', 'admin-app.js']);
 panelScripts.forEach((src) => { if (!/^(?:[a-z]+:|\/\/)/i.test(src) && !fs.existsSync(path.join(root, 'prezi_panel', src))) errors.push(`prezi_panel/index.html: missing script ${src}`); });
 assert(!/<script(?![^>]*\bsrc=)[^>]*>/.test(read('prezi_panel/index.html')), 'prezi_panel/index.html: inline scripts would break its Content-Security-Policy');
 assert(/script-src 'self'/.test(read('prezi_panel/index.html')) && !/script-src[^;]*unsafe-inline/.test(read('prezi_panel/index.html')), 'prezi_panel/index.html: CSP must keep script-src \'self\' without unsafe-inline');
 
-// 3. The error stylesheet's palette copies must not drift from styles.css.
+// 3. The error stylesheet's palette copies must not drift from css/styles.css.
 const tokens = (text, names) => Object.fromEntries(names.map((n) => [n, (new RegExp(`--${n}:\\s*(#[0-9a-fA-F]{3,8})`).exec(text) || [])[1]]));
-const siteTokens = tokens(read('styles.css'), ['ink', 'maroon', 'maroon-deep', 'cream', 'accent']);
-const errTokens = tokens(read('error.css').replace(/--e-/g, '--'), ['ink', 'maroon', 'maroon-deep', 'cream', 'accent']);
+const siteTokens = tokens(read('css/styles.css'), ['ink', 'maroon', 'maroon-deep', 'cream', 'accent']);
+const errTokens = tokens(read('css/error.css').replace(/--e-/g, '--'), ['ink', 'maroon', 'maroon-deep', 'cream', 'accent']);
 Object.keys(siteTokens).forEach((name) => {
-  if (!siteTokens[name]) return errors.push(`styles.css: could not read --${name}`);
-  assert((errTokens[name] || '').toLowerCase() === siteTokens[name].toLowerCase(), `error.css --e-${name} (${errTokens[name]}) differs from styles.css --${name} (${siteTokens[name]})`);
+  if (!siteTokens[name]) return errors.push(`css/styles.css: could not read --${name}`);
+  assert((errTokens[name] || '').toLowerCase() === siteTokens[name].toLowerCase(), `css/error.css --e-${name} (${errTokens[name]}) differs from css/styles.css --${name} (${siteTokens[name]})`);
 });
 if (exists('site.webmanifest') && siteTokens.ink) {
   const manifest = JSON.parse(read('site.webmanifest'));
-  assert((manifest.theme_color || '').toLowerCase() === siteTokens.ink.toLowerCase(), `site.webmanifest theme_color (${manifest.theme_color}) differs from styles.css --ink (${siteTokens.ink})`);
-  assert((manifest.background_color || '').toLowerCase() === siteTokens.ink.toLowerCase(), `site.webmanifest background_color (${manifest.background_color}) differs from styles.css --ink (${siteTokens.ink})`);
+  assert((manifest.theme_color || '').toLowerCase() === siteTokens.ink.toLowerCase(), `site.webmanifest theme_color (${manifest.theme_color}) differs from css/styles.css --ink (${siteTokens.ink})`);
+  assert((manifest.background_color || '').toLowerCase() === siteTokens.ink.toLowerCase(), `site.webmanifest background_color (${manifest.background_color}) differs from css/styles.css --ink (${siteTokens.ink})`);
 }
 
 // 4. Every error code in the catalog is documented, and the docs name no code that does not exist.
-const catalog = require(path.join(root, 'error-catalog.js'));
-const errorsDoc = exists('ERRORS.md') ? read('ERRORS.md') : '';
-assert(errorsDoc, 'ERRORS.md is missing');
-catalog.list.forEach((entry) => assert(errorsDoc.includes(entry.code), `ERRORS.md does not document ${entry.code}`));
-[...new Set(errorsDoc.match(/BLITZ-[A-Z]+-\d{3}/g) || [])].forEach((code) => assert(catalog.has(code), `ERRORS.md mentions ${code}, which is not in error-catalog.js`));
+const catalog = require(path.join(root, 'js', 'error-catalog.js'));
+const errorsDoc = exists('docs/ERRORS.md') ? read('docs/ERRORS.md') : '';
+assert(errorsDoc, 'docs/ERRORS.md is missing');
+catalog.list.forEach((entry) => assert(errorsDoc.includes(entry.code), `docs/ERRORS.md does not document ${entry.code}`));
+[...new Set(errorsDoc.match(/BLITZ-[A-Z]+-\d{3}/g) || [])].forEach((code) => assert(catalog.has(code), `docs/ERRORS.md mentions ${code}, which is not in js/error-catalog.js`));
 // Every code the source can produce must exist in the catalog.
-['error-handler.js', 'content-loader.js', 'event-page.js', 'prezi_panel/admin-app.js', 'prezi_panel/database-diagnostics.js', 'prezi_panel/operation-status.js'].forEach((file) => {
-  [...new Set(read(file).match(/BLITZ-[A-Z]+-\d{3}/g) || [])].forEach((code) => assert(catalog.has(code), `${file} uses ${code}, which is not in error-catalog.js`));
+['js/error-handler.js', 'js/content-loader.js', 'js/event-page.js', 'prezi_panel/admin-app.js', 'prezi_panel/database-diagnostics.js', 'prezi_panel/operation-status.js'].forEach((file) => {
+  [...new Set(read(file).match(/BLITZ-[A-Z]+-\d{3}/g) || [])].forEach((code) => assert(catalog.has(code), `${file} uses ${code}, which is not in js/error-catalog.js`));
 });
 
 // 5. No secret or service-role key anywhere in files that ship to the browser or are committed.
@@ -208,13 +208,13 @@ walk(root).forEach((file) => {
     try { if (JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString('utf8')).role === 'service_role') errors.push(`${rel}: contains a service_role JWT`); } catch (e) { /* not a JWT payload */ }
   });
 });
-const configText = read('config.js');
-assert(!/service_role|sb_secret_/.test(configText), 'config.js must only hold the public publishable/anon key');
+const configText = read('js/config.js');
+assert(!/service_role|sb_secret_/.test(configText), 'js/config.js must only hold the public publishable/anon key');
 
 // 6. Hosting config: every ErrorDocument points at a page that exists; documented, not assumed.
 ['.htaccess.example'].forEach((file) => {
   if (!exists(file)) return errors.push(`${file}: missing (custom error pages need server configuration)`);
-  const docs = [...read(file).matchAll(/^\s*ErrorDocument\s+(\d{3})\s+\S*?\/?([A-Za-z0-9_.-]+\.html)\s*$/gm)];
+  const docs = [...read(file).matchAll(/^\s*ErrorDocument\s+(\d{3})\s+(?:\S*?\/blitz\/|\S*?\/)([A-Za-z0-9_./-]+\.html)\s*$/gm)];
   ['403', '404', '500', '503'].forEach((code) => assert(docs.some((d) => d[1] === code), `${file}: no ErrorDocument for ${code}`));
   docs.forEach((d) => assert(exists(d[2]), `${file}: ErrorDocument ${d[1]} points at missing ${d[2]}`));
 });

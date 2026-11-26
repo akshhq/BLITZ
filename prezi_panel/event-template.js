@@ -175,7 +175,7 @@
   }
 
   window.BLITZ_TEMPLATE = {
-    file: '../BLITZ_EVENT_TEMPLATE.json',
+    file: '../templates/BLITZ_EVENT_TEMPLATE.json',
     maxBytes: MAX_BYTES,
     read: read,
     normalize: normalize,

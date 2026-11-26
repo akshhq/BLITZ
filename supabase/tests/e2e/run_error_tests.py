@@ -99,7 +99,7 @@ def new_context(p, viewport=(1280, 900), mobile=False):
             return r.fulfill(response=resp, body=body)
         r.continue_()
     import re
-    ctx.route(re.compile(r'^http://localhost:54321/(config\.js|prezi_panel/(index\.html|preview\.html)?)$'), route)
+    ctx.route(re.compile(r'^http://localhost:54321/((?:js/)?config\.js|prezi_panel/(index\.html|preview\.html)?)$'), route)
     return b, ctx
 
 def login(page, who, pw=None):
@@ -422,7 +422,7 @@ with sync_playwright() as p:
     ok('script link in registration URL is rejected with its path', 'registration.url' in r, r)
     r = imp('huge.json', b'{"template":"BLITZ_EVENT","version":1,"event":{"title":"' + b'x' * 1100000 + b'"}}')
     ok('file over 1 MB is rejected', '1 MB' in r, r[:120])
-    good = json.loads(open(os.path.join(ROOT, 'BLITZ_EVENT_TEMPLATE.json')).read()); good['event'].update({'id': 'imported-ok', 'title': 'Imported OK', 'category': 'Workshop', 'description': 'Valid import.'})
+    good = json.loads(open(os.path.join(ROOT, 'templates', 'BLITZ_EVENT_TEMPLATE.json')).read()); good['event'].update({'id': 'imported-ok', 'title': 'Imported OK', 'category': 'Workshop', 'description': 'Valid import.'})
     r = imp('good.json', json.dumps(good)); ok('a valid template validates and enables Import', 'Template validated' in r and page.is_enabled('button:has-text("Import into form")'), r)
     n0 = q("select count(*) from public.events")[0][0]; page.click('button:has-text("Import into form")'); page.wait_for_selector('input[name=title]'); page.wait_for_timeout(300)
     ok('importing fills the form but saves NOTHING', page.input_value('input[name=title]') == 'Imported OK' and q("select count(*) from public.events")[0][0] == n0)

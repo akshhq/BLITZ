@@ -17,7 +17,7 @@ import re
 import sys
 from urllib.parse import urlparse
 
-ERROR_PAGES = ["404.html", "403.html", "500.html", "503.html", "offline.html"]
+ERROR_PAGES = ["errors/404.html", "errors/403.html", "errors/500.html", "errors/503.html", "errors/offline.html"]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILES = ["index.html", "event.html", "sitemap.xml", "robots.txt", "README.md"]
 

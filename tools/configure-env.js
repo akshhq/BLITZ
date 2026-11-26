@@ -8,7 +8,7 @@ var path = require('path');
 
 var root = path.resolve(__dirname, '..');
 var envPath = path.join(root, '.env');
-var configPath = path.join(root, 'config.js');
+var configPath = path.join(root, 'js', 'config.js');
 
 function parseEnv(text) {
   var values = {};
@@ -46,6 +46,6 @@ if (!fs.existsSync(envPath)) {
       ''
     ].join('\n');
     fs.writeFileSync(configPath, config, 'utf8');
-    console.log('[BLITZ] config.js updated from .env');
+    console.log('[BLITZ] js/config.js updated from .env');
   }
 }

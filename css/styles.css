@@ -516,7 +516,7 @@ button:disabled,
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: url("assets/images/hero-ring-bg.webp") center center / cover no-repeat;
+  background: url("../assets/images/hero-ring-bg.webp") center center / cover no-repeat;
 }
 
 .hero-sculpture.is-webgl-active {

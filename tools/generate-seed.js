@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const root = path.resolve(__dirname, '..');
 const ctx = { window: {} };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), ctx);
+vm.runInContext(fs.readFileSync(path.join(root, 'js', 'data.js'), 'utf8'), ctx);
 const D = ctx.window.BLITZ_DATA || {};
 
 const q = (v) => (v === undefined || v === null || v === '' ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`);

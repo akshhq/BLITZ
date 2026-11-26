@@ -16,9 +16,9 @@ This project is **zero-build and static**: plain HTML/CSS/JS files that any web 
 ```
 
 - **Announcements, events, team, gallery and collaborations** live in the database and are edited in the admin panel. A save appears on the website immediately (visitors with the page already open see it within about two minutes or on their next visit); nobody has to redeploy anything.
-- **`data.js`** now holds (a) the **contact details** and (b) a **fallback snapshot** of the content, shown only if the database cannot be reached and used for the no-JavaScript text. The site is never blank.
-- **Setup, accounts, password reset, deployment and troubleshooting:** see **[SETUP-ADMIN.md](SETUP-ADMIN.md)**.
-- Until `config.js` is filled in, the site simply shows the content in `data.js`, exactly as before.
+- **`js/data.js`** now holds (a) the **contact details** and (b) a **fallback snapshot** of the content, shown only if the database cannot be reached and used for the no-JavaScript text. The site is never blank.
+- **Setup, accounts, password reset, deployment and troubleshooting:** see **[docs/SETUP-ADMIN.md](docs/SETUP-ADMIN.md)**.
+- Until `js/config.js` is filled in, the site simply shows the content in `js/data.js`, exactly as before.
 
 ---
 
@@ -26,64 +26,74 @@ This project is **zero-build and static**: plain HTML/CSS/JS files that any web 
 
 ```text
 BLITZ/
-├── index.html            # Markup, head/SEO/JSON-LD, <noscript> fallbacks, dialog
-├── event.html            # Launchpad-style event browser and selected-event view
-├── styles.css            # Design system, responsive rules (section 17 = mobile)
-├── event-launchpad.css   # Event Launchpad windowing, dock and detail layout
-├── data.js               # ALL content (announcements, events, team, contact, ...)
-├── BLITZ_EVENT_TEMPLATE.json # Canonical event import template downloaded by admins
-├── BLITZ_EVENT_TEMPLATE_GUIDE.md # Template preparation and import guide
-├── script.js             # Vanilla JS: hero announcements, modal, nav sheet, rails
-├── hero-sculpture.js     # WebGL magma ring background for the hero section
-├── event-renderer.js     # Shared, escaped event-detail markup for both pages
-├── event-page.js         # Data-driven event selector and route-aware page shell
-├── .env.example          # Local Supabase configuration template
-├── config.js             # PUBLIC runtime config generated from .env
-├── content-map.js        # database rows -> site objects (shared by site and admin)
-├── content-loader.js     # loads live content (cached), falls back to data.js, says which one is on screen
-├── error-catalog.js  error-handler.js  error.css  error-page.js   # ONE error system (see ERRORS.md)
-├── 404.html  403.html  500.html  503.html  offline.html          # static error pages (need server config)
-├── .htaccess  .htaccess.example   # Apache config that makes the server use those pages (nginx notes inside)
-├── ERRORS.md             # error codes, diagnostics, recovery steps, hosting, known limitations
-├── tests/unit/           # node:test unit tests (error handler, catalog, event validator)
-├── prezi_panel/          # THE ADMIN PANEL (own folder, own strict CSP, noindex)
+├── index.html                        # Markup, head/SEO/JSON-LD, <noscript> fallbacks, dialog
+├── event.html                        # Launchpad-style event browser and selected-event view
+├── css/
+│   ├── styles.css                    # Design system, responsive rules (section 17 = mobile)
+│   ├── event-launchpad.css           # Event Launchpad windowing, dock and detail layout
+│   └── error.css                     # Error page styles (see docs/ERRORS.md)
+├── js/
+│   ├── config.js                     # PUBLIC runtime config generated from .env
+│   ├── data.js                       # ALL content (announcements, events, team, contact, ...)
+│   ├── content-map.js                # database rows -> site objects (shared by site and admin)
+│   ├── content-loader.js             # loads live content (cached), falls back to js/data.js
+│   ├── script.js                     # Vanilla JS: hero announcements, modal, nav sheet, rails
+│   ├── hero-sculpture.js             # WebGL magma ring background for the hero section
+│   ├── event-renderer.js             # Shared, escaped event-detail markup for both pages
+│   ├── event-page.js                 # Data-driven event selector and route-aware page shell
+│   ├── error-catalog.js              # Error code catalog (see docs/ERRORS.md)
+│   ├── error-handler.js              # Central error handling and redaction
+│   └── error-page.js                 # Static error page interaction script
+├── errors/                           # Static error pages (need server config)
+│   ├── 403.html  404.html  500.html  503.html  offline.html
+├── docs/
+│   ├── ERRORS.md                     # error codes, diagnostics, recovery steps, hosting
+│   ├── SETUP-ADMIN.md                # Supabase & admin setup guide
+│   ├── TODO.md                       # Remaining project tasks
+│   └── BLITZ_EVENT_TEMPLATE_GUIDE.md # Template preparation and import guide
+├── templates/
+│   ├── BLITZ_EVENT_TEMPLATE.json     # Canonical event import template downloaded by admins
+│   └── sample.json                   # Filled sample event used by validator tests
+├── .env.example                      # Local Supabase configuration template
+├── .htaccess  .htaccess.example      # Apache config for error pages & security headers
+├── tests/unit/                       # node:test unit tests (error handler, catalog, validator)
+├── prezi_panel/                      # THE ADMIN PANEL (own folder, own strict CSP, noindex)
 │   ├── index.html  admin.css  admin-core.js  admin-forms.js  admin-app.js
 │   ├── event-validator.js  event-template.js  database-diagnostics.js  operation-status.js
-│   ├── preview.html  preview.js   # live event preview (sandboxed frame)
-│   ├── .htaccess.example          # recommended security headers (give to the server admin)
-│   └── vendor/supabase.js         # pinned supabase-js 2.117.2 (MIT)
+│   ├── preview.html  preview.js      # live event preview (sandboxed frame)
+│   ├── .htaccess.example             # recommended security headers (give to the server admin)
+│   └── vendor/supabase.js            # pinned supabase-js 2.117.2 (MIT)
 ├── supabase/
-│   ├── schema.sql  seed.sql  user.sql  admins.sql   # run in the Supabase SQL editor (see SETUP-ADMIN.md)
-│   └── tests/                             # schema/RLS tests + end-to-end tests (see Testing below)
-├── .github/workflows/ci.yml               # syntax, validators, unit, schema and browser tests
-├── .github/workflows/keepalive.yml        # daily read so the free database is less likely to be paused
-├── SETUP-ADMIN.md
-├── favicon.ico           # 16/32/48 (generated)
+│   ├── schema.sql  seed.sql  user.sql  admins.sql
+│   └── tests/                        # schema/RLS tests + end-to-end tests
+├── .github/workflows/ci.yml          # syntax, validators, unit, schema and browser tests
+├── .github/workflows/keepalive.yml   # daily read so the free database is less likely to be paused
+├── favicon.ico                       # 16/32/48 (generated)
 ├── favicon-16.png  favicon-32.png  apple-touch-icon.png  icon-192.png  icon-512.png
-├── site.webmanifest      # PWA/theme colours + icons
+├── site.webmanifest                  # PWA/theme colours + icons
 ├── robots.txt  sitemap.xml
 ├── assets/
-│   ├── og.png            # 1200x630 social preview (generated)
+│   ├── og.png                        # 1200x630 social preview (generated)
 │   ├── logo/
-│   │   ├── blitz-logo.png         # 512px, white on transparent (site + JSON-LD)
-│   │   ├── blitz-logo-1024.png    # retina hero (srcset)
-│   │   ├── blitz-logo-dark.png    # ink-coloured variant for LIGHT backgrounds
-│   │   └── blitz-logo-source.webp # untouched master, input for the build script
+│   │   ├── blitz-logo.png            # 512px, white on transparent (site + JSON-LD)
+│   │   ├── blitz-logo-1024.png       # retina hero (srcset)
+│   │   ├── blitz-logo-dark.png       # ink-coloured variant for LIGHT backgrounds
+│   │   └── blitz-logo-source.webp    # untouched master, input for the build script
 │   └── images/
 │       ├── hero-ring-bg.webp  background.avif   # Hero ring fallback & backdrop assets
-│       ├── events/           # Event cover and carousel WebP photos
-│       ├── gallery/          # Gallery illustration fallbacks
-│       ├── team/             # 400x400 WebP portraits + avatar-placeholder.svg
+│       ├── events/                   # Event cover and carousel WebP photos
+│       ├── gallery/                  # Gallery illustration fallbacks
+│       ├── team/                     # 400x400 WebP portraits + avatar-placeholder.svg
 │       └── collaborations/
 ├── tools/
-│   ├── configure-env.js         # .env -> config.js
-│   ├── build-brand-assets.py    # logo -> favicons, icons, og.png
-│   ├── optimize-team-images.py  # photos -> 400x400 WebP
-│   ├── set-site-url.py          # change the production URL everywhere
-│   ├── validate-data.js         # content, templates, JSON syntax, event rules
-│   ├── validate-site.js         # metadata, URL, sitemap, robots, asset checks
-│   ├── generate-seed.js         # data.js -> supabase/seed.sql (one-time import)
-│   └── sync-noscript.js         # regenerate <noscript> blocks from data.js
+│   ├── configure-env.js              # .env -> js/config.js
+│   ├── build-brand-assets.py         # logo -> favicons, icons, og.png
+│   ├── optimize-team-images.py       # photos -> 400x400 WebP
+│   ├── set-site-url.py               # change the production URL everywhere
+│   ├── validate-data.js              # content, templates, JSON syntax, event rules
+│   ├── validate-site.js              # metadata, URL, sitemap, robots, asset checks
+│   ├── generate-seed.js              # js/data.js -> supabase/seed.sql
+│   └── sync-noscript.js              # regenerate <noscript> blocks from js/data.js
 └── README.md
 ```
 
@@ -95,24 +105,24 @@ the public site and admin panel:
 1. Copy `.env.example` to `.env`.
 2. Fill in `BLITZ_SUPABASE_URL` and the public `BLITZ_SUPABASE_ANON_KEY`.
 3. Run `node tools/configure-env.js`.
-4. Deploy the generated `config.js` with the rest of the site.
+4. Deploy the generated `js/config.js` with the rest of the site.
 
 `.env` is ignored by Git. Only the public anon/publishable key belongs in this
 configuration; never use a Supabase `service_role` or secret key. The site and the
-panel refuse to run if `config.js` contains one, and `node tools/validate-site.js`
+panel refuse to run if `js/config.js` contains one, and `node tools/validate-site.js`
 fails if one is found anywhere in the repository.
 
-If `config.js` is left blank, the site simply shows the content bundled in `data.js`
+If `js/config.js` is left blank, the site simply shows the content bundled in `js/data.js`
 and never contacts Supabase (no warning is shown, because that is intended).
 
 **GitHub secrets** used by `keepalive.yml` (names only, set under *Settings > Secrets
 and variables > Actions*): `BLITZ_SUPABASE_URL` and `BLITZ_SUPABASE_PUBLISHABLE_KEY` (the same
-public key as in `config.js`). `.env` calls that key `BLITZ_SUPABASE_ANON_KEY`; that name
+public key as in `js/config.js`). `.env` calls that key `BLITZ_SUPABASE_ANON_KEY`; that name
 exists only in the local file. `ci.yml` needs no secrets.
 
 Download the official administrator template here:
-[BLITZ_EVENT_TEMPLATE.json](BLITZ_EVENT_TEMPLATE.json). See the
-[template usage guide](BLITZ_EVENT_TEMPLATE_GUIDE.md) for supported fields,
+[templates/BLITZ_EVENT_TEMPLATE.json](templates/BLITZ_EVENT_TEMPLATE.json). See the
+[template usage guide](docs/BLITZ_EVENT_TEMPLATE_GUIDE.md) for supported fields,
 validation, AI completion, media upload, preview, draft, and publication steps.
 
 ### Creating events in the Prezi Panel
@@ -307,7 +317,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://keshav.du.ac.in/blitz/no-such-p
 GitHub Pages and Netlify serve `404.html` by themselves but do not support custom 403,
 500 or 503 pages. Event links such as `event.html?event=unknown` cannot return a real 404
 on a static site; they show an in-page "Event not found" state instead. Full details,
-including `offline.html` and what is not verified, are in [ERRORS.md](ERRORS.md#8-hosting-and-custom-error-pages).
+including `errors/offline.html` and what is not verified, are in [docs/ERRORS.md](docs/ERRORS.md#8-hosting-and-custom-error-pages).
 
 ### Production URL
 The default is `https://keshav.du.ac.in/blitz/` (canonical, `og:url`, `og:image`, `twitter:image`, JSON-LD, sitemap, robots). Social scrapers and crawlers need absolute URLs, so it is written out in those files. If the society gets its own domain:
@@ -321,9 +331,9 @@ Run the local deployment/metadata check before publishing:
 node tools/validate-site.js
 ```
 It checks the two public HTML entry points, their local references, the intended
-canonical URLs, and the sitemap/robots pairing. It also checks the error pages, script
-load order, that the error stylesheet's colours still match `styles.css`, that every
-error code in `error-catalog.js` is documented in `ERRORS.md`, that no secret key is
+canonical URLs, and the sitemap/robots pairing. It also checks the error pages (`errors/`), script
+load order, that the error stylesheet's colours still match `css/styles.css`, that every
+error code in `js/error-catalog.js` is documented in `docs/ERRORS.md`, that no secret key is
 committed, that `.htaccess.example` points at pages that exist, and that every
 workflow secret is documented. It does not verify the live host.
 
@@ -339,7 +349,7 @@ python supabase/tests/e2e/run_e2e.py <path-to-postgrest>
 python supabase/tests/e2e/run_error_tests.py <path-to-postgrest>
 ```
 These use a scratch PostgreSQL, never a hosted Supabase project; Supabase Auth/Storage are
-a local stand-in, and ERRORS.md explains which failures are real and which are simulated.
+a local stand-in, and `docs/ERRORS.md` explains which failures are real and which are simulated.
 
 ---
 
@@ -359,9 +369,9 @@ What is actually implemented (and checked with Lighthouse mobile, headless Chrom
 
 ## Event Launchpad (event.html)
 
-- Layout and behaviour live in `event-launchpad.css` and `event-page.js`; the wine palette comes from `styles.css`.
+- Layout and behaviour live in `css/event-launchpad.css` and `js/event-page.js`; the wine palette comes from `css/styles.css`.
 - Windows are non-modal (no backdrop or blur), so several events can be open at once. Minimized windows sit in the dock; the trash icon closes them all. `?event=<id>` opens that event on load.
-- The admin preview (`prezi_panel/preview.html`) also loads `event-launchpad.css`.
+- The admin preview (`prezi_panel/preview.html`) also loads `css/event-launchpad.css`.
 
 
 ## Event images and the Gallery
@@ -369,5 +379,5 @@ What is actually implemented (and checked with Lighthouse mobile, headless Chrom
 - **Events can have many images** (Prezi Panel > Events > *Image & links*): add several at once, reorder, describe, remove. On `event.html` an event with two or more images shows an Instagram-style carousel (arrows inside the image at the left and right edges, swipe on phones); one image looks as before.
 - **The Gallery section lists every event image with a star.** The star decides whether that image appears in the public Gallery; the event must also be published. There is no separate Gallery upload.
 - **Image shapes:** choose Wide 16:9, Landscape 5:4 or Portrait 4:5 when adding images; the Gallery shows each at its own shape in one even row.
-- **Install:** run `supabase/schema.sql` in the Supabase SQL Editor first, then deploy the code. Details, checks and troubleshooting: [ERRORS.md section 12](ERRORS.md#12-event-images-gallery-and-the-3d-hero). The older standalone Gallery photos are kept in the database but no longer shown.
+- **Install:** run `supabase/schema.sql` in the Supabase SQL Editor first, then deploy the code. Details, checks and troubleshooting: [docs/ERRORS.md section 12](docs/ERRORS.md#12-event-images-gallery-and-the-3d-hero). The older standalone Gallery photos are kept in the database but no longer shown.
 - **Tests added:** `python supabase/tests/e2e/run_image_tests.py <postgrest>` (the acceptance tests), and the schema/migration/role tests in `run_schema_contract_tests.py`.

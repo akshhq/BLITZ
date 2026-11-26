@@ -22,7 +22,7 @@ jobs:
       - name: JavaScript syntax
         run: |
           set -e
-          for f in *.js prezi_panel/*.js tools/*.js tests/unit/*.js; do node --check "$f"; done
+          for f in js/*.js prezi_panel/*.js tools/*.js tests/unit/*.js; do node --check "$f"; done
       - name: Unit tests (error handler, catalog, validator)
         run: node --test "tests/unit/*.test.js"
       - name: Validate data

@@ -3,8 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const catalog = require(path.join('..', '..', 'error-catalog.js'));
-const E = require(path.join('..', '..', 'error-handler.js'));
+const catalog = require(path.join('..', '..', 'js', 'error-catalog.js'));
+const E = require(path.join('..', '..', 'js', 'error-handler.js'));
 
 const code = (input, ctx) => E.normalize(input, ctx).code;
 

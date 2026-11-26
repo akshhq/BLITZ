@@ -8,7 +8,7 @@ const vm = require('vm');
 const root = path.resolve(__dirname, '..');
 const ctx = { window: {} };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), ctx);
+vm.runInContext(fs.readFileSync(path.join(root, 'js', 'data.js'), 'utf8'), ctx);
 const DATA = ctx.window.BLITZ_DATA;
 const TIERS = [
   ['faculty', 'Faculty & Convenor'],

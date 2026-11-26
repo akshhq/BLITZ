@@ -8,7 +8,7 @@ const vm = require('vm');
 const root = path.resolve(__dirname, '..');
 const context = { window: {} };
 vm.createContext(context);
-vm.runInContext(fs.readFileSync(path.join(root, 'data.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(root, 'js', 'data.js'), 'utf8'), context);
 const data = context.window.BLITZ_DATA || {};
 const errors = [];
 const warnings = [];
@@ -115,13 +115,13 @@ jsonFiles(root).forEach((file) => {
   ['prezi_panel/event-validator.js', 'prezi_panel/event-template.js'].forEach((file) => vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), sandbox, { filename: file }));
   const T = sandbox.window.BLITZ_TEMPLATE;
   if (!T || typeof T.normalize !== 'function') return errors.push('prezi_panel/event-template.js: BLITZ_TEMPLATE.normalize is not exposed');
-  ['BLITZ_EVENT_TEMPLATE.json', 'sample.json'].forEach((file) => {
+  ['templates/BLITZ_EVENT_TEMPLATE.json', 'templates/sample.json'].forEach((file) => {
     if (!fs.existsSync(path.join(root, file))) return;
     let raw;
     try { raw = JSON.parse(fs.readFileSync(path.join(root, file), 'utf8').replace(/^\uFEFF/, '')); } catch (error) { return; }
     const result = T.normalize(raw);
     // The blank template is allowed to be incomplete (it is a form to fill in); the sample must import cleanly.
-    if (file === 'sample.json') (result.errors || []).forEach((message) => errors.push(`${file}: ${message}`));
+    if (file === 'templates/sample.json') (result.errors || []).forEach((message) => errors.push(`${file}: ${message}`));
     else if (!result.event && !(result.errors || []).length) errors.push(`${file}: importer produced nothing`);
   });
 }());

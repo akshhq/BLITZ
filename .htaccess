@@ -13,10 +13,10 @@
 # them, and run:  python tools/set-site-url.py https://your.domain/your-path/   (it updates the <base> in the
 # error pages too). Use local paths like these, never a full http(s):// URL: that would turn the error
 # into a redirect and lose the status code.
-ErrorDocument 403 /blitz/403.html
-ErrorDocument 404 /blitz/404.html
-ErrorDocument 500 /blitz/500.html
-ErrorDocument 503 /blitz/503.html
+ErrorDocument 403 /blitz/errors/403.html
+ErrorDocument 404 /blitz/errors/404.html
+ErrorDocument 500 /blitz/errors/500.html
+ErrorDocument 503 /blitz/errors/503.html
 
 # Do not list folder contents (a folder without an index page then shows the custom 403 page).
 # Needs AllowOverride Options; remove this line if the server rejects it.
@@ -35,7 +35,7 @@ Options -Indexes
   RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK) [NC]
   RewriteRule .* - [F,L]
   RewriteRule (^|/)\.(?!well-known/) - [F,L]
-  RewriteRule ^(?:tools|supabase|tests|node_modules|__pycache__)(/|$) - [F,L]
+  RewriteRule ^(?:tools|supabase|tests|docs|templates|node_modules|__pycache__)(/|$) - [F,L]
 </IfModule>
 
 <IfModule mod_headers.c>
@@ -62,7 +62,7 @@ Options -Indexes
 #
 # <IfModule mod_rewrite.c>
 #   RewriteEngine On
-#   RewriteCond %{REQUEST_URI} !^/blitz/(503\.html|error\.css|error-page\.js|favicon\.ico|favicon-32\.png|assets/logo/)
+#   RewriteCond %{REQUEST_URI} !^/blitz/(errors/503\.html|css/error\.css|js/error-page\.js|favicon\.ico|favicon-32\.png|assets/logo/)
 #   RewriteRule ^ - [R=503,L]
 # </IfModule>
 # <IfModule mod_headers.c>
@@ -70,15 +70,15 @@ Options -Indexes
 # </IfModule>
 
 # --- nginx equivalent (put inside the server { } block of the site) ------------------------------------
-#   error_page 403 /blitz/403.html;
-#   error_page 404 /blitz/404.html;
-#   error_page 500 502 504 /blitz/500.html;
-#   error_page 503 /blitz/503.html;
-#   location ~ ^/blitz/(403|404|500|503)\.html$ {
+#   error_page 403 /blitz/errors/403.html;
+#   error_page 404 /blitz/errors/404.html;
+#   error_page 500 502 504 /blitz/errors/500.html;
+#   error_page 503 /blitz/errors/503.html;
+#   location ~ ^/blitz/errors/(403|404|500|503)\.html$ {
 #     internal;
 #     add_header Cache-Control "no-store" always;
 #   }
-#   location ~ ^/blitz/(\.(?!well-known)|tools/|supabase/|tests/|node_modules/|.*\.(?:sql|py|sh|example)$) {
+#   location ~ ^/blitz/(\.(?!well-known)|tools/|supabase/|tests/|docs/|templates/|node_modules/|.*\.(?:sql|py|sh|example)$) {
 #     return 403;
 #   }
 #   add_header X-Content-Type-Options "nosniff" always;
@@ -88,4 +88,4 @@ Options -Indexes
 #   autoindex off;
 #
 # GitHub Pages and Netlify-style hosts serve a file named 404.html automatically; they do not support
-# custom 403, 500 or 503 pages. See ERRORS.md ("Hosting").
+# custom 403, 500 or 503 pages. See docs/ERRORS.md ("Hosting").
