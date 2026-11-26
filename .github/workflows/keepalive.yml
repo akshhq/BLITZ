@@ -20,15 +20,15 @@ jobs:
     steps:
       - name: Query BLITZ site content
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_URL: ${{ secrets.BLITZ_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.BLITZ_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           set -eu
 
           # Say which secret is missing (by name only) instead of failing with an unreadable curl error.
           missing=""
-          [ -n "${SUPABASE_URL:-}" ] || missing="$missing SUPABASE_URL"
-          [ -n "${SUPABASE_KEY:-}" ] || missing="$missing SUPABASE_PUBLISHABLE_KEY"
+          [ -n "${SUPABASE_URL:-}" ] || missing="$missing BLITZ_SUPABASE_URL"
+          [ -n "${SUPABASE_KEY:-}" ] || missing="$missing BLITZ_SUPABASE_PUBLISHABLE_KEY"
           if [ -n "$missing" ]; then
             echo "::error::Missing GitHub secret(s):$missing. Add them under Settings > Secrets and variables > Actions."
             exit 1
@@ -37,7 +37,7 @@ jobs:
           BASE="${SUPABASE_URL%/}"
           case "$BASE" in
             https://*) ;;
-            *) echo "::error::SUPABASE_URL must start with https://"; exit 1 ;;
+            *) echo "::error::BLITZ_SUPABASE_URL must start with https://"; exit 1 ;;
           esac
 
           # The public key goes in the apikey header. Only a legacy JWT key is also sent as a bearer token.
@@ -55,14 +55,14 @@ jobs:
             --header "apikey: ${SUPABASE_KEY}" \
             "${AUTH[@]}" \
             --header "Content-Type: application/json" \
-            --data '{}') || { echo "::error::Could not reach the Supabase project (network or wrong SUPABASE_URL)."; exit 1; }
+            --data '{}') || { echo "::error::Could not reach the Supabase project (network or wrong BLITZ_SUPABASE_URL)."; exit 1; }
 
           if [ "$STATUS" != "200" ]; then
             echo "::error::Supabase request failed: HTTP $STATUS"
             # The body is a PostgREST error (code/message), never a secret. Show the start of it to help diagnose.
             head -c 400 /tmp/response.json || true; echo
             case "$STATUS" in
-              401|403) echo "Hint: the key was rejected. Check SUPABASE_PUBLISHABLE_KEY belongs to this project." ;;
+              401|403) echo "Hint: the key was rejected. Check BLITZ_SUPABASE_PUBLISHABLE_KEY belongs to this project." ;;
               404)     echo "Hint: wrong project URL, or public.site_content() is missing. See ERRORS.md (BLITZ-SCH-003)." ;;
               5*)      echo "Hint: the project may be paused or restarting. Open the Supabase dashboard and resume it." ;;
             esac

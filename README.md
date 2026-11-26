@@ -93,7 +93,7 @@ This is a zero-build static site, so browsers cannot read `.env` directly. To co
 the public site and admin panel:
 
 1. Copy `.env.example` to `.env`.
-2. Fill in `SUPABASE_URL` and the public `SUPABASE_ANON_KEY`.
+2. Fill in `BLITZ_SUPABASE_URL` and the public `BLITZ_SUPABASE_ANON_KEY`.
 3. Run `node tools/configure-env.js`.
 4. Deploy the generated `config.js` with the rest of the site.
 
@@ -106,8 +106,8 @@ If `config.js` is left blank, the site simply shows the content bundled in `data
 and never contacts Supabase (no warning is shown, because that is intended).
 
 **GitHub secrets** used by `keepalive.yml` (names only, set under *Settings > Secrets
-and variables > Actions*): `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (the same
-public key as in `config.js`). `.env` calls that key `SUPABASE_ANON_KEY`; that name
+and variables > Actions*): `BLITZ_SUPABASE_URL` and `BLITZ_SUPABASE_PUBLISHABLE_KEY` (the same
+public key as in `config.js`). `.env` calls that key `BLITZ_SUPABASE_ANON_KEY`; that name
 exists only in the local file. `ci.yml` needs no secrets.
 
 Download the official administrator template here:

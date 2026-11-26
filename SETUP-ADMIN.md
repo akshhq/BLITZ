@@ -159,8 +159,8 @@ Copy `.env.example` to `.env` in the site folder and fill in the two **public** 
 from step 1.3:
 
 ```text
-SUPABASE_URL=https://abcdefgh.supabase.co
-SUPABASE_ANON_KEY=eyJ...your anon/publishable key...
+BLITZ_SUPABASE_URL=https://abcdefgh.supabase.co
+BLITZ_SUPABASE_ANON_KEY=eyJ...your anon/publishable key...
 ```
 
 Then generate the browser configuration:
@@ -200,7 +200,7 @@ Requirements and advice for whoever runs the server:
 
 Supabase's free plan **pauses a project after about a week with no activity.** Do both of these:
 
-1. **GitHub Action (included).** In the GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (the same public values as `config.js`; `.env` calls the key `SUPABASE_ANON_KEY` locally). The workflow in `.github/workflows/keepalive.yml` then reads the public content daily at 03:17 UTC (08:47 IST). Run it once by hand (**Actions → Supabase Keep Alive → Run workflow**) and check it is green. *GitHub switches scheduled workflows off after 60 days without repository activity; if that happens, press “Enable workflow”.*
+1. **GitHub Action (included).** In the GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**. Add `BLITZ_SUPABASE_URL` and `BLITZ_SUPABASE_PUBLISHABLE_KEY` (the same public values as `config.js`; `.env` calls the key `BLITZ_SUPABASE_ANON_KEY` locally). The workflow in `.github/workflows/keepalive.yml` then reads the public content daily at 03:17 UTC (08:47 IST). Run it once by hand (**Actions → Supabase Keep Alive → Run workflow**) and check it is green. *GitHub switches scheduled workflows off after 60 days without repository activity; if that happens, press “Enable workflow”.*
 2. **Backup ping (recommended).** On <https://cron-job.org> (free) create a job every 3 days: method **POST** to `YOUR_SUPABASE_URL/rest/v1/rpc/site_content`, headers `apikey: YOUR_ANON_KEY` and `Content-Type: application/json`, body `{}`.
 
 If a project does get paused, open the Supabase dashboard and press **Restore**. Meanwhile the website keeps working from its saved copy.
@@ -323,7 +323,7 @@ Anyone maintaining the site can copy and paste these commands directly.
 Open a terminal in the `BLITZ` folder and run whichever command you need:
 
 ```bash
-# Update config.js from your .env file (run after changing SUPABASE_URL or SUPABASE_ANON_KEY)
+# Update config.js from your .env file (run after changing BLITZ_SUPABASE_URL or BLITZ_SUPABASE_ANON_KEY)
 node tools/configure-env.js
 
 # Rebuild supabase/seed.sql from data.js (run if you edited data.js and want to re-seed Supabase)
@@ -340,7 +340,7 @@ node tools/validate-data.js
 
 ### B. Test the live website API (one command)
 
-Replace `YOUR_PROJECT` and `YOUR_PUBLISHABLE_OR_ANON_KEY` with the values from your `.env` file (`SUPABASE_URL` and `SUPABASE_ANON_KEY`), then run:
+Replace `YOUR_PROJECT` and `YOUR_PUBLISHABLE_OR_ANON_KEY` with the values from your `.env` file (`BLITZ_SUPABASE_URL` and `BLITZ_SUPABASE_ANON_KEY`), then run:
 
 **Windows PowerShell:**
 ```powershell

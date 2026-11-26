@@ -334,8 +334,8 @@ python supabase/tests/e2e/run_error_tests.py /path/to/postgrest     # do not run
 
 **Secrets (names only; set under Settings → Secrets and variables → Actions):**
 
-- `SUPABASE_URL`: the project URL, `https://<project-ref>.supabase.co`.
-- `SUPABASE_PUBLISHABLE_KEY`: the public publishable (or legacy anon) key. Never a secret or `service_role` key. It is the same public key that is in `config.js`; the locally used `.env` may call it `SUPABASE_ANON_KEY`, which is only a local file and not the GitHub secret name.
+- `BLITZ_SUPABASE_URL`: the project URL, `https://<project-ref>.supabase.co`.
+- `BLITZ_SUPABASE_PUBLISHABLE_KEY`: the public publishable (or legacy anon) key. Never a secret or `service_role` key. It is the same public key that is in `config.js`; the locally used `.env` may call it `BLITZ_SUPABASE_ANON_KEY`, which is only a local file and not the GitHub secret name.
 
 **Reading a red keep-alive run.** The log names the cause and never prints a key: missing secret (by name), `https://` missing, unreachable host, HTTP 401/403 (key rejected), 404 (wrong URL or missing function), 5xx (project paused), or a 200 without an events list. A passing run proves the content function answered that day. **It does not guarantee the database will never pause**; if GitHub disables scheduled workflows after a period of repository inactivity, or the project is paused for another reason, the run will fail or stop, so check the Actions tab occasionally.
 

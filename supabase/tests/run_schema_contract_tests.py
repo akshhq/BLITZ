@@ -113,6 +113,7 @@ for mig, drop in (('schema.sql', ['event_details', 'placeholder', 'brochure', 'l
 print('\n== 5. schema.sql never destroys data')
 body = re.sub(r'--[^\n]*', '', read(SUP, 'schema.sql')).lower()
 body = re.sub(r'delete from public\.event_images where event_id = p_event_id and id <> all \(v_ids\);', '', body)   # set_event_images: removes only the images taken off ONE event's list
+body = re.sub(r"delete from public\.content_history where id in\s*\(select id from public\.content_history where changed_at < now\(\) - interval '365 days' limit 20\);", '', body)   # log_change(): the history log forgets entries older than a year
 bad = [w for w in ('drop table', 'truncate', 'delete from', 'drop column', 'drop schema') if w in body]
 ok(f'schema.sql: contains no {", ".join(("drop table", "truncate", "delete from", "drop column"))}', not bad, bad)
 
@@ -244,6 +245,7 @@ mig_defs = {n: fdef(n) for n in ('site_content', 'set_event_images')}
 mig_cols = cols('event_images'); fresh(); ok('schema.sql on an old DB and a fresh DB define IDENTICAL functions and the same event_images columns (no drift)', mig_defs == {n: fdef(n) for n in ('site_content', 'set_event_images')} and mig_cols == cols('event_images'))
 body = re.sub(r'--[^\n]*', '', read(SUP, 'schema.sql')).lower()
 body = re.sub(r'delete from public\.event_images where event_id = p_event_id and id <> all \(v_ids\);', '', body)
+body = re.sub(r"delete from public\.content_history where id in\s*\(select id from public\.content_history where changed_at < now\(\) - interval '365 days' limit 20\);", '', body)   # log_change(): the history log forgets entries older than a year
 ok('schema.sql contains no drop / truncate / delete from (apart from the RPC removing images taken off one event)', not [w for w in ('drop table', 'truncate', 'delete from', 'drop column', 'drop schema') if w in body])
 
 print(f"\n{sum(R)}/{len(R)} passed")

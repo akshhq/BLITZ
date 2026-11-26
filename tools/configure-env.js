@@ -30,13 +30,13 @@ if (!fs.existsSync(envPath)) {
   fail('.env was not found. Copy .env.example to .env and fill in the public Supabase values.');
 } else {
   var env = parseEnv(fs.readFileSync(envPath, 'utf8'));
-  var url = String(env.SUPABASE_URL || '').trim();
-  var key = String(env.SUPABASE_ANON_KEY || '').trim();
+  var url = String(env.BLITZ_SUPABASE_URL || '').trim();
+  var key = String(env.BLITZ_SUPABASE_ANON_KEY || '').trim();
 
   if (!/^https:\/\/[^\/\s]+$/i.test(url)) {
-    fail('SUPABASE_URL must be an HTTPS Supabase project URL.');
+    fail('BLITZ_SUPABASE_URL must be an HTTPS Supabase project URL.');
   } else if (key.length < 20 || /service_role|secret/i.test(key)) {
-    fail('SUPABASE_ANON_KEY must be the public anon/publishable key, not a secret key.');
+    fail('BLITZ_SUPABASE_ANON_KEY must be the public anon/publishable key, not a secret key.');
   } else {
     var config = [
       'window.BLITZ_CONFIG = {',
